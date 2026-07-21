@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build output
+build
+dist
+.next
+next-env.d.ts
+.vercel
+
+# Environment variables
+.env
+.env.local
+test.env
+
+# Database (SQLite) — contains real content, uploads, and credential hashes
+payload.db
+payload.db-journal
+payload.db-wal
+payload.db-shm
+
+# Payload default media upload directory
+public/media/
+
+public/robots.txt
+public/sitemap*.xml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Logs
+*.log
