@@ -7,11 +7,11 @@ type SocialLink = {
 }
 
 type TeamMember = {
-  avatarUrl?: string
-  bio?: string
-  name?: string
-  socialLinks?: SocialLink[] | null
-  title?: string
+  avatarUrl?: string | null
+  bio?: string | null
+  name?: string | null
+  socialLinks?: any
+  title?: string | null
 }
 
 const XIcon: React.FC = () => (
@@ -38,7 +38,7 @@ const platformLabels: Record<string, string> = {
   youtube: 'YouTube',
 }
 
-const Avatar: React.FC<{ name?: string; url?: string }> = ({ name, url }) => {
+const Avatar: React.FC<{ name?: string | null; url?: string | null }> = ({ name, url }) => {
   if (url) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img alt={name || ''} className="size-14 shrink-0 rounded-full object-cover" src={url} />
@@ -68,8 +68,8 @@ const TeamMemberRow: React.FC<{ label: string; member: TeamMember }> = ({ label,
 
       <div className="flex shrink-0 gap-2">
         {member.socialLinks
-          ?.filter((link) => link.platform && link.url)
-          .map((link) => (
+          ?.filter((link: any) => link?.platform && link?.url)
+          .map((link: any) => (
             <a
               aria-label={`${member.name} on ${platformLabels[link.platform as string] ?? link.platform}`}
               className="flex size-9 items-center justify-center rounded-md border text-foreground hover:bg-muted"

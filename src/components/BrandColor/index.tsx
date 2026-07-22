@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { getCachedGlobal } from '@/utilities/getGlobals'
+import { getMergedSettings } from '@/utilities/getSettings'
 
 const getContrastForeground = (hex: string): string => {
   const normalized = hex.replace('#', '')
@@ -24,7 +24,7 @@ const getContrastForeground = (hex: string): string => {
 }
 
 export const BrandColor: React.FC = async () => {
-  const settings = await getCachedGlobal('settings', 0)()
+  const settings = await getMergedSettings(0)
   const color = settings?.primaryColor
 
   if (!color) return null

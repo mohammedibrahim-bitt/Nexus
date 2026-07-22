@@ -4,7 +4,7 @@ import type { Media, Page, Post, Config } from '../payload-types'
 
 import { mergeOpenGraph } from './mergeOpenGraph'
 import { getServerSideURL } from './getURL'
-import { getCachedGlobal } from './getGlobals'
+import { getMergedSettings } from './getSettings'
 
 const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null) => {
   const serverUrl = getServerSideURL()
@@ -25,7 +25,7 @@ export const generateMeta = async (args: {
 }): Promise<Metadata> => {
   const { doc } = args
 
-  const settings = await getCachedGlobal('settings', 0)()
+  const settings = await getMergedSettings(0)
   const siteName = settings?.siteName || 'Nexus'
 
   const ogImage = getImageURL(doc?.meta?.image)

@@ -47,7 +47,7 @@ export const seed = async ({
   await Promise.all(
     globals.map((global) =>
       payload.updateGlobal({
-        slug: global,
+        slug: global as 'header',
         data: {
           navItems: [],
         },
@@ -105,6 +105,7 @@ export const seed = async ({
         name: 'Demo Author',
         email: 'demo-author@example.com',
         password: 'password',
+        role: 'author',
       },
     }),
     payload.create({
