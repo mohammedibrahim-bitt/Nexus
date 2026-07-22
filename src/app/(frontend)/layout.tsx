@@ -12,7 +12,7 @@ import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
-import { getMergedSettings } from '@/utilities/getSettings'
+import { getCachedGlobal } from '@/utilities/getGlobals'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { draftMode } from 'next/headers'
 
@@ -49,7 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getMergedSettings(0)
+  const settings = await getCachedGlobal('settings', 0)()
 
   return {
     metadataBase: new URL(getServerSideURL()),

@@ -1,5 +1,4 @@
 import { getCachedGlobal } from '@/utilities/getGlobals'
-import { getMergedSettings } from '@/utilities/getSettings'
 import Link from 'next/link'
 import React from 'react'
 
@@ -10,7 +9,7 @@ import { navIconComponents } from '@/utilities/navIcons'
 
 export async function Footer() {
   const footerData = await getCachedGlobal('footer', 1)()
-  const settingsData = await getMergedSettings(1)
+  const settingsData = await getCachedGlobal('settings', 1)()
 
   const navItems = footerData?.navItems || []
 

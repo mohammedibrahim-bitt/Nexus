@@ -5,7 +5,6 @@ import React, { useState } from 'react'
 
 const IconButton: React.FC<{
   'aria-label': string
-  children?: React.ReactNode
   href?: string
   onClick?: () => void
 }> = ({ 'aria-label': ariaLabel, href, onClick, children }) => {

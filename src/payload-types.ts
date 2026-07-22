@@ -1970,14 +1970,6 @@ export interface Setting {
    */
   logo?: (number | null) | Media;
   /**
-   * Optional. Enter the URL of an external site so Nexus can adopt that site’s branding automatically.
-   */
-  connectedSiteUrl?: string | null;
-  /**
-   * When enabled, Nexus will try to import the connected site’s title and theme color automatically.
-   */
-  useConnectedSiteDesign?: boolean | null;
-  /**
    * Hex color (e.g. #2563eb) used for buttons, links, and other accents site-wide.
    */
   primaryColor: string;
@@ -2039,8 +2031,6 @@ export interface FooterSelect<T extends boolean = true> {
 export interface SettingsSelect<T extends boolean = true> {
   siteName?: T;
   logo?: T;
-  connectedSiteUrl?: T;
-  useConnectedSiteDesign?: T;
   primaryColor?: T;
   updatedAt?: T;
   createdAt?: T;

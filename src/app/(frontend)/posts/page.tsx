@@ -3,7 +3,6 @@ import type { Metadata } from 'next/types'
 import { CollectionArchive } from '@/components/CollectionArchive'
 import { PageRange } from '@/components/PageRange'
 import { Pagination } from '@/components/Pagination'
-import { getMergedSettings } from '@/utilities/getSettings'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
@@ -59,7 +58,7 @@ export default async function Page() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getMergedSettings(0)
+  const settings = await getCachedGlobal('settings', 0)()
 
   return {
     title: `${settings?.siteName || 'Nexus'} Posts`,
