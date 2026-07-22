@@ -5,11 +5,13 @@ import { buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { Categories } from './collections/Categories'
+import { ContentSources } from './collections/ContentSources'
 import { Customers } from './collections/Customers'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Reviews } from './collections/Reviews'
+import { Tags } from './collections/Tags'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -88,9 +90,11 @@ export default buildConfig({
     Posts,
     Media,
     Categories,
+    Tags,
     Users,
     Customers,
     Reviews,
+    ContentSources,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer, Settings],

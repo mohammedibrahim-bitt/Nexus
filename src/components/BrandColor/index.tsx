@@ -1,37 +1,23 @@
 import React from 'react'
 
-import { getCachedGlobal } from '@/utilities/getGlobals'
-
-const getContrastForeground = (hex: string): string => {
-  const normalized = hex.replace('#', '')
-  const full =
-    normalized.length === 3
-      ? normalized
-          .split('')
-          .map((c) => c + c)
-          .join('')
-      : normalized
-
-  const r = parseInt(full.slice(0, 2), 16) / 255
-  const g = parseInt(full.slice(2, 4), 16) / 255
-  const b = parseInt(full.slice(4, 6), 16) / 255
-
-  // Relative luminance (WCAG)
-  const toLinear = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
-  const luminance = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b)
-
-  return luminance > 0.4 ? '#171717' : '#fafafa'
-}
+import { getBrandData } from '@/utilities/getBrandData'
+import { darkShade, lightShade } from '@/utilities/colorShade'
 
 export const BrandColor: React.FC = async () => {
-  const settings = await getCachedGlobal('settings', 0)()
-  const color = settings?.primaryColor
+  const brand = await getBrandData()
+  const color = brand.primaryColor
 
   if (!color) return null
 
-  const foreground = getContrastForeground(color)
-  const rule = `--primary: ${color}; --primary-foreground: ${foreground}; --ring: ${color};`
-  const css = `:root, [data-theme='light'] { ${rule} } [data-theme='dark'] { ${rule} }`
+  // Same brand hue, but adapted per theme so it always has strong contrast
+  // against that theme's background — a literal color forced into both
+  // themes would go invisible in whichever theme it doesn't suit.
+  const lightModePrimary = darkShade(color, 25)
+  const darkModePrimary = lightShade(color, 85)
+
+  const lightRule = `--primary: ${lightModePrimary}; --primary-foreground: #fafafa; --ring: ${lightModePrimary};`
+  const darkRule = `--primary: ${darkModePrimary}; --primary-foreground: #171717; --ring: ${darkModePrimary};`
+  const css = `:root, [data-theme='light'] { ${lightRule} } [data-theme='dark'] { ${darkRule} }`
 
   return <style dangerouslySetInnerHTML={{ __html: css }} />
 }

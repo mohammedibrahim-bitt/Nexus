@@ -44,6 +44,26 @@ Log into the admin panel and go to **Settings** (under the "Site" group in the s
 - **Logo** — upload an image to replace the text logo everywhere
 - **Brand Color** — a hex color used for buttons, links, and accents site-wide
 
+### Syncing branding from a main website
+
+If this blog runs as a subdomain of a main website (e.g. `blog.example.com` under `example.com`), set **Brand Sync URL** in Settings to that main site, and it'll pick up the name/color/logo automatically — no manual re-entry needed. It's checked roughly every 5 minutes, and any field found remotely overrides the manual Settings values above.
+
+Two ways to point it:
+
+1. **A dedicated JSON file** (most reliable) — e.g. `https://example.com/brand.json`:
+   ```json
+   {
+     "siteName": "Example Inc",
+     "primaryColor": "#2563eb",
+     "logoUrl": "https://example.com/logo.svg"
+   }
+   ```
+   All fields are optional; only the ones present are applied.
+
+2. **Just the main site's homepage URL** — if no JSON is found there, the blog automatically falls back to reading standard meta tags: `og:site_name` (or `<title>`) for the name, `theme-color` for the color, and the favicon/apple-touch-icon for the logo. Works with zero changes to the main site, though fidelity depends on what that site already publishes.
+
+If the sync URL is unreachable or returns nothing usable, the blog silently falls back to the manual Settings values — it never breaks the site.
+
 ## Scripts
 
 | Command | Description |

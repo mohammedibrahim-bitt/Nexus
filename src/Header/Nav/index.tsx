@@ -4,9 +4,9 @@ import React from 'react'
 
 import type { Header as HeaderType } from '@/payload-types'
 
+import { AccountMenu } from '@/components/AccountMenu'
 import { CMSLink } from '@/components/Link'
-import Link from 'next/link'
-import { SearchIcon } from 'lucide-react'
+import { QuickSearch } from '@/components/QuickSearch'
 import { ThemeToggle } from '@/providers/Theme/ThemeToggle'
 import { navIconComponents } from '@/utilities/navIcons'
 
@@ -14,22 +14,25 @@ export const HeaderNav: React.FC<{ data: HeaderType }> = ({ data }) => {
   const navItems = data?.navItems || []
 
   return (
-    <nav className="flex gap-3 items-center">
+    <nav className="flex items-center gap-1">
       {navItems.map(({ icon, link }, i) => {
         const Icon = icon ? navIconComponents[icon] : undefined
 
         return (
-          <span className="flex items-center gap-1.5" key={i}>
+          <span
+            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+            key={i}
+          >
             {Icon && <Icon className="size-4" />}
-            <CMSLink {...link} appearance="link" />
+            <CMSLink {...link} appearance="link" className="!text-inherit !no-underline" />
           </span>
         )
       })}
-      <Link href="/search">
-        <span className="sr-only">Search</span>
-        <SearchIcon className="w-5 text-primary" />
-      </Link>
-      <ThemeToggle />
+      <div className="ml-1 flex items-center gap-1">
+        <QuickSearch />
+        <ThemeToggle />
+        <AccountMenu />
+      </div>
     </nav>
   )
 }

@@ -1,11 +1,15 @@
 'use client'
 
 import { Facebook, Link2, Linkedin, Twitter } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 export const SocialShare: React.FC<{ title: string }> = ({ title }) => {
   const [copied, setCopied] = useState(false)
-  const url = typeof window !== 'undefined' ? window.location.href : ''
+  const [url, setUrl] = useState('')
+
+  useEffect(() => {
+    setUrl(window.location.href)
+  }, [])
 
   const links = [
     {
@@ -32,7 +36,7 @@ export const SocialShare: React.FC<{ title: string }> = ({ title }) => {
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3" data-social-share>
       {links.map(({ Icon, href, label }) => (
         <a
           aria-label={label}

@@ -19,6 +19,7 @@ export const BackToTop: React.FC = () => {
     <button
       aria-label="Back to top"
       className="fixed bottom-6 right-6 z-50 flex size-11 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-lg transition-opacity hover:opacity-80"
+      data-back-to-top
       onClick={() => window.scrollTo({ behavior: 'smooth', top: 0 })}
       type="button"
     >

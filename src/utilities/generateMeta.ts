@@ -4,20 +4,25 @@ import type { Media, Page, Post, Config } from '../payload-types'
 
 import { mergeOpenGraph } from './mergeOpenGraph'
 import { getServerSideURL } from './getURL'
-import { getCachedGlobal } from './getGlobals'
+import { getBrandData } from './getBrandData'
 
-const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null) => {
+const getImageURL = (
+  image: Media | Config['db']['defaultIDType'] | null | undefined,
+  fallback: Media | null | undefined,
+  generatedFallbackTitle: string,
+) => {
   const serverUrl = getServerSideURL()
 
-  let url = serverUrl + '/website-template-OG.webp'
+  const source = image && typeof image === 'object' && 'url' in image ? image : fallback
 
-  if (image && typeof image === 'object' && 'url' in image) {
-    const ogUrl = image.sizes?.og?.url
-
-    url = ogUrl ? serverUrl + ogUrl : serverUrl + image.url
+  if (source) {
+    const ogUrl = source.sizes?.og?.url
+    return ogUrl ? serverUrl + ogUrl : serverUrl + source.url
   }
 
-  return url
+  // No uploaded image anywhere — fall back to the dynamically generated,
+  // brand-colored share card (see /og route).
+  return `${serverUrl}/og?title=${encodeURIComponent(generatedFallbackTitle)}`
 }
 
 export const generateMeta = async (args: {
@@ -25,18 +30,23 @@ export const generateMeta = async (args: {
 }): Promise<Metadata> => {
   const { doc } = args
 
-  const settings = await getCachedGlobal('settings', 0)()
-  const siteName = settings?.siteName || 'Nexus'
+  const brand = await getBrandData()
+  const siteName = brand.siteName
 
-  const ogImage = getImageURL(doc?.meta?.image)
+  const ogImage = getImageURL(
+    doc?.meta?.image,
+    brand.defaultOgImage,
+    doc?.meta?.title || doc?.title || siteName,
+  )
+  const description = doc?.meta?.description || brand.defaultMetaDescription || undefined
 
   const title = doc?.meta?.title ? doc?.meta?.title + ' | ' + siteName : siteName
 
   return {
-    description: doc?.meta?.description,
+    description,
     openGraph: mergeOpenGraph(
       {
-        description: doc?.meta?.description || '',
+        description: description || '',
         images: ogImage
           ? [
               {

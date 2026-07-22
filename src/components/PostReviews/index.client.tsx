@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { MessageSquareText } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
+
+import { useCustomerAuth } from '@/providers/CustomerAuth'
 
 type ReviewItem = {
   id: string
@@ -13,12 +15,6 @@ type ReviewItem = {
   createdAt: string
   customerName: string
   rating: number
-}
-
-type Customer = {
-  id: string
-  email: string
-  name: string
 }
 
 const Stars: React.FC<{ onChange?: (value: number) => void; value: number }> = ({
@@ -48,9 +44,8 @@ export const PostReviewsClient: React.FC<{
   initialReviews: ReviewItem[]
   postId: string
 }> = ({ initialReviews, postId }) => {
+  const { customer, loading: checkingSession, login, signup } = useCustomerAuth()
   const [reviews, setReviews] = useState(initialReviews)
-  const [customer, setCustomer] = useState<Customer | null>(null)
-  const [checkingSession, setCheckingSession] = useState(true)
   const [mode, setMode] = useState<'login' | 'signup'>('signup')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -59,21 +54,7 @@ export const PostReviewsClient: React.FC<{
   const [comment, setComment] = useState('')
   const [error, setError] = useState<null | string>(null)
   const [status, setStatus] = useState<'idle' | 'submitted' | 'submitting'>('idle')
-
-  useEffect(() => {
-    const loadSession = async () => {
-      try {
-        const res = await fetch('/api/customers/me', { credentials: 'include' })
-        const data = await res.json()
-        if (data?.user) {
-          setCustomer({ id: data.user.id, email: data.user.email, name: data.user.name })
-        }
-      } finally {
-        setCheckingSession(false)
-      }
-    }
-    void loadSession()
-  }, [])
+  const [awaitingVerification, setAwaitingVerification] = useState(false)
 
   const averageRating =
     reviews.length > 0
@@ -86,36 +67,11 @@ export const PostReviewsClient: React.FC<{
 
     try {
       if (mode === 'signup') {
-        const registerRes = await fetch('/api/customers', {
-          body: JSON.stringify({ email, name, password }),
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          method: 'POST',
-        })
-        if (!registerRes.ok) {
-          const data = await registerRes.json()
-          throw new Error(data?.errors?.[0]?.message || 'Could not create your account')
-        }
+        await signup(name, email, password)
+        setAwaitingVerification(true)
+      } else {
+        await login(email, password)
       }
-
-      const loginRes = await fetch('/api/customers/login', {
-        body: JSON.stringify({ email, password }),
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        method: 'POST',
-      })
-
-      if (!loginRes.ok) {
-        const data = await loginRes.json()
-        throw new Error(data?.errors?.[0]?.message || 'Login failed')
-      }
-
-      const loginData = await loginRes.json()
-      setCustomer({
-        id: loginData.user.id,
-        email: loginData.user.email,
-        name: loginData.user.name,
-      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     }
@@ -191,7 +147,12 @@ export const PostReviewsClient: React.FC<{
 
       {!checkingSession && (
         <div className="border rounded-lg p-6">
-          {!customer ? (
+          {awaitingVerification && !customer ? (
+            <p>
+              Almost there! We sent a verification link to <strong>{email}</strong>. Click it to
+              activate your account, then log in to leave your review.
+            </p>
+          ) : !customer ? (
             <form className="flex flex-col gap-4 max-w-sm" onSubmit={handleAuth}>
               <h3 className="text-lg font-medium">
                 {mode === 'signup' ? 'Create an account to leave a review' : 'Log in to leave a review'}

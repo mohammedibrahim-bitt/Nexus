@@ -1,10 +1,12 @@
 import { BadgeCheck, Clock, PenLine, ShieldCheck } from 'lucide-react'
+import Link from 'next/link'
 import React from 'react'
 
 import { formatDateTime } from '@/utilities/formatDateTime'
 
 type BylinePerson = {
   avatarUrl?: string
+  id?: number | string
   name?: string
 }
 
@@ -23,12 +25,23 @@ const Avatar: React.FC<{ name?: string; url?: string }> = ({ name, url }) => {
   )
 }
 
+const PersonName: React.FC<{ id?: number | string; name: string }> = ({ id, name }) => {
+  if (id === undefined || id === null) return <p className="font-semibold">{name}</p>
+
+  return (
+    <Link className="font-semibold hover:underline" href={`/authors/${id}`}>
+      {name}
+    </Link>
+  )
+}
+
 export const ArticleByline: React.FC<{
   author?: BylinePerson
   expertVerified?: boolean
+  readingTimeMinutes?: number
   reviewer?: BylinePerson
   updatedAt?: string
-}> = ({ author, expertVerified, reviewer, updatedAt }) => {
+}> = ({ author, expertVerified, readingTimeMinutes, reviewer, updatedAt }) => {
   if (!author && !reviewer && !updatedAt) return null
 
   return (
@@ -41,7 +54,7 @@ export const ArticleByline: React.FC<{
               <PenLine className="size-3.5" />
               Written by
             </p>
-            <p className="font-semibold">{author.name}</p>
+            <PersonName id={author.id} name={author.name} />
           </div>
         </div>
       )}
@@ -54,7 +67,7 @@ export const ArticleByline: React.FC<{
               <ShieldCheck className="size-3.5" />
               Reviewed by
             </p>
-            <p className="font-semibold">{reviewer.name}</p>
+            <PersonName id={reviewer.id} name={reviewer.name} />
           </div>
         </div>
       )}
@@ -75,6 +88,10 @@ export const ArticleByline: React.FC<{
             )}
           </div>
         </div>
+      )}
+
+      {readingTimeMinutes && (
+        <div className="ml-auto text-sm text-muted-foreground">{readingTimeMinutes} min read</div>
       )}
     </div>
   )

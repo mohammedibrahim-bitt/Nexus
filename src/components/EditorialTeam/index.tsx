@@ -1,4 +1,5 @@
 import { Facebook, Globe, Instagram, Linkedin, ShieldCheck, Youtube } from 'lucide-react'
+import Link from 'next/link'
 import React from 'react'
 
 type SocialLink = {
@@ -9,6 +10,7 @@ type SocialLink = {
 type TeamMember = {
   avatarUrl?: string
   bio?: string
+  id?: number | string
   name?: string
   socialLinks?: SocialLink[] | null
   title?: string
@@ -60,7 +62,13 @@ const TeamMemberRow: React.FC<{ label: string; member: TeamMember }> = ({ label,
         <Avatar name={member.name} url={member.avatarUrl} />
         <div>
           <p className="text-xs font-semibold tracking-wide text-orange-500 uppercase">{label}</p>
-          <p className="font-semibold">{member.name}</p>
+          {member.id !== undefined && member.id !== null ? (
+            <Link className="font-semibold hover:underline" href={`/authors/${member.id}`}>
+              {member.name}
+            </Link>
+          ) : (
+            <p className="font-semibold">{member.name}</p>
+          )}
           {member.title && <p className="text-sm text-muted-foreground">{member.title}</p>}
           {member.bio && <p className="mt-2 text-sm">{member.bio}</p>}
         </div>
