@@ -73,9 +73,11 @@ export interface Config {
     posts: Post;
     media: Media;
     categories: Category;
+    tags: Tag;
     users: User;
     customers: Customer;
     reviews: Review;
+    'content-sources': ContentSource;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -98,9 +100,11 @@ export interface Config {
     posts: PostsSelect<false> | PostsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    tags: TagsSelect<false> | TagsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     customers: CustomersSelect<false> | CustomersSelect<true>;
     reviews: ReviewsSelect<false> | ReviewsSelect<true>;
+    'content-sources': ContentSourcesSelect<false> | ContentSourcesSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -406,6 +410,12 @@ export interface Post {
   };
   relatedPosts?: (number | Post)[] | null;
   categories?: (number | Category)[] | null;
+  tags?: (number | Tag)[] | null;
+  /**
+   * Set automatically when this post was imported from an external feed.
+   */
+  sourceUrl?: string | null;
+  syncSource?: (number | null) | ContentSource;
   meta?: {
     title?: string | null;
     /**
@@ -488,6 +498,62 @@ export interface Category {
         id?: string | null;
       }[]
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: number;
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * External RSS/Atom feeds to pull new articles from. Add a source, then trigger a sync from POST /api/sync-content-sources (protected by CRON_SECRET, or works automatically for logged-in admins) — wire an external cron to that URL to check on a schedule.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-sources".
+ */
+export interface ContentSource {
+  id: number;
+  /**
+   * Just a label for you, e.g. "Partner Co Blog".
+   */
+  name: string;
+  /**
+   * The RSS or Atom feed URL, e.g. https://example.com/feed.xml
+   */
+  feedUrl: string;
+  /**
+   * Only active sources are checked when a sync runs.
+   */
+  active?: boolean | null;
+  /**
+   * If checked, imported articles are published immediately using the reviewer below. If unchecked, they land as drafts for someone to review first (recommended).
+   */
+  autoPublish?: boolean | null;
+  /**
+   * Required for auto-publish — imported posts need a reviewer on file, same as any other post.
+   */
+  defaultReviewer?: (number | null) | User;
+  /**
+   * Optional. Tag every post imported from this source with this category.
+   */
+  defaultCategory?: (number | null) | Category;
+  /**
+   * Optional. Byline to credit for imported posts.
+   */
+  defaultAuthor?: (number | null) | User;
+  lastFetchedAt?: string | null;
+  lastFetchStatus?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -887,6 +953,8 @@ export interface Customer {
   resetPasswordExpiration?: string | null;
   salt?: string | null;
   hash?: string | null;
+  _verified?: boolean | null;
+  _verificationToken?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
   sessions?:
@@ -1127,6 +1195,10 @@ export interface PayloadLockedDocument {
         value: number | Category;
       } | null)
     | ({
+        relationTo: 'tags';
+        value: number | Tag;
+      } | null)
+    | ({
         relationTo: 'users';
         value: number | User;
       } | null)
@@ -1137,6 +1209,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'reviews';
         value: number | Review;
+      } | null)
+    | ({
+        relationTo: 'content-sources';
+        value: number | ContentSource;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1365,6 +1441,9 @@ export interface PostsSelect<T extends boolean = true> {
   content?: T;
   relatedPosts?: T;
   categories?: T;
+  tags?: T;
+  sourceUrl?: T;
+  syncSource?: T;
   meta?:
     | T
     | {
@@ -1518,6 +1597,17 @@ export interface CategoriesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags_select".
+ */
+export interface TagsSelect<T extends boolean = true> {
+  title?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
@@ -1563,6 +1653,8 @@ export interface CustomersSelect<T extends boolean = true> {
   resetPasswordExpiration?: T;
   salt?: T;
   hash?: T;
+  _verified?: T;
+  _verificationToken?: T;
   loginAttempts?: T;
   lockUntil?: T;
   sessions?:
@@ -1583,6 +1675,23 @@ export interface ReviewsSelect<T extends boolean = true> {
   rating?: T;
   comment?: T;
   approved?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-sources_select".
+ */
+export interface ContentSourcesSelect<T extends boolean = true> {
+  name?: T;
+  feedUrl?: T;
+  active?: T;
+  autoPublish?: T;
+  defaultReviewer?: T;
+  defaultCategory?: T;
+  defaultAuthor?: T;
+  lastFetchedAt?: T;
+  lastFetchStatus?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1970,9 +2079,43 @@ export interface Setting {
    */
   logo?: (number | null) | Media;
   /**
+   * Optional. Replaces the browser tab icon. Square image recommended (e.g. 512×512 PNG or SVG).
+   */
+  favicon?: (number | null) | Media;
+  /**
    * Hex color (e.g. #2563eb) used for buttons, links, and other accents site-wide.
    */
   primaryColor: string;
+  /**
+   * Optional. If this blog is a subdomain of a main website, point this at either (a) a JSON file on that site, e.g. https://example.com/brand.json, with { "siteName": "...", "primaryColor": "#...", "logoUrl": "..." }, or (b) just that site's homepage URL — if no JSON is found, we'll auto-detect the name, color, and logo from its standard meta tags and favicon. Any field found overrides the values in the Branding tab. Checked roughly every 5 minutes.
+   */
+  brandSyncUrl?: string | null;
+  /**
+   * Optional short line shown next to the logo in the footer, e.g. a mission statement.
+   */
+  footerTagline?: string | null;
+  /**
+   * Optional. Use {year} for the current year and {siteName} for the site name, e.g. "© {year} {siteName}. All rights reserved."
+   */
+  copyrightText?: string | null;
+  /**
+   * Shown as icon links in the footer.
+   */
+  socialLinks?:
+    | {
+        platform: 'twitter' | 'instagram' | 'linkedin' | 'facebook' | 'youtube' | 'github' | 'tiktok' | 'other';
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Used for pages/posts that don't set their own SEO description.
+   */
+  defaultMetaDescription?: string | null;
+  /**
+   * Used as the social-share preview image for pages/posts that don't set their own. Recommended 1200×630.
+   */
+  defaultOgImage?: (number | null) | Media;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2031,7 +2174,20 @@ export interface FooterSelect<T extends boolean = true> {
 export interface SettingsSelect<T extends boolean = true> {
   siteName?: T;
   logo?: T;
+  favicon?: T;
   primaryColor?: T;
+  brandSyncUrl?: T;
+  footerTagline?: T;
+  copyrightText?: T;
+  socialLinks?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        id?: T;
+      };
+  defaultMetaDescription?: T;
+  defaultOgImage?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

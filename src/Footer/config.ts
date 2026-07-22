@@ -19,7 +19,7 @@ export const Footer: GlobalConfig = {
         }),
         navIcon(),
       ],
-      maxRows: 6,
+      maxRows: 14,
       admin: {
         initCollapsed: true,
         components: {

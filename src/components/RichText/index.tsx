@@ -21,6 +21,7 @@ import type {
 import { BannerBlock } from '@/blocks/Banner/Component'
 import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 import { cn } from '@/utilities/ui'
+import { extractText, slugify } from '@/utilities/richTextHeadings'
 
 type NodeTypes =
   | DefaultNodeTypes
@@ -38,6 +39,14 @@ const internalDocToHref = ({ linkNode }: { linkNode: SerializedLinkNode }) => {
 const jsxConverters: JSXConvertersFunction<NodeTypes> = ({ defaultConverters }) => ({
   ...defaultConverters,
   ...LinkJSXConverter({ internalDocToHref }),
+  heading: ({ node, nodesToJSX }) => {
+    const children = nodesToJSX({ nodes: node.children })
+    const NodeTag = node.tag as keyof React.JSX.IntrinsicElements
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const id = slugify(extractText(node.children as any))
+
+    return <NodeTag id={id}>{children}</NodeTag>
+  },
   blocks: {
     banner: ({ node }) => <BannerBlock className="col-start-2 mb-4" {...node.fields} />,
     mediaBlock: ({ node }) => (

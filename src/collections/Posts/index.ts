@@ -131,6 +131,35 @@ export const Posts: CollectionConfig<'posts'> = {
               hasMany: true,
               relationTo: 'categories',
             },
+            {
+              name: 'tags',
+              type: 'relationship',
+              admin: {
+                position: 'sidebar',
+              },
+              hasMany: true,
+              relationTo: 'tags',
+            },
+            {
+              name: 'sourceUrl',
+              type: 'text',
+              admin: {
+                condition: (_, siblingData) => Boolean(siblingData?.sourceUrl),
+                description: 'Set automatically when this post was imported from an external feed.',
+                position: 'sidebar',
+                readOnly: true,
+              },
+            },
+            {
+              name: 'syncSource',
+              type: 'relationship',
+              admin: {
+                condition: (_, siblingData) => Boolean(siblingData?.syncSource),
+                position: 'sidebar',
+                readOnly: true,
+              },
+              relationTo: 'content-sources',
+            },
           ],
           label: 'Meta',
         },

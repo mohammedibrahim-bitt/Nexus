@@ -3,7 +3,7 @@ import type { Metadata } from 'next/types'
 import { CollectionArchive } from '@/components/CollectionArchive'
 import { PageRange } from '@/components/PageRange'
 import { Pagination } from '@/components/Pagination'
-import { getCachedGlobal } from '@/utilities/getGlobals'
+import { getBrandData } from '@/utilities/getBrandData'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
@@ -65,10 +65,10 @@ export default async function Page({ params: paramsPromise }: Args) {
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
   const { pageNumber } = await paramsPromise
-  const settings = await getCachedGlobal('settings', 0)()
+  const brand = await getBrandData()
 
   return {
-    title: `${settings?.siteName || 'Nexus'} Posts Page ${pageNumber || ''}`,
+    title: `${brand.siteName} Posts Page ${pageNumber || ''}`,
   }
 }
 

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next/types'
 
 import { CollectionArchive } from '@/components/CollectionArchive'
-import { getCachedGlobal } from '@/utilities/getGlobals'
+import { getBrandData } from '@/utilities/getBrandData'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
@@ -83,9 +83,9 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getCachedGlobal('settings', 0)()
+  const brand = await getBrandData()
 
   return {
-    title: `${settings?.siteName || 'Nexus'} Search`,
+    title: `${brand.siteName} Search`,
   }
 }

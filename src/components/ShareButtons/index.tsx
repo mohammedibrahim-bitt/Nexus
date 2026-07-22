@@ -56,7 +56,7 @@ export const ShareButtons: React.FC<{ title: string; url: string }> = ({ title, 
   const encodedTitle = encodeURIComponent(title)
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3" data-social-share>
       <p className="flex items-center gap-2 text-sm text-muted-foreground">
         <Share2 className="size-4" />
         Share this post

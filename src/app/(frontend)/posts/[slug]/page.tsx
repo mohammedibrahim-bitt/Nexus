@@ -5,7 +5,10 @@ import { ArticleByline } from '@/components/ArticleByline'
 import { EditorialTeam } from '@/components/EditorialTeam'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
 import { PostReviews } from '@/components/PostReviews'
+import { ReadingProgressBar } from '@/components/ReadingProgressBar'
 import { ShareButtons } from '@/components/ShareButtons'
+import { TableOfContents } from '@/components/TableOfContents'
+import { PostTags } from '@/components/PostTags'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { draftMode } from 'next/headers'
@@ -15,8 +18,12 @@ import RichText from '@/components/RichText'
 import type { Post } from '@/payload-types'
 
 import { PostHero } from '@/heros/PostHero'
+import { StructuredData } from '@/components/StructuredData'
 import { generateMeta } from '@/utilities/generateMeta'
+import { getBrandData } from '@/utilities/getBrandData'
 import { getServerSideURL } from '@/utilities/getURL'
+import { estimateReadingTime, extractHeadings } from '@/utilities/richTextHeadings'
+import { articleSchema, breadcrumbSchema } from '@/utilities/schema'
 import PageClient from './page.client'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 
@@ -56,8 +63,14 @@ export default async function Post({ params: paramsPromise }: Args) {
 
   if (!post) return <PayloadRedirects url={url} />
 
+  const headings = extractHeadings(post.content)
+  const readingTimeMinutes = estimateReadingTime(post.content)
+  const brand = await getBrandData()
+
   return (
     <article className="pt-16 pb-16">
+      <StructuredData data={articleSchema(post, brand)} />
+      <StructuredData data={breadcrumbSchema(post, brand)} />
       <PageClient />
 
       {/* Allows redirects for valid pages too */}
@@ -65,20 +78,32 @@ export default async function Post({ params: paramsPromise }: Args) {
 
       {draft && <LivePreviewListener />}
 
+      <ReadingProgressBar targetId="article-content" />
+
       <PostHero post={post} />
 
       <div className="flex flex-col items-center gap-4 pt-8">
         <div className="container">
-          <div className="max-w-[48rem] mx-auto mb-8">
-            <ArticleByline
-              author={post.populatedAuthors?.[0]}
-              expertVerified={post.expertVerified ?? undefined}
-              reviewer={post.populatedReviewedBy ?? undefined}
-              updatedAt={post.updatedAt}
-            />
+          <div className="max-w-[64rem] mx-auto lg:grid lg:grid-cols-[1fr_14rem] lg:gap-12 lg:items-start">
+            <div id="article-content" className="min-w-0">
+              <div className="max-w-[48rem] mb-8">
+                <ArticleByline
+                  author={post.populatedAuthors?.[0]}
+                  expertVerified={post.expertVerified ?? undefined}
+                  readingTimeMinutes={readingTimeMinutes}
+                  reviewer={post.populatedReviewedBy ?? undefined}
+                  updatedAt={post.updatedAt}
+                />
+              </div>
+
+              <RichText className="max-w-[48rem]" data={post.content} enableGutter={false} />
+
+              <PostTags className="mt-8" tags={post.tags} />
+            </div>
+
+            <TableOfContents headings={headings} />
           </div>
 
-          <RichText className="max-w-[48rem] mx-auto" data={post.content} enableGutter={false} />
           {post.relatedPosts && post.relatedPosts.length > 0 && (
             <RelatedPosts
               className="mt-12 max-w-[52rem] lg:grid lg:grid-cols-subgrid col-start-1 col-span-3 grid-rows-[2fr]"

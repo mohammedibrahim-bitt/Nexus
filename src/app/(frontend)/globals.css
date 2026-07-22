@@ -222,3 +222,28 @@ html[data-theme='dark'],
 html[data-theme='light'] {
   opacity: initial;
 }
+
+@media print {
+  header,
+  footer,
+  .admin-bar,
+  [data-toc],
+  [data-social-share],
+  [data-back-to-top] {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+
+  a {
+    color: black;
+    text-decoration: underline;
+  }
+
+  .payload-richtext {
+    max-width: none !important;
+  }
+}
