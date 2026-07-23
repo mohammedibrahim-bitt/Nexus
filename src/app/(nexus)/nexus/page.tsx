@@ -5,13 +5,12 @@ import { ArrowRight, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 
-import { demoBlogs } from '@/nexus/data'
 import { useNexus } from '@/nexus/NexusProvider'
 import { Reveal } from '@/nexus/Reveal'
 
 export default function NexusMainPage() {
-  const { tr, lang, statuses } = useNexus()
-  const published = demoBlogs.filter((b) => statuses[b.id] === 'approved')
+  const { tr, lang, statuses, blogs } = useNexus()
+  const published = blogs.filter((b) => statuses[b.id] === 'approved')
 
   return (
     <div className="flex flex-col gap-12">

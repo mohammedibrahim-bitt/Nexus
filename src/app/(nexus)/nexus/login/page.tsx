@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { BookOpen, ShieldCheck } from 'lucide-react'
+import { BookOpen, PenLine, ShieldCheck } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 
@@ -12,9 +12,9 @@ export default function LoginPage() {
   const { tr, login, settings } = useNexus()
   const router = useRouter()
 
-  const enter = (role: 'reader' | 'admin') => {
+  const enter = (role: 'reader' | 'admin' | 'author') => {
     login(role)
-    router.push(role === 'admin' ? '/nexus/admin' : '/nexus')
+    router.push(role === 'admin' ? '/nexus/admin' : role === 'author' ? '/nexus/write' : '/nexus')
   }
 
   return (
@@ -38,6 +38,14 @@ export default function LoginPage() {
           >
             <BookOpen size={18} />
             {tr('loginReader')}
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => enter('author')}
+            className="flex items-center justify-center gap-2.5 rounded-nx border border-nx-border bg-nx-surface px-5 py-3.5 font-semibold text-nx-text transition-colors hover:bg-nx-surface-2"
+          >
+            <PenLine size={18} />
+            {tr('loginAuthor')}
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.98 }}

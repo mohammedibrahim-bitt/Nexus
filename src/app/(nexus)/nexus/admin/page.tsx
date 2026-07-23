@@ -5,12 +5,11 @@ import { Clock, Lock, Settings, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 
-import { demoBlogs } from '@/nexus/data'
 import { useNexus } from '@/nexus/NexusProvider'
 import { Reveal } from '@/nexus/Reveal'
 
 export default function AdminPanelPage() {
-  const { tr, lang, role, statuses } = useNexus()
+  const { tr, lang, role, statuses, blogs } = useNexus()
 
   if (role !== 'admin') {
     return (
@@ -27,7 +26,7 @@ export default function AdminPanelPage() {
     )
   }
 
-  const pending = demoBlogs.filter((b) => statuses[b.id] === 'pending')
+  const pending = blogs.filter((b) => statuses[b.id] === 'pending')
 
   return (
     <div className="flex flex-col gap-8">
@@ -41,7 +40,7 @@ export default function AdminPanelPage() {
             <p className="text-nx-muted">{tr('adminSub')}</p>
           </div>
           <Link
-            href="/nexus/settings"
+            href="/nexus/admin/settings"
             aria-label={tr('settings')}
             title={tr('settings')}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-nx-muted transition-colors hover:bg-nx-surface-2 hover:text-nx-text"
@@ -82,7 +81,7 @@ export default function AdminPanelPage() {
                       {blog.description[lang]}
                     </p>
                     <p className="mt-auto pt-2 text-xs text-nx-muted">
-                      {tr('generatedBy')} {blog.model}
+                      {blog.author ? `${tr('writtenBy')} ${blog.author}` : `${tr('generatedBy')} ${blog.model}`}
                     </p>
                   </Link>
                 </motion.div>

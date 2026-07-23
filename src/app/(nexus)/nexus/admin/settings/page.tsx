@@ -1,17 +1,95 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { Check, Link2, Lock, Paintbrush, RotateCcw, Type } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Check, ChevronDown, Link2, Lock, Paintbrush, RotateCcw, Type, Users } from 'lucide-react'
 import Link from 'next/link'
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
+import type { NexusRole } from '@/nexus/NexusProvider'
 import { parentSiteTokens, useNexus } from '@/nexus/NexusProvider'
 import { Reveal } from '@/nexus/Reveal'
 
 const ACCENTS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6']
+const ASSIGNABLE_ROLES: Exclude<NexusRole, null>[] = ['reader', 'author', 'admin']
+
+function RoleDropdown({
+  value,
+  onChange,
+  label,
+}: {
+  value: Exclude<NexusRole, null>
+  onChange: (role: Exclude<NexusRole, null>) => void
+  label: (role: Exclude<NexusRole, null>) => string
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="flex h-9 items-center gap-2 rounded-[calc(var(--nx-radius)*0.5)] border border-nx-border bg-nx-surface-2 px-3 text-sm font-medium text-nx-text outline-none transition-colors hover:bg-nx-surface focus-visible:ring-2 focus-visible:ring-(--nx-accent)"
+      >
+        {label(value)}
+        <ChevronDown
+          size={14}
+          className={`text-nx-muted transition-transform ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+            role="listbox"
+            className="nx-card absolute end-0 top-[calc(100%+6px)] z-20 w-36 overflow-hidden p-1"
+          >
+            {ASSIGNABLE_ROLES.map((r) => (
+              <button
+                key={r}
+                type="button"
+                role="option"
+                aria-selected={r === value}
+                onClick={() => {
+                  onChange(r)
+                  setOpen(false)
+                }}
+                className={`flex w-full items-center justify-between rounded-[calc(var(--nx-radius)*0.4)] px-3 py-2 text-sm transition-colors hover:bg-nx-surface-2 ${
+                  r === value ? 'font-semibold text-nx-text' : 'text-nx-muted'
+                }`}
+              >
+                {label(r)}
+                {r === value && <Check size={14} className="text-(--nx-accent)" />}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
 
 export default function SettingsPage() {
-  const { tr, role, settings, updateSettings, resetSettings } = useNexus()
+  const { tr, role, users, setUserRole, settings, updateSettings, resetSettings } = useNexus()
   const [syncing, setSyncing] = useState(false)
 
   if (role !== 'admin') {
@@ -94,6 +172,34 @@ export default function SettingsPage() {
             placeholder="Nexus"
             className="h-11 w-full max-w-xs rounded-[calc(var(--nx-radius)*0.6)] border border-nx-border bg-nx-surface-2 px-4 font-proxemic text-lg tracking-[0.1em] text-nx-text uppercase outline-none focus:ring-2 focus:ring-(--nx-accent)"
           />
+        </section>
+      </Reveal>
+
+      {/* Manage user roles */}
+      <Reveal>
+        <section className="nx-card nx-space flex flex-col gap-4">
+          <div>
+            <h2 className="flex items-center gap-2 font-semibold text-nx-text">
+              <Users size={18} className="text-(--nx-accent)" />
+              {tr('manageUsers')}
+            </h2>
+            <p className="mt-1 text-sm text-nx-muted">{tr('manageUsersSub')}</p>
+          </div>
+          <div className="flex flex-col divide-y divide-nx-border">
+            {users.map((u) => (
+              <div key={u.id} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-nx-text">{u.name}</p>
+                  <p className="truncate text-xs text-nx-muted">{u.email}</p>
+                </div>
+                <RoleDropdown
+                  value={u.role}
+                  onChange={(r) => setUserRole(u.id, r)}
+                  label={(r) => tr(r)}
+                />
+              </div>
+            ))}
+          </div>
         </section>
       </Reveal>
 

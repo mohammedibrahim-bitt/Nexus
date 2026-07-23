@@ -1,14 +1,16 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   Bot,
+  ChevronsUpDown,
   Globe,
   Home,
   LogIn,
   LogOut,
   Moon,
   PanelLeft,
+  PenLine,
   Search,
   ShieldCheck,
   Sun,
@@ -16,16 +18,16 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 
-import { demoBlogs } from './data'
+import type { NexusRole } from './NexusProvider'
 import { useNexus } from './NexusProvider'
 
 const iconBtn =
   'flex h-10 w-10 items-center justify-center rounded-full text-nx-muted transition-colors hover:bg-nx-surface-2 hover:text-nx-text focus-visible:outline-2 focus-visible:outline-nx-accent'
 
 export function NexusShell({ children }: { children: React.ReactNode }) {
-  const { tr, lang, setLang, dark, setDark, role, logout, settings } = useNexus()
+  const { tr, lang, setLang, dark, setDark, role, settings } = useNexus()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [searchOpen, setSearchOpen] = useState(false)
   const pathname = usePathname()
@@ -47,8 +49,9 @@ export function NexusShell({ children }: { children: React.ReactNode }) {
 
   const nav = [
     { href: '/nexus', label: tr('main'), icon: Home },
-    { href: '/nexus/admin', label: tr('adminPanel'), icon: ShieldCheck },
+    ...(role === 'admin' ? [{ href: '/nexus/admin', label: tr('adminPanel'), icon: ShieldCheck }] : []),
     { href: '/nexus/ai', label: tr('aiChat'), icon: Bot },
+    ...(role === 'author' ? [{ href: '/nexus/write', label: tr('writeNav'), icon: PenLine }] : []),
   ]
 
   return (
@@ -102,66 +105,44 @@ export function NexusShell({ children }: { children: React.ReactNode }) {
         </button>
       </div>
 
-      {/* Hidable sidebar — stays mounted, slides off-screen when hidden */}
+      {/* Hidable sidebar — stays mounted, slides off-screen when hidden. Styled after the ChatGPT sidebar: a flat, slightly-tinted panel with plain hover/active fills (no borders), and a bottom account row that opens a small menu above it. */}
       <motion.aside
         animate={{ x: sidebarOpen ? 0 : rtl ? 264 : -264, opacity: sidebarOpen ? 1 : 0 }}
         initial={false}
         transition={{ type: 'spring', stiffness: 380, damping: 34 }}
-        className="fixed top-28 bottom-0 z-30 flex w-60 flex-col border-e border-nx-border bg-nx-surface/70 p-3 backdrop-blur-md ltr:left-0 rtl:right-0"
+        className="fixed top-28 bottom-0 z-30 flex w-60 flex-col bg-nx-surface-2 p-2 ltr:left-0 rtl:right-0"
         style={{ pointerEvents: sidebarOpen ? 'auto' : 'none' }}
         aria-hidden={!sidebarOpen}
       >
-            <nav className="flex flex-col gap-1">
+            <nav className="flex flex-col gap-0.5">
               {nav.map(({ href, label, icon: Icon }) => {
                 const active = pathname === href
                 return (
                   <Link
                     key={href}
                     href={href}
-                    className={`relative flex items-center gap-3 rounded-[calc(var(--nx-radius)*0.75)] px-3 py-2.5 text-sm font-medium transition-colors ${
-                      active ? 'text-nx-text' : 'text-nx-muted hover:bg-nx-surface-2 hover:text-nx-text'
+                    className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                      active
+                        ? 'font-medium text-nx-text'
+                        : 'text-nx-muted hover:bg-nx-surface hover:text-nx-text'
                     }`}
                   >
                     {active && (
                       <motion.span
                         layoutId="nx-nav-active"
-                        className="absolute inset-0 rounded-[calc(var(--nx-radius)*0.75)] bg-nx-surface-2 ring-1 ring-nx-border"
+                        className="absolute inset-0 rounded-lg bg-nx-surface"
                         transition={{ type: 'spring', stiffness: 420, damping: 36 }}
                       />
                     )}
-                    <Icon size={18} className="relative z-10 text-(--nx-accent)" />
+                    <Icon size={18} className="relative z-10" />
                     <span className="relative z-10">{label}</span>
                   </Link>
                 )
               })}
             </nav>
 
-            <div className="mt-auto border-t border-nx-border pt-3">
-              {role ? (
-                <div className="flex flex-col gap-2">
-                  <p className="px-3 text-xs text-nx-muted">
-                    {tr('loggedInAs')}{' '}
-                    <span className="font-semibold text-nx-text">
-                      {tr(role === 'admin' ? 'admin' : 'reader')}
-                    </span>
-                  </p>
-                  <button
-                    onClick={logout}
-                    className="flex items-center gap-3 rounded-[calc(var(--nx-radius)*0.75)] px-3 py-2.5 text-sm font-medium text-nx-muted transition-colors hover:bg-nx-surface-2 hover:text-nx-text"
-                  >
-                    <LogOut size={18} className="text-(--nx-accent)" />
-                    {tr('logout')}
-                  </button>
-                </div>
-              ) : (
-                <Link
-                  href="/nexus/login"
-                  className="flex items-center gap-3 rounded-[calc(var(--nx-radius)*0.75)] px-3 py-2.5 text-sm font-medium text-nx-muted transition-colors hover:bg-nx-surface-2 hover:text-nx-text"
-                >
-                  <LogIn size={18} className="text-(--nx-accent)" />
-                  {tr('login')}
-                </Link>
-              )}
+            <div className="mt-auto">
+              <SidebarUserMenu />
             </div>
       </motion.aside>
 
@@ -179,8 +160,89 @@ export function NexusShell({ children }: { children: React.ReactNode }) {
   )
 }
 
+const roleInitials: Record<Exclude<NexusRole, null>, string> = {
+  admin: 'AD',
+  author: 'AU',
+  reader: 'RE',
+}
+
+/** Bottom-of-sidebar account row, styled after ChatGPT's: avatar + name, opens a small menu above it. */
+function SidebarUserMenu() {
+  const { role, logout, tr } = useNexus()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  if (!role) {
+    return (
+      <Link
+        href="/nexus/login"
+        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-nx-muted transition-colors hover:bg-nx-surface hover:text-nx-text"
+      >
+        <LogIn size={18} />
+        {tr('login')}
+      </Link>
+    )
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+            className="nx-card absolute bottom-[calc(100%+6px)] start-0 z-20 w-full overflow-hidden p-1"
+          >
+            <button
+              onClick={() => {
+                setOpen(false)
+                logout()
+              }}
+              className="flex w-full items-center gap-3 rounded-[calc(var(--nx-radius)*0.4)] px-3 py-2.5 text-sm text-nx-text transition-colors hover:bg-nx-surface-2"
+            >
+              <LogOut size={16} className="text-nx-muted" />
+              {tr('logout')}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-start transition-colors hover:bg-nx-surface"
+      >
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-(--nx-accent) text-xs font-semibold text-white">
+          {roleInitials[role]}
+        </span>
+        <span className="min-w-0 flex-1 text-sm font-medium text-nx-text">
+          {tr(role === 'admin' ? 'admin' : role === 'author' ? 'author' : 'reader')}
+        </span>
+        <ChevronsUpDown size={15} className="shrink-0 text-nx-muted" />
+      </button>
+    </div>
+  )
+}
+
 function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { tr, lang, statuses } = useNexus()
+  const { tr, lang, statuses, blogs } = useNexus()
   const [query, setQuery] = useState('')
   const router = useRouter()
   const inputRef = React.useRef<HTMLInputElement>(null)
@@ -194,13 +256,13 @@ function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const published = demoBlogs.filter((b) => statuses[b.id] === 'approved')
+    const published = blogs.filter((b) => statuses[b.id] === 'approved')
     if (!q) return published
     return published.filter(
       (b) =>
         b.title[lang].toLowerCase().includes(q) || b.description[lang].toLowerCase().includes(q),
     )
-  }, [query, lang, statuses])
+  }, [query, lang, statuses, blogs])
 
   // Kept mounted; visibility is animated so a stuck exit can never block the page.
   return (

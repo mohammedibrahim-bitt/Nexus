@@ -11,6 +11,8 @@ export type NexusBlog = {
   model: string
   readMinutes: number
   tag: { en: string; ar: string }
+  /** Present for human-written submissions instead of an AI model name. */
+  author?: string
 }
 
 export const demoBlogs: NexusBlog[] = [
@@ -202,6 +204,11 @@ export const t: Record<string, { en: string; ar: string }> = {
     ar: 'تحكم في كل جزء من واجهة نكسس — أو ورّثها تلقائيًا من الموقع الأم.',
   },
   logoName: { en: 'Logo name', ar: 'اسم الشعار' },
+  manageUsers: { en: 'Manage users', ar: 'إدارة المستخدمين' },
+  manageUsersSub: {
+    en: 'Grant author or admin access to any account.',
+    ar: 'امنح صلاحية الكاتب أو المسؤول لأي حساب.',
+  },
   accentColor: { en: 'Accent color', ar: 'اللون الرئيسي' },
   cornerRadius: { en: 'Corner radius', ar: 'استدارة الزوايا' },
   fontSize: { en: 'Font size', ar: 'حجم الخط' },
@@ -231,6 +238,33 @@ export const t: Record<string, { en: string; ar: string }> = {
   loggedInAs: { en: 'Signed in as', ar: 'مسجل الدخول باسم' },
   admin: { en: 'Admin', ar: 'مسؤول' },
   reader: { en: 'Reader', ar: 'قارئ' },
+  author: { en: 'Author', ar: 'كاتب' },
+  loginAuthor: { en: 'Continue as Author', ar: 'المتابعة ككاتب' },
   adminOnly: { en: 'Log in as an admin to access this page.', ar: 'سجّل الدخول كمسؤول للوصول إلى هذه الصفحة.' },
+  authorOnly: { en: 'Log in as an author to write blogs.', ar: 'سجّل الدخول ككاتب لكتابة المدونات.' },
   notFoundBlog: { en: 'This blog does not exist.', ar: 'هذه المدونة غير موجودة.' },
+  edit: { en: 'Edit', ar: 'تعديل' },
+  editBlog: { en: 'Edit blog', ar: 'تعديل المدونة' },
+  editingEnglish: { en: 'Editing the English version', ar: 'تعديل النسخة الإنجليزية' },
+  editingArabic: { en: 'Editing the Arabic version', ar: 'تعديل النسخة العربية' },
+  fieldTitle: { en: 'Title', ar: 'العنوان' },
+  fieldDescription: { en: 'Description', ar: 'الوصف' },
+  fieldContent: { en: 'Content (separate paragraphs with a blank line)', ar: 'المحتوى (افصل الفقرات بسطر فارغ)' },
+  fieldReferences: { en: 'References (one per line)', ar: 'المراجع (مرجع في كل سطر)' },
+  save: { en: 'Save changes', ar: 'حفظ التعديلات' },
+  cancel: { en: 'Cancel', ar: 'إلغاء' },
+  saved: { en: 'Changes saved', ar: 'تم حفظ التعديلات' },
+  writeNav: { en: 'Write', ar: 'كتابة' },
+  writeTitle: { en: 'Write a new blog', ar: 'اكتب مدونة جديدة' },
+  writeSub: {
+    en: 'Draft an article from scratch. Once submitted, an admin will review it before it publishes.',
+    ar: 'اكتب مقالًا من الصفر. بعد الإرسال سيراجعه أحد المسؤولين قبل نشره.',
+  },
+  fieldTag: { en: 'Topic tag', ar: 'وسم الموضوع' },
+  submitForReview: { en: 'Submit for review', ar: 'إرسال للمراجعة' },
+  submitted: { en: 'Submitted — awaiting admin approval', ar: 'تم الإرسال — بانتظار موافقة المسؤول' },
+  writeAnother: { en: 'Write another', ar: 'اكتب مقالًا آخر' },
+  mySubmissions: { en: 'Your submissions', ar: 'مقالاتك المرسلة' },
+  noSubmissionsYet: { en: "You haven't submitted any blogs yet.", ar: 'لم ترسل أي مدونة بعد.' },
+  writtenBy: { en: 'Written by', ar: 'كتبها' },
 }
