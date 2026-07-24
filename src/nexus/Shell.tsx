@@ -318,7 +318,7 @@ function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }
                 className="w-full rounded-[calc(var(--nx-radius)*0.6)] px-3 py-3 text-start transition-colors hover:bg-nx-surface-2"
                 onClick={() => {
                   onClose()
-                  router.push(`/nexus/blog/${b.id}`)
+                  router.push(`/nexus/article/${b.id}`)
                 }}
               >
                 <p className="font-medium text-nx-text">{b.title[lang]}</p>

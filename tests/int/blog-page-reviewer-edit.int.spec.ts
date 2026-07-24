@@ -49,7 +49,7 @@ vi.mock('framer-motion', () => ({
   },
 }))
 
-import BlogPage from '../../src/app/(nexus)/nexus/blog/[id]/page'
+import BlogPage from '../../src/app/(nexus)/nexus/article/[id]/page'
 
 describe('reviewer editing', () => {
   beforeEach(() => {

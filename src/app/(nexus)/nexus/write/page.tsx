@@ -191,7 +191,7 @@ export default function WritePage() {
                 return (
                   <Link
                     key={b.id}
-                    href={`/nexus/blog/${b.id}`}
+                    href={`/nexus/article/${b.id}`}
                     className="nx-card flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-nx-surface-2"
                   >
                     <span className="text-sm font-medium text-nx-text">{b.title[lang]}</span>

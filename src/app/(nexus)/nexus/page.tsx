@@ -77,7 +77,7 @@ export default function NexusMainPage() {
                   transition={{ type: 'spring', stiffness: 380, damping: 26 }}
                 >
                   <Link
-                    href={`/nexus/blog/${blog.id}`}
+                    href={`/nexus/article/${blog.id}`}
                     className="nx-card nx-space group flex h-full flex-col gap-3 transition-shadow hover:shadow-lg"
                   >
                     <div className="flex items-center justify-between text-xs text-nx-muted">
