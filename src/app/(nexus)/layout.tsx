@@ -8,7 +8,7 @@ import './nexus.css'
 
 export const metadata: Metadata = {
   title: { default: 'Nexus', template: '%s · Nexus' },
-  description: 'AI-written, human-approved blogs — published automatically.',
+  description: 'AI-written, human-approved articles — published automatically.',
 }
 
 export default function NexusRootLayout({ children }: { children: React.ReactNode }) {

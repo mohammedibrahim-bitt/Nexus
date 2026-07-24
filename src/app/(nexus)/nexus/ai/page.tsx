@@ -38,12 +38,12 @@ export default function AIChatPage() {
     )
     if (hit) {
       return lang === 'ar'
-        ? `بالتأكيد — مدونة «${hit.title.ar}» تتناول هذا الموضوع: ${hit.description.ar}`
-        : `Sure — the blog “${hit.title.en}” covers that: ${hit.description.en}`
+        ? `بالتأكيد — المقال «${hit.title.ar}» يتناول هذا الموضوع: ${hit.description.ar}`
+        : `Sure — the article “${hit.title.en}” covers that: ${hit.description.en}`
     }
     return lang === 'ar'
-      ? `سؤال جيد! حاليًا لدينا ${published.length} مدونات منشورة. اسألني عن أي منها، أو اطلب ملخصًا لموضوع معين.`
-      : `Good question! There are currently ${published.length} published blogs. Ask me about any of them, or request a summary of a topic.`
+      ? `سؤال جيد! حاليًا لدينا ${published.length} مقالات منشورة. اسألني عن أي منها، أو اطلب ملخصًا لموضوع معين.`
+      : `Good question! There are currently ${published.length} published articles. Ask me about any of them, or request a summary of a topic.`
   }
 
   const send = () => {
