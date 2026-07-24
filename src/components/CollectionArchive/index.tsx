@@ -2,6 +2,7 @@ import { cn } from '@/utilities/ui'
 import React from 'react'
 
 import { Card, CardPostData } from '@/components/Card'
+import { Reveal } from '@/components/Reveal'
 
 export type Props = {
   posts: CardPostData[]
@@ -18,7 +19,9 @@ export const CollectionArchive: React.FC<Props> = (props) => {
             if (typeof result === 'object' && result !== null) {
               return (
                 <div className="col-span-4" key={index}>
-                  <Card className="h-full" doc={result} relationTo="posts" showCategories />
+                  <Reveal className="h-full" delay={(index % 4) * 60}>
+                    <Card className="h-full" doc={result} relationTo="posts" showCategories />
+                  </Reveal>
                 </div>
               )
             }

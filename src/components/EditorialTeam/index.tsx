@@ -8,12 +8,12 @@ type SocialLink = {
 }
 
 type TeamMember = {
-  avatarUrl?: string
-  bio?: string
-  id?: number | string
-  name?: string
+  avatarUrl?: null | string
+  bio?: null | string
+  id?: null | number | string
+  name?: null | string
   socialLinks?: SocialLink[] | null
-  title?: string
+  title?: null | string
 }
 
 const XIcon: React.FC = () => (
@@ -40,7 +40,7 @@ const platformLabels: Record<string, string> = {
   youtube: 'YouTube',
 }
 
-const Avatar: React.FC<{ name?: string; url?: string }> = ({ name, url }) => {
+const Avatar: React.FC<{ name?: string; url?: null | string }> = ({ name, url }) => {
   if (url) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img alt={name || ''} className="size-14 shrink-0 rounded-full object-cover" src={url} />
@@ -101,7 +101,7 @@ export const EditorialTeam: React.FC<{
   if (!author?.name && !reviewer?.name) return null
 
   return (
-    <div className="rounded-xl border bg-card p-6">
+    <div className="rounded-xl border bg-card p-6 shadow-[var(--shadow-card)]">
       <h2 className="mb-6 flex items-center gap-2 text-xl font-bold">
         <ShieldCheck className="size-5 text-orange-500" />
         About the editorial team

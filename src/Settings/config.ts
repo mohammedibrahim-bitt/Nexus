@@ -1,10 +1,27 @@
 import type { GlobalConfig } from 'payload'
 
 import { revalidateSettings } from './hooks/revalidateSettings'
+import { DEFAULT_DISPLAY_FONT, DISPLAY_FONT_OPTIONS } from '../utilities/displayFonts'
 
 const hexColorValidate = (value: string | null | undefined) => {
   if (!value) return 'A brand color is required.'
   return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value) ? true : 'Enter a valid hex color, e.g. #2563eb'
+}
+
+const optionalHexColorValidate = (value: string | null | undefined) => {
+  if (!value) return true
+  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value) ? true : 'Enter a valid hex color, e.g. #f59e0b'
+}
+
+// Restricted to characters valid in a GA4 Measurement ID or a bare domain —
+// this value is interpolated into an inline analytics <script>, so it must
+// never contain quotes, angle brackets, or other characters that could
+// break out of that context.
+const analyticsIdValidate = (value: string | null | undefined) => {
+  if (!value) return true
+  return /^[a-zA-Z0-9.\-_]+$/.test(value)
+    ? true
+    : 'Only letters, numbers, dots, dashes, and underscores are allowed.'
 }
 
 const urlValidate = (value: string | null | undefined) => {
@@ -68,6 +85,92 @@ export const Settings: GlobalConfig = {
                 description: 'Hex color (e.g. #2563eb) used for buttons, links, and other accents site-wide.',
               },
               validate: hexColorValidate,
+            },
+            {
+              name: 'secondaryColor',
+              type: 'text',
+              label: 'Secondary / Accent Color',
+              admin: {
+                description:
+                  'Optional. Hex color (e.g. #f59e0b) used for a second tint — badges, secondary buttons, and subtle highlights. Leave blank to use a neutral gray.',
+              },
+              validate: optionalHexColorValidate,
+            },
+          ],
+        },
+        {
+          label: 'Appearance',
+          fields: [
+            {
+              name: 'cornerRadius',
+              type: 'number',
+              defaultValue: 16,
+              label: 'Corner Radius (px)',
+              max: 28,
+              min: 0,
+              admin: {
+                description:
+                  'Controls roundedness of cards, buttons, and inputs site-wide, from 0 (sharp) to 28 (very rounded).',
+                step: 1,
+              },
+            },
+            {
+              name: 'fontScale',
+              type: 'number',
+              defaultValue: 1,
+              label: 'Font Scale',
+              max: 1.15,
+              min: 0.9,
+              admin: {
+                description: 'Global text-size multiplier applied to the whole site, from 90% to 115%.',
+                step: 0.01,
+              },
+            },
+            {
+              name: 'density',
+              type: 'select',
+              defaultValue: 'comfortable',
+              label: 'Layout Density',
+              options: [
+                { label: 'Comfortable', value: 'comfortable' },
+                { label: 'Compact', value: 'compact' },
+              ],
+              admin: {
+                description: 'Compact reduces internal padding on cards and content blocks for a denser layout.',
+              },
+            },
+            {
+              name: 'enableAnimations',
+              type: 'checkbox',
+              defaultValue: true,
+              label: 'Enable Animations',
+              admin: {
+                description:
+                  'Turns on subtle hover/transition animations (cards, nav pills) across the site. Disable for a fully static, no-motion experience.',
+              },
+            },
+            {
+              name: 'fontFamily',
+              type: 'select',
+              defaultValue: DEFAULT_DISPLAY_FONT,
+              label: 'Heading Font',
+              options: DISPLAY_FONT_OPTIONS.map(({ label, value }) => ({ label, value })),
+              admin: {
+                description: 'Used for headings and the text logo site-wide. Body text stays on the readable base font.',
+              },
+            },
+            {
+              name: 'headerLayout',
+              type: 'select',
+              defaultValue: 'left',
+              label: 'Header Layout',
+              options: [
+                { label: 'Logo left, nav right', value: 'left' },
+                { label: 'Centered logo, nav below', value: 'centered' },
+              ],
+              admin: {
+                description: 'Controls how the logo and navigation are arranged in the site header.',
+              },
             },
           ],
         },
@@ -150,6 +253,36 @@ export const Settings: GlobalConfig = {
               ],
               label: 'Social Links',
               maxRows: 8,
+            },
+          ],
+        },
+        {
+          label: 'Analytics',
+          fields: [
+            {
+              name: 'analyticsProvider',
+              type: 'select',
+              defaultValue: 'none',
+              label: 'Analytics Provider',
+              options: [
+                { label: 'None', value: 'none' },
+                { label: 'Google Analytics (GA4)', value: 'ga4' },
+                { label: 'Plausible', value: 'plausible' },
+              ],
+              admin: {
+                description: 'Injects the tracking snippet site-wide when a provider and ID are set.',
+              },
+            },
+            {
+              name: 'analyticsId',
+              type: 'text',
+              label: 'Analytics ID',
+              admin: {
+                condition: (_, { analyticsProvider } = {}) => analyticsProvider !== 'none',
+                description:
+                  'For GA4: your Measurement ID, e.g. G-XXXXXXXXXX. For Plausible: your site domain, e.g. example.com.',
+              },
+              validate: analyticsIdValidate,
             },
           ],
         },

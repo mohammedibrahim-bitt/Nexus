@@ -1,6 +1,7 @@
 import type { Media as MediaType } from '@/payload-types'
 
 import { getCachedGlobal } from './getGlobals'
+import { DEFAULT_DISPLAY_FONT } from './displayFonts'
 
 export type BrandLogo = { type: 'media'; media: MediaType } | { type: 'remote'; url: string } | null
 
@@ -10,13 +11,22 @@ export type SocialLink = {
 }
 
 export type BrandData = {
+  analyticsId: string | null
+  analyticsProvider: 'ga4' | 'none' | 'plausible'
   copyrightText: string | null
+  cornerRadius: number
   defaultMetaDescription: string | null
   defaultOgImage: MediaType | null
+  density: 'comfortable' | 'compact'
+  enableAnimations: boolean
   favicon: MediaType | null
+  fontFamily: string
+  fontScale: number
   footerTagline: string | null
+  headerLayout: 'centered' | 'left'
   logo: BrandLogo
   primaryColor: string
+  secondaryColor: string | null
   siteName: string
   socialLinks: SocialLink[]
 }
@@ -148,13 +158,25 @@ export async function getBrandData(): Promise<BrandData> {
   const settings = await getCachedGlobal('settings', 1)()
 
   const brand: BrandData = {
+    analyticsId: settings?.analyticsId || null,
+    analyticsProvider:
+      settings?.analyticsProvider === 'ga4' || settings?.analyticsProvider === 'plausible'
+        ? settings.analyticsProvider
+        : 'none',
     copyrightText: settings?.copyrightText || null,
+    cornerRadius: typeof settings?.cornerRadius === 'number' ? settings.cornerRadius : 16,
     defaultMetaDescription: settings?.defaultMetaDescription || null,
     defaultOgImage: typeof settings?.defaultOgImage === 'object' ? settings?.defaultOgImage || null : null,
+    density: settings?.density === 'compact' ? 'compact' : 'comfortable',
+    enableAnimations: settings?.enableAnimations ?? true,
     favicon: typeof settings?.favicon === 'object' ? settings?.favicon || null : null,
+    fontFamily: settings?.fontFamily || DEFAULT_DISPLAY_FONT,
+    fontScale: typeof settings?.fontScale === 'number' ? settings.fontScale : 1,
     footerTagline: settings?.footerTagline || null,
+    headerLayout: settings?.headerLayout === 'centered' ? 'centered' : 'left',
     logo: typeof settings?.logo === 'object' && settings?.logo ? { type: 'media', media: settings.logo } : null,
     primaryColor: settings?.primaryColor || '#171717',
+    secondaryColor: settings?.secondaryColor || null,
     siteName: settings?.siteName || 'Nexus',
     socialLinks: (settings?.socialLinks || [])
       .filter((link): link is { platform: string; url: string } => Boolean(link?.url))

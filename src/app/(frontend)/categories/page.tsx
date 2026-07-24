@@ -46,7 +46,7 @@ export default async function CategoriesPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {categoriesWithCounts.map((category) => (
               <Link
-                className="flex items-center justify-between rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted"
+                className="flex items-center justify-between rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-card)] transition-shadow hover:shadow-lg"
                 href={`/posts?category=${category.slug}`}
                 key={category.id}
               >

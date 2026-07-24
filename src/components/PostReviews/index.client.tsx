@@ -146,7 +146,7 @@ export const PostReviewsClient: React.FC<{
       </div>
 
       {!checkingSession && (
-        <div className="border rounded-lg p-6">
+        <div className="border rounded-xl bg-card p-6 shadow-[var(--shadow-card)]">
           {awaitingVerification && !customer ? (
             <p>
               Almost there! We sent a verification link to <strong>{email}</strong>. Click it to

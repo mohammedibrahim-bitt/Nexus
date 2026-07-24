@@ -33,16 +33,25 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, brand }) => {
 
   return (
     <header
-      className="relative z-20 bg-background border-b border-border shadow-sm"
+      className="sticky top-0 z-20 bg-background/80 backdrop-blur border-b border-border"
       {...(theme ? { 'data-theme': theme } : {})}
     >
       <div className="container">
-        <div className="flex items-center justify-between py-5">
-          <Link className="shrink-0 transition-opacity hover:opacity-80" href="/">
-            <Logo className="text-foreground" logo={brand?.logo} siteName={brand?.siteName} />
-          </Link>
-          <HeaderNav data={data} />
-        </div>
+        {brand?.headerLayout === 'centered' ? (
+          <div className="flex flex-col items-center gap-3 py-5">
+            <Link className="shrink-0 transition-opacity hover:opacity-80" href="/">
+              <Logo className="text-foreground" logo={brand?.logo} siteName={brand?.siteName} />
+            </Link>
+            <HeaderNav data={data} />
+          </div>
+        ) : (
+          <div className="flex items-center justify-between py-5">
+            <Link className="shrink-0 transition-opacity hover:opacity-80" href="/">
+              <Logo className="text-foreground" logo={brand?.logo} siteName={brand?.siteName} />
+            </Link>
+            <HeaderNav data={data} />
+          </div>
+        )}
       </div>
     </header>
   )

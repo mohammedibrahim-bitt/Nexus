@@ -5,12 +5,12 @@ import React from 'react'
 import { formatDateTime } from '@/utilities/formatDateTime'
 
 type BylinePerson = {
-  avatarUrl?: string
-  id?: number | string
-  name?: string
+  avatarUrl?: null | string
+  id?: null | number | string
+  name?: null | string
 }
 
-const Avatar: React.FC<{ name?: string; url?: string }> = ({ name, url }) => {
+const Avatar: React.FC<{ name?: string; url?: null | string }> = ({ name, url }) => {
   if (url) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img alt={name || ''} className="size-9 rounded-full object-cover" src={url} />

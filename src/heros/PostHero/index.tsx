@@ -4,6 +4,7 @@ import React from 'react'
 import type { Post } from '@/payload-types'
 
 import { Media } from '@/components/Media'
+import { Reveal } from '@/components/Reveal'
 import { SocialShare } from '@/components/SocialShare'
 import { formatAuthors } from '@/utilities/formatAuthors'
 
@@ -18,7 +19,7 @@ export const PostHero: React.FC<{
   return (
     <div className="relative -mt-[10.4rem] flex items-end">
       <div className="container z-10 relative lg:grid lg:grid-cols-[1fr_48rem_1fr] text-white pb-8">
-        <div className="col-start-1 col-span-1 md:col-start-2 md:col-span-2">
+        <Reveal className="col-start-1 col-span-1 md:col-start-2 md:col-span-2">
           <div className="uppercase text-sm mb-6">
             {categories?.map((category, index) => {
               if (typeof category === 'object' && category !== null) {
@@ -65,7 +66,7 @@ export const PostHero: React.FC<{
           <div className="mt-6">
             <SocialShare title={title} />
           </div>
-        </div>
+        </Reveal>
       </div>
       <div className="min-h-[80vh] select-none">
         {heroImage && typeof heroImage !== 'string' && (

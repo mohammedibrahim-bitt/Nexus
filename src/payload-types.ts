@@ -78,6 +78,7 @@ export interface Config {
     customers: Customer;
     reviews: Review;
     'content-sources': ContentSource;
+    'seo-research-runs': SeoResearchRun;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -105,6 +106,7 @@ export interface Config {
     customers: CustomersSelect<false> | CustomersSelect<true>;
     reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     'content-sources': ContentSourcesSelect<false> | ContentSourcesSelect<true>;
+    'seo-research-runs': SeoResearchRunsSelect<false> | SeoResearchRunsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -137,6 +139,7 @@ export interface Config {
   user: User | Customer;
   jobs: {
     tasks: {
+      'run-seo-research': TaskRunSeoResearch;
       schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
@@ -365,6 +368,10 @@ export interface Page {
         }[]
       | null;
     media?: (number | null) | Media;
+    /**
+     * Darkens the background image to improve text legibility, from 0 (none) to 90 (very dark).
+     */
+    overlayOpacity?: number | null;
   };
   layout: (CallToActionBlock | ContentBlock | MediaBlock | ArchiveBlock | FormBlock)[];
   meta?: {
@@ -587,6 +594,22 @@ export interface User {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Set automatically on each login. Powers the "active users" stat on the admin dashboard.
+   */
+  lastLoginAt?: string | null;
+  /**
+   * Your personal SerpApi key, used only for SEO Research Agent runs you trigger.
+   */
+  serpApiKey?: string | null;
+  /**
+   * Which AI provider to use for analyzing competitors and writing the draft.
+   */
+  aiProvider?: ('anthropic' | 'openai' | 'google') | null;
+  /**
+   * Your personal API key for the AI provider selected above.
+   */
+  aiApiKey?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -985,6 +1008,55 @@ export interface Review {
   createdAt: string;
 }
 /**
+ * Enter a target keyword and run automatic competitor research: finds top-ranking pages, scores them across SEO/content-quality dimensions, and drafts an original post designed to outperform them. Each user needs their own SerpApi key and an API key for their chosen AI provider, set on their profile.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "seo-research-runs".
+ */
+export interface SeoResearchRun {
+  id: number;
+  /**
+   * The target keyword or search phrase to research.
+   */
+  keyword: string;
+  triggeredBy?: (number | null) | User;
+  status?: ('queued' | 'researching' | 'analyzing' | 'strategizing' | 'writing' | 'completed' | 'failed') | null;
+  generatedPost?: (number | null) | Post;
+  error?: string | null;
+  competitorUrls?:
+    | {
+        url?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Per-competitor scoring and notes, populated once analysis completes.
+   */
+  analysis?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Content gaps, missed questions, recommended outline, FAQ, and link suggestions.
+   */
+  strategy?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
@@ -1127,7 +1199,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'schedulePublish';
+        taskSlug: 'inline' | 'run-seo-research' | 'schedulePublish';
         taskID: string;
         input?:
           | {
@@ -1160,7 +1232,7 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'schedulePublish') | null;
+  taskSlug?: ('inline' | 'run-seo-research' | 'schedulePublish') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
@@ -1213,6 +1285,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'content-sources';
         value: number | ContentSource;
+      } | null)
+    | ({
+        relationTo: 'seo-research-runs';
+        value: number | SeoResearchRun;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1323,6 +1399,7 @@ export interface PagesSelect<T extends boolean = true> {
               id?: T;
             };
         media?: T;
+        overlayOpacity?: T;
       };
   layout?:
     | T
@@ -1623,6 +1700,10 @@ export interface UsersSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  lastLoginAt?: T;
+  serpApiKey?: T;
+  aiProvider?: T;
+  aiApiKey?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1692,6 +1773,27 @@ export interface ContentSourcesSelect<T extends boolean = true> {
   defaultAuthor?: T;
   lastFetchedAt?: T;
   lastFetchStatus?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "seo-research-runs_select".
+ */
+export interface SeoResearchRunsSelect<T extends boolean = true> {
+  keyword?: T;
+  triggeredBy?: T;
+  status?: T;
+  generatedPost?: T;
+  error?: T;
+  competitorUrls?:
+    | T
+    | {
+        url?: T;
+        id?: T;
+      };
+  analysis?: T;
+  strategy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2087,6 +2189,34 @@ export interface Setting {
    */
   primaryColor: string;
   /**
+   * Optional. Hex color (e.g. #f59e0b) used for a second tint — badges, secondary buttons, and subtle highlights. Leave blank to use a neutral gray.
+   */
+  secondaryColor?: string | null;
+  /**
+   * Controls roundedness of cards, buttons, and inputs site-wide, from 0 (sharp) to 28 (very rounded).
+   */
+  cornerRadius?: number | null;
+  /**
+   * Global text-size multiplier applied to the whole site, from 90% to 115%.
+   */
+  fontScale?: number | null;
+  /**
+   * Compact reduces internal padding on cards and content blocks for a denser layout.
+   */
+  density?: ('comfortable' | 'compact') | null;
+  /**
+   * Turns on subtle hover/transition animations (cards, nav pills) across the site. Disable for a fully static, no-motion experience.
+   */
+  enableAnimations?: boolean | null;
+  /**
+   * Used for headings and the text logo site-wide. Body text stays on the readable base font.
+   */
+  fontFamily?: ('space-grotesk' | 'poppins' | 'sora' | 'outfit' | 'playfair-display' | 'inter') | null;
+  /**
+   * Controls how the logo and navigation are arranged in the site header.
+   */
+  headerLayout?: ('left' | 'centered') | null;
+  /**
    * Optional. If this blog is a subdomain of a main website, point this at either (a) a JSON file on that site, e.g. https://example.com/brand.json, with { "siteName": "...", "primaryColor": "#...", "logoUrl": "..." }, or (b) just that site's homepage URL — if no JSON is found, we'll auto-detect the name, color, and logo from its standard meta tags and favicon. Any field found overrides the values in the Branding tab. Checked roughly every 5 minutes.
    */
   brandSyncUrl?: string | null;
@@ -2108,6 +2238,14 @@ export interface Setting {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Injects the tracking snippet site-wide when a provider and ID are set.
+   */
+  analyticsProvider?: ('none' | 'ga4' | 'plausible') | null;
+  /**
+   * For GA4: your Measurement ID, e.g. G-XXXXXXXXXX. For Plausible: your site domain, e.g. example.com.
+   */
+  analyticsId?: string | null;
   /**
    * Used for pages/posts that don't set their own SEO description.
    */
@@ -2176,6 +2314,13 @@ export interface SettingsSelect<T extends boolean = true> {
   logo?: T;
   favicon?: T;
   primaryColor?: T;
+  secondaryColor?: T;
+  cornerRadius?: T;
+  fontScale?: T;
+  density?: T;
+  enableAnimations?: T;
+  fontFamily?: T;
+  headerLayout?: T;
   brandSyncUrl?: T;
   footerTagline?: T;
   copyrightText?: T;
@@ -2186,6 +2331,8 @@ export interface SettingsSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  analyticsProvider?: T;
+  analyticsId?: T;
   defaultMetaDescription?: T;
   defaultOgImage?: T;
   updatedAt?: T;
@@ -2201,6 +2348,20 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskRun-seo-research".
+ */
+export interface TaskRunSeoResearch {
+  input: {
+    runId: string;
+    serpApiKey: string;
+    aiApiKey: string;
+    aiProvider: string;
+    authorId: string;
+  };
+  output?: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

@@ -32,7 +32,7 @@ export const Card: React.FC<{
   return (
     <article
       className={cn(
-        'border border-border rounded-lg overflow-hidden bg-card hover:cursor-pointer',
+        'border border-border rounded-xl overflow-hidden bg-card shadow-[var(--shadow-card)] transition-shadow hover:shadow-lg hover:cursor-pointer',
         className,
       )}
       ref={card.ref}
@@ -41,7 +41,7 @@ export const Card: React.FC<{
         {!metaImage && <div className="">No image</div>}
         {metaImage && typeof metaImage !== 'string' && <Media resource={metaImage} size="33vw" />}
       </div>
-      <div className="p-4">
+      <div style={{ padding: 'calc(1rem * var(--space-scale, 1))' }}>
         {showCategories && hasCategories && (
           <div className="uppercase text-sm mb-4">
             {categories?.map((category, index) => {
