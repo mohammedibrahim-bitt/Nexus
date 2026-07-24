@@ -7,7 +7,9 @@ import { authApi } from './api'
 import type { Lang } from './data'
 import { t } from './data'
 
-export type NexusRole = 'admin' | 'author' | 'reviewer' | null
+import { isNexusWriterRole } from '@/access/isNexusWriter'
+
+export type NexusRole = 'admin' | 'author' | 'reviewer' | 'user' | null
 
 export type UISettings = {
   accent: string

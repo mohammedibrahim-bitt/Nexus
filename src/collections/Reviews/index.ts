@@ -23,7 +23,7 @@ export const Reviews: CollectionConfig = {
   admin: {
     defaultColumns: ['post', 'customer', 'rating', 'approved', 'createdAt'],
     // Authors have no way to act on reviews, so don't clutter their sidebar with it.
-    hidden: ({ user }) => user?.role === 'author',
+    hidden: ({ user }) => user?.role === 'author' || user?.role === 'user',
     useAsTitle: 'comment',
   },
   fields: [

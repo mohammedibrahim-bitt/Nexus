@@ -501,9 +501,9 @@ export interface User {
   id: number;
   name?: string | null;
   /**
-   * Only an admin can grant this. Admins can also author and review posts.
+   * Only an admin can grant this. Admins, reviewers, and users can write blogs.
    */
-  role: 'admin' | 'author' | 'reviewer';
+  role: 'admin' | 'author' | 'reviewer' | 'user';
   avatar?: (number | null) | Media;
   /**
    * e.g. "Senior Editor" or "Licensed Real Estate Broker" — shown under their name.

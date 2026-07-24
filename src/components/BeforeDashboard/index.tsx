@@ -16,7 +16,7 @@ const quickLinks = [
     href: '/admin/collections/posts/create',
     icon: FileText,
     title: 'Write a post',
-    visibleFor: ['admin', 'author', 'reviewer'],
+    visibleFor: ['admin', 'author', 'reviewer', 'user'],
   },
   {
     description:

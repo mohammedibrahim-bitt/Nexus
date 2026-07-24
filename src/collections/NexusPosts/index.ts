@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { isAdmin } from '../../access/isAdmin'
+import { isAdminOrReviewer } from '../../access/isAdminOrReviewer'
 import { canCreateNexusPost } from './access/canCreateNexusPost'
 import { canReadNexusPost } from './access/canReadNexusPost'
 import { canUpdateNexusPost } from './access/canUpdateNexusPost'
@@ -87,10 +88,10 @@ export const NexusPosts: CollectionConfig = {
       name: 'status',
       type: 'select',
       access: {
-        // Only an admin can approve/reject — an author submitting or
-        // editing their own draft can never move this themselves.
+        // Admins and reviewers can approve/reject pending posts.
+        // Authors submitting or editing their own draft can never move this themselves.
         create: isAdmin,
-        update: isAdmin,
+        update: isAdminOrReviewer,
       },
       defaultValue: 'pending',
       options: [

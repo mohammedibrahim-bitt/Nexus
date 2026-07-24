@@ -18,8 +18,14 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const routeForRole = (role: 'admin' | 'author' | 'reviewer' | null) =>
-    role === 'admin' ? '/nexus/admin' : role === 'author' ? '/nexus/write' : '/nexus'
+  const routeForRole = (role: 'admin' | 'author' | 'reviewer' | 'user' | null) =>
+    role === 'admin'
+      ? '/nexus/admin'
+      : role === 'reviewer'
+        ? '/nexus/review'
+        : role === 'author' || role === 'user'
+          ? '/nexus/write'
+          : '/nexus'
 
   const submit = async () => {
     setSubmitting(true)

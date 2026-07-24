@@ -22,7 +22,7 @@ import { parentSiteTokens, useNexus } from '@/nexus/NexusProvider'
 import { Reveal } from '@/nexus/Reveal'
 
 const ACCENTS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6']
-const ASSIGNABLE_ROLES: Exclude<NexusRole, null>[] = ['author', 'reviewer', 'admin']
+const ASSIGNABLE_ROLES: Exclude<NexusRole, null>[] = ['user', 'author', 'reviewer', 'admin']
 
 function RoleDropdown({
   value,

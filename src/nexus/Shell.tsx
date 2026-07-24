@@ -20,6 +20,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
+import { isNexusWriterRole } from '@/access/isNexusWriter'
 import { postsApi, toNexusBlog, type NexusBlog } from './api'
 import type { NexusRole } from './NexusProvider'
 import { useNexus } from './NexusProvider'
@@ -49,10 +50,15 @@ export function NexusShell({ children }: { children: React.ReactNode }) {
   }, [])
 
   const nav = [
-    { href: '/nexus', label: tr('main'), icon: Home },
-    ...(role === 'admin' ? [{ href: '/nexus/admin', label: tr('adminPanel'), icon: ShieldCheck }] : []),
+    { href: '/', label: tr('main'), icon: Home },
+    ...(role === 'admin'
+      ? [{ href: '/nexus/admin', label: tr('adminPanel'), icon: ShieldCheck }]
+      : []),
+    ...(role === 'reviewer' ? [{ href: '/nexus/review', label: 'Review', icon: ShieldCheck }] : []),
     { href: '/nexus/ai', label: tr('aiChat'), icon: Bot },
-    ...(role === 'author' ? [{ href: '/nexus/write', label: tr('writeNav'), icon: PenLine }] : []),
+    ...(isNexusWriterRole(role)
+      ? [{ href: '/nexus/write', label: tr('writeNav'), icon: PenLine }]
+      : []),
   ]
 
   return (
@@ -60,7 +66,7 @@ export function NexusShell({ children }: { children: React.ReactNode }) {
       {/* Fixed top bar — the Nexus wordmark sits at the very top corner, nothing above it. */}
       <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-nx-border bg-nx-bg/80 px-4 backdrop-blur-md">
         <Link
-          href="/nexus"
+          href="/"
           className="font-proxemic text-2xl font-bold tracking-[0.18em] text-nx-text uppercase"
         >
           {settings.logoText || 'Nexus'}
@@ -70,11 +76,7 @@ export function NexusShell({ children }: { children: React.ReactNode }) {
           <button aria-label={tr('search')} className={iconBtn} onClick={() => setSearchOpen(true)}>
             <Search size={19} />
           </button>
-          <button
-            aria-label="Toggle color mode"
-            className={iconBtn}
-            onClick={() => setDark(!dark)}
-          >
+          <button aria-label="Toggle color mode" className={iconBtn} onClick={() => setDark(!dark)}>
             <motion.span
               key={dark ? 'moon' : 'sun'}
               initial={{ rotate: -90, opacity: 0 }}
@@ -115,41 +117,43 @@ export function NexusShell({ children }: { children: React.ReactNode }) {
         style={{ pointerEvents: sidebarOpen ? 'auto' : 'none' }}
         aria-hidden={!sidebarOpen}
       >
-            <nav className="flex flex-col gap-0.5">
-              {nav.map(({ href, label, icon: Icon }) => {
-                const active = pathname === href
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                      active
-                        ? 'font-medium text-nx-text'
-                        : 'text-nx-muted hover:bg-nx-surface hover:text-nx-text'
-                    }`}
-                  >
-                    {active && (
-                      <motion.span
-                        layoutId="nx-nav-active"
-                        className="absolute inset-0 rounded-lg bg-nx-surface"
-                        transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-                      />
-                    )}
-                    <Icon size={18} className="relative z-10" />
-                    <span className="relative z-10">{label}</span>
-                  </Link>
-                )
-              })}
-            </nav>
+        <nav className="flex flex-col gap-0.5">
+          {nav.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                  active
+                    ? 'font-medium text-nx-text'
+                    : 'text-nx-muted hover:bg-nx-surface hover:text-nx-text'
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="nx-nav-active"
+                    className="absolute inset-0 rounded-lg bg-nx-surface"
+                    transition={{ type: 'spring', stiffness: 420, damping: 36 }}
+                  />
+                )}
+                <Icon size={18} className="relative z-10" />
+                <span className="relative z-10">{label}</span>
+              </Link>
+            )
+          })}
+        </nav>
 
-            <div className="mt-auto">
-              <SidebarUserMenu />
-            </div>
+        <div className="mt-auto">
+          <SidebarUserMenu />
+        </div>
       </motion.aside>
 
       {/* Page content shifts with the sidebar */}
       <motion.main
-        animate={rtl ? { paddingRight: sidebarOpen ? 240 : 0 } : { paddingLeft: sidebarOpen ? 240 : 0 }}
+        animate={
+          rtl ? { paddingRight: sidebarOpen ? 240 : 0 } : { paddingLeft: sidebarOpen ? 240 : 0 }
+        }
         transition={{ type: 'spring', stiffness: 380, damping: 34 }}
         className="pt-28"
       >
@@ -165,6 +169,7 @@ const roleInitials: Record<Exclude<NexusRole, null>, string> = {
   admin: 'AD',
   author: 'AU',
   reviewer: 'RV',
+  user: 'US',
 }
 
 /** Bottom-of-sidebar account row, styled after ChatGPT's: avatar + name, opens a small menu above it. */
@@ -286,38 +291,42 @@ function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }
         transition={{ type: 'spring', stiffness: 400, damping: 32 }}
         onClick={(e) => e.stopPropagation()}
       >
-            <div className="flex items-center gap-3 border-b border-nx-border px-4">
-              <Search size={18} className="shrink-0 text-nx-muted" />
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={tr('searchPlaceholder')}
-                className="h-14 w-full bg-transparent text-nx-text outline-none placeholder:text-nx-muted"
-              />
-              <button aria-label="Close search" onClick={onClose} className="text-nx-muted hover:text-nx-text">
-                <X size={18} />
+        <div className="flex items-center gap-3 border-b border-nx-border px-4">
+          <Search size={18} className="shrink-0 text-nx-muted" />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={tr('searchPlaceholder')}
+            className="h-14 w-full bg-transparent text-nx-text outline-none placeholder:text-nx-muted"
+          />
+          <button
+            aria-label="Close search"
+            onClick={onClose}
+            className="text-nx-muted hover:text-nx-text"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <ul className="max-h-80 overflow-y-auto p-2">
+          {results.length === 0 && (
+            <li className="px-3 py-6 text-center text-sm text-nx-muted">{tr('noResults')}</li>
+          )}
+          {results.map((b) => (
+            <li key={b.id}>
+              <button
+                className="w-full rounded-[calc(var(--nx-radius)*0.6)] px-3 py-3 text-start transition-colors hover:bg-nx-surface-2"
+                onClick={() => {
+                  onClose()
+                  router.push(`/nexus/blog/${b.id}`)
+                }}
+              >
+                <p className="font-medium text-nx-text">{b.title[lang]}</p>
+                <p className="line-clamp-1 text-sm text-nx-muted">{b.description[lang]}</p>
               </button>
-            </div>
-            <ul className="max-h-80 overflow-y-auto p-2">
-              {results.length === 0 && (
-                <li className="px-3 py-6 text-center text-sm text-nx-muted">{tr('noResults')}</li>
-              )}
-              {results.map((b) => (
-                <li key={b.id}>
-                  <button
-                    className="w-full rounded-[calc(var(--nx-radius)*0.6)] px-3 py-3 text-start transition-colors hover:bg-nx-surface-2"
-                    onClick={() => {
-                      onClose()
-                      router.push(`/nexus/blog/${b.id}`)
-                    }}
-                  >
-                    <p className="font-medium text-nx-text">{b.title[lang]}</p>
-                    <p className="line-clamp-1 text-sm text-nx-muted">{b.description[lang]}</p>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            </li>
+          ))}
+        </ul>
       </motion.div>
     </motion.div>
   )

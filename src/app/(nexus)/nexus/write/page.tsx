@@ -5,6 +5,7 @@ import { Check, Clock, Loader2, Lock, PenLine, ThumbsDown, ThumbsUp } from 'luci
 import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 
+import { isNexusWriterRole } from '@/access/isNexusWriter'
 import { postsApi, toNexusBlog, type NexusBlog } from '@/nexus/api'
 import { useNexus } from '@/nexus/NexusProvider'
 import { Reveal } from '@/nexus/Reveal'
@@ -40,7 +41,7 @@ export default function WritePage() {
   }
 
   useEffect(() => {
-    if (role === 'author' && currentUser) loadMine()
+    if (isNexusWriterRole(role) && currentUser) loadMine()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, currentUser])
 
@@ -53,11 +54,11 @@ export default function WritePage() {
     )
   }
 
-  if (role !== 'author') {
+  if (!isNexusWriterRole(role)) {
     return (
       <div className="flex flex-col items-center gap-4 py-24 text-center">
         <Lock size={32} className="text-nx-muted" />
-        <p className="text-nx-muted">{tr('authorOnly')}</p>
+        <p className="text-nx-muted">{tr('writeAccessRequired')}</p>
         <Link
           href="/nexus/login"
           className="rounded-nx bg-(--nx-accent) px-5 py-2.5 font-semibold text-white"

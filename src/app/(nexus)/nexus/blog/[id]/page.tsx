@@ -44,7 +44,7 @@ export default function BlogPage() {
     return (
       <div className="py-20 text-center text-nx-muted">
         <p>{tr('notFoundBlog')}</p>
-        <Link href="/nexus" className="mt-4 inline-block font-medium text-(--nx-accent)">
+        <Link href="/" className="mt-4 inline-block font-medium text-(--nx-accent)">
           {tr('backToMain')}
         </Link>
       </div>
@@ -61,16 +61,19 @@ export default function BlogPage() {
   }
 
   const status = blog.status
-  const reviewing = role === 'admin' && status === 'pending'
+  const reviewing = (role === 'admin' || role === 'reviewer') && status === 'pending'
   const backHref =
-    status === 'pending' && role === 'author'
+    status === 'pending' && (role === 'author' || role === 'user')
       ? '/nexus/write'
-      : status === 'pending' && role === 'admin'
-        ? '/nexus/admin'
-        : '/nexus'
+      : status === 'pending' && role === 'reviewer'
+        ? '/nexus/review'
+        : status === 'pending' && role === 'admin'
+          ? '/nexus/admin'
+          : '/'
   const canEdit =
     (role === 'admin' && status !== 'approved') ||
-    (role === 'author' &&
+    (role === 'reviewer' && status === 'pending') ||
+    ((role === 'author' || role === 'user') &&
       status === 'pending' &&
       blog.authorId != null &&
       currentUser != null &&
@@ -119,7 +122,7 @@ export default function BlogPage() {
     const res = await postsApi.decide(blog.id, next)
     setDeciding(false)
     if (!res.ok) return
-    router.push('/nexus/admin')
+    router.push(role === 'reviewer' ? '/nexus/review' : '/nexus/admin')
   }
 
   const confirmDelete = async () => {
@@ -262,7 +265,9 @@ export default function BlogPage() {
                 {blog.title[lang]}
               </h1>
               <p className="text-sm text-nx-muted">
-                {blog.author ? `${tr('writtenBy')} ${blog.author}` : `${tr('generatedBy')} ${blog.model}`}
+                {blog.author
+                  ? `${tr('writtenBy')} ${blog.author}`
+                  : `${tr('generatedBy')} ${blog.model}`}
               </p>
             </div>
           </Reveal>
