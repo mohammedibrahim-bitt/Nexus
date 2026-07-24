@@ -7,6 +7,7 @@ dist
 .next
 next-env.d.ts
 .vercel
+tsconfig.tsbuildinfo
 
 # Environment variables
 .env

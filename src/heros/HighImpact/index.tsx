@@ -8,7 +8,12 @@ import { CMSLink } from '@/components/Link'
 import { Media } from '@/components/Media'
 import RichText from '@/components/RichText'
 
-export const HighImpactHero: React.FC<Page['hero']> = ({ links, media, richText }) => {
+export const HighImpactHero: React.FC<Page['hero']> = ({
+  links,
+  media,
+  overlayOpacity,
+  richText,
+}) => {
   const { setHeaderTheme } = useHeaderTheme()
 
   useEffect(() => {
@@ -17,7 +22,7 @@ export const HighImpactHero: React.FC<Page['hero']> = ({ links, media, richText 
 
   return (
     <div
-      className="relative -mt-[10.4rem] flex items-center justify-center text-white"
+      className="relative -mt-[10.4rem] flex min-h-[80vh] items-center justify-center text-white"
       data-theme="dark"
     >
       <div className="container mb-8 z-10 relative flex items-center justify-center">
@@ -36,9 +41,19 @@ export const HighImpactHero: React.FC<Page['hero']> = ({ links, media, richText 
           )}
         </div>
       </div>
-      <div className="min-h-[80vh] select-none">
+      {/* Full-bleed background — absolutely positioned so it sits behind the
+      text without competing for width in the flex row above (it previously
+      shared flex flow with the text container, which claims 100% width via
+      `.container`, collapsing this box to 0 width). */}
+      <div className="absolute inset-0 select-none">
         {media && typeof media === 'object' && (
           <Media fill imgClassName="-z-10 object-cover" priority resource={media} />
+        )}
+        {Boolean(overlayOpacity) && (
+          <div
+            className="absolute inset-0 -z-[5] bg-black"
+            style={{ opacity: Math.min(90, Math.max(0, overlayOpacity || 0)) / 100 }}
+          />
         )}
       </div>
     </div>

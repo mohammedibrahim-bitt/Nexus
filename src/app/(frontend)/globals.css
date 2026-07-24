@@ -3,6 +3,20 @@
 
 @config '../../../tailwind.config.mjs';
 
+/*
+ * "PROXEMIC" display font for the Nexus wordmark.
+ * Drop the licensed font files into /public/fonts/ to activate it;
+ * until then the stack falls back to a geometric sans.
+ */
+@font-face {
+  font-family: 'PROXEMIC';
+  src:
+    url('/fonts/Proxemic.woff2') format('woff2'),
+    url('/fonts/Proxemic.woff') format('woff');
+  font-weight: 400 800;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is([data-theme='dark'] *));
 @custom-variant sm (@media (width >= theme(--breakpoint-sm)));
 @custom-variant md (@media (width >= theme(--breakpoint-md)));
@@ -19,6 +33,7 @@
   h6 {
     font-weight: unset;
     font-size: unset;
+    font-family: var(--font-display);
   }
 }
 
@@ -45,6 +60,8 @@
   --breakpoint-2xl: 86rem;
   --font-mono: var(--font-geist-mono);
   --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-space-grotesk);
+  --font-proxemic: 'PROXEMIC', 'Avenir Next', 'Futura', 'Century Gothic', ui-sans-serif, sans-serif;
 }
 
 @layer utilities {
@@ -87,31 +104,34 @@
 }
 
 :root {
-  --background: oklch(100% 0 0deg);
-  --foreground: oklch(14.5% 0 0deg);
-  --card: oklch(96.5% 0.005 265deg);
-  --card-foreground: oklch(14.5% 0 0deg);
-  --popover: oklch(100% 0 0deg);
-  --popover-foreground: oklch(14.5% 0 0deg);
-  --primary: oklch(20.5% 0 0deg);
-  --primary-foreground: oklch(98.5% 0 0deg);
-  --secondary: oklch(97% 0 0deg);
-  --secondary-foreground: oklch(20.5% 0 0deg);
-  --muted: oklch(97% 0 0deg);
-  --muted-foreground: oklch(55.6% 0 0deg);
-  --accent: oklch(97% 0 0deg);
-  --accent-foreground: oklch(20.5% 0 0deg);
+  --background: #f7f7fb;
+  --foreground: #16161d;
+  --card: #ffffff;
+  --card-foreground: #16161d;
+  --popover: #ffffff;
+  --popover-foreground: #16161d;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f0f6;
+  --secondary-foreground: #16161d;
+  --muted: #f0f0f6;
+  --muted-foreground: #6b7080;
+  --accent: #f0f0f6;
+  --accent-foreground: #16161d;
   --destructive: oklch(57.7% 0.245 27.325deg);
   --destructive-foreground: oklch(57.7% 0.245 27.325deg);
-  --border: oklch(92.2% 0 0deg);
-  --input: oklch(92.2% 0 0deg);
-  --ring: oklch(70.8% 0 0deg);
+  --border: rgb(22 22 29 / 0.09);
+  --input: rgb(22 22 29 / 0.09);
+  --ring: #6366f1;
+  --shadow-card:
+    0 1px 2px rgb(22 22 29 / 0.05),
+    0 12px 32px -16px rgb(22 22 29 / 0.18);
   --chart-1: oklch(64.6% 0.222 41.116deg);
   --chart-2: oklch(60% 0.118 184.704deg);
   --chart-3: oklch(39.8% 0.07 227.392deg);
   --chart-4: oklch(82.8% 0.189 84.429deg);
   --chart-5: oklch(76.9% 0.188 70.08deg);
-  --radius: 0.625rem;
+  --radius: 1rem;
   --sidebar: oklch(98.5% 0 0deg);
   --sidebar-foreground: oklch(14.5% 0 0deg);
   --sidebar-primary: oklch(20.5% 0 0deg);
@@ -126,25 +146,28 @@
 }
 
 [data-theme='dark'] {
-  --background: oklch(14.5% 0 0deg);
-  --foreground: oklch(98.5% 0 0deg);
-  --card: oklch(17% 0 0deg);
-  --card-foreground: oklch(98.5% 0 0deg);
-  --popover: oklch(14.5% 0 0deg);
-  --popover-foreground: oklch(98.5% 0 0deg);
-  --primary: oklch(98.5% 0 0deg);
-  --primary-foreground: oklch(20.5% 0 0deg);
-  --secondary: oklch(26.9% 0 0deg);
-  --secondary-foreground: oklch(98.5% 0 0deg);
-  --muted: oklch(26.9% 0 0deg);
-  --muted-foreground: oklch(70.8% 0 0deg);
-  --accent: oklch(26.9% 0 0deg);
-  --accent-foreground: oklch(98.5% 0 0deg);
+  --background: #0d0d12;
+  --foreground: #ececf2;
+  --card: #16161d;
+  --card-foreground: #ececf2;
+  --popover: #16161d;
+  --popover-foreground: #ececf2;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --secondary: #1e1e27;
+  --secondary-foreground: #ececf2;
+  --muted: #1e1e27;
+  --muted-foreground: #9298a8;
+  --accent: #1e1e27;
+  --accent-foreground: #ececf2;
   --destructive: oklch(39.6% 0.141 25.723deg);
   --destructive-foreground: oklch(63.7% 0.237 25.331deg);
-  --border: oklch(26.9% 0 0deg);
-  --input: oklch(26.9% 0 0deg);
-  --ring: oklch(43.9% 0 0deg);
+  --border: rgb(236 236 242 / 0.1);
+  --input: rgb(236 236 242 / 0.1);
+  --ring: #6366f1;
+  --shadow-card:
+    0 1px 2px rgb(0 0 0 / 0.4),
+    0 12px 32px -16px rgb(0 0 0 / 0.6);
   --chart-1: oklch(48.8% 0.243 264.376deg);
   --chart-2: oklch(69.6% 0.17 162.48deg);
   --chart-3: oklch(76.9% 0.188 70.08deg);
@@ -223,27 +246,6 @@ html[data-theme='light'] {
   opacity: initial;
 }
 
-@media print {
-  header,
-  footer,
-  .admin-bar,
-  [data-toc],
-  [data-social-share],
-  [data-back-to-top] {
-    display: none !important;
-  }
-
-  body {
-    background: white;
-    color: black;
-  }
-
-  a {
-    color: black;
-    text-decoration: underline;
-  }
-
-  .payload-richtext {
-    max-width: none !important;
-  }
+::selection {
+  background: color-mix(in srgb, var(--primary) 30%, transparent);
 }

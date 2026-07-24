@@ -11,6 +11,7 @@ import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Reviews } from './collections/Reviews'
+import { SeoResearchRuns } from './collections/SeoResearchRuns'
 import { Tags } from './collections/Tags'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
@@ -18,6 +19,7 @@ import { Header } from './Header/config'
 import { Settings } from './Settings/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
+import { runSeoResearchTask } from './utilities/seoResearch/task'
 import { getServerSideURL } from './utilities/getURL'
 
 const filename = fileURLToPath(import.meta.url)
@@ -95,6 +97,7 @@ export default buildConfig({
     Customers,
     Reviews,
     ContentSources,
+    SeoResearchRuns,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer, Settings],
@@ -120,6 +123,6 @@ export default buildConfig({
         return authHeader === `Bearer ${secret}`
       },
     },
-    tasks: [],
+    tasks: [runSeoResearchTask],
   },
 })

@@ -6,9 +6,11 @@ import { useRouter } from 'next/navigation'
 import React, { useEffect, useRef, useState } from 'react'
 
 import { useCustomerAuth } from '@/providers/CustomerAuth'
+import { useStaffAuth } from '@/providers/StaffAuth'
 
 export const AccountMenu: React.FC = () => {
   const { customer, loading, logout } = useCustomerAuth()
+  const { staff, loading: staffLoading } = useStaffAuth()
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -23,7 +25,19 @@ export const AccountMenu: React.FC = () => {
     return () => document.removeEventListener('mousedown', onClickOutside)
   }, [])
 
-  if (loading) return null
+  if (loading || staffLoading) return null
+
+  if (!customer && staff) {
+    return (
+      <Link
+        className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+        href="/dashboard"
+      >
+        <User className="size-4" />
+        {staff.name || 'Dashboard'}
+      </Link>
+    )
+  }
 
   if (!customer) {
     return (

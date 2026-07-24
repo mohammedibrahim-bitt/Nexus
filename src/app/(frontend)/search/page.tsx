@@ -1,7 +1,8 @@
 import type { Metadata } from 'next/types'
 
 import { CollectionArchive } from '@/components/CollectionArchive'
-import { getBrandData } from '@/utilities/getBrandData'
+import { getMergedSettings } from '@/utilities/getSettings'
+import { getCachedGlobal } from '@/utilities/getGlobals'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
@@ -83,9 +84,9 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brand = await getBrandData()
+  const settings = await getMergedSettings(0)
 
   return {
-    title: `${brand.siteName} Search`,
+    title: `${settings?.siteName || 'Nexus'} Search`,
   }
 }

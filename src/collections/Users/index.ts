@@ -4,12 +4,20 @@ import { anyone } from '../../access/anyone'
 import { authenticated } from '../../access/authenticated'
 import { isAdmin } from '../../access/isAdmin'
 import { isAdminOrSelf } from '../../access/isAdminOrSelf'
+import { isAdminOrSelfField } from '../../access/isAdminOrSelfField'
+import { decryptSecret, encryptSecret } from '../../utilities/encryption'
+import { AI_PROVIDER_OPTIONS } from '../../utilities/seoResearch/aiProviders'
 import { assignFirstUserAsAdmin } from './hooks/assignFirstUserAsAdmin'
+import { trackLastLogin } from './hooks/trackLastLogin'
 
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    admin: authenticated,
+    // Only admins can open /admin at all — authors/reviewers use the
+    // frontend /dashboard instead. This is a real server-side redirect gate
+    // (Payload's admin app shell checks it on every /admin/* request), not
+    // just a hidden UI element.
+    admin: isAdmin,
     // Anyone can register an account, but they always land in the collection
     // as an "author" — see the `role` field's own access control below, and
     // the `assignFirstUserAsAdmin` hook for the one bootstrap exception.
@@ -41,6 +49,9 @@ export const Users: CollectionConfig = {
         update: isAdmin,
       },
       admin: {
+        components: {
+          Cell: '@/collections/Users/components/RoleCell#RoleCell',
+        },
         description: 'Only an admin can grant this. Admins can also author and review posts.',
         position: 'sidebar',
       },
@@ -102,6 +113,15 @@ export const Users: CollectionConfig = {
       label: 'Social Links',
     },
     {
+      name: 'lastLoginAt',
+      type: 'date',
+      admin: {
+        description: 'Set automatically on each login. Powers the "active users" stat on the admin dashboard.',
+        position: 'sidebar',
+        readOnly: true,
+      },
+    },
+    {
       name: 'profilePreview',
       type: 'ui',
       admin: {
@@ -111,8 +131,62 @@ export const Users: CollectionConfig = {
         position: 'sidebar',
       },
     },
+    {
+      type: 'collapsible',
+      admin: {
+        description:
+          'Only visible to you (and admins). Bring your own keys to use the SEO Research Agent — this site does not supply shared keys. Get a SerpApi key at serpapi.com, and an API key from whichever AI provider you choose below.',
+        initCollapsed: true,
+      },
+      fields: [
+        {
+          name: 'serpApiKey',
+          type: 'text',
+          access: {
+            read: isAdminOrSelfField,
+            update: isAdminOrSelfField,
+          },
+          admin: {
+            description: 'Your personal SerpApi key, used only for SEO Research Agent runs you trigger.',
+          },
+          hooks: {
+            afterRead: [({ value }) => decryptSecret(value as string | undefined) || undefined],
+            beforeChange: [({ value }) => (value ? encryptSecret(value) : value)],
+          },
+          label: 'SerpApi Key',
+        },
+        {
+          name: 'aiProvider',
+          type: 'select',
+          admin: {
+            description: 'Which AI provider to use for analyzing competitors and writing the draft.',
+          },
+          defaultValue: 'anthropic',
+          label: 'AI Provider',
+          options: AI_PROVIDER_OPTIONS,
+        },
+        {
+          name: 'aiApiKey',
+          type: 'text',
+          access: {
+            read: isAdminOrSelfField,
+            update: isAdminOrSelfField,
+          },
+          admin: {
+            description: 'Your personal API key for the AI provider selected above.',
+          },
+          hooks: {
+            afterRead: [({ value }) => decryptSecret(value as string | undefined) || undefined],
+            beforeChange: [({ value }) => (value ? encryptSecret(value) : value)],
+          },
+          label: 'AI API Key',
+        },
+      ],
+      label: 'API Keys',
+    },
   ],
   hooks: {
+    afterLogin: [trackLastLogin],
     beforeChange: [assignFirstUserAsAdmin],
   },
   timestamps: true,

@@ -9,6 +9,33 @@
     }
   }
 
+  &__stats-grid {
+    display: grid;
+    gap: base(0.5);
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    margin-bottom: base(1);
+  }
+
+  &__stat-card {
+    background: var(--theme-elevation-50);
+    border: 1px solid var(--theme-elevation-100);
+    border-radius: 4px;
+    padding: base(0.5);
+  }
+
+  &__stat-value {
+    color: var(--theme-elevation-800);
+    display: block;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  &__stat-label {
+    color: var(--theme-elevation-500);
+    font-size: 13px;
+  }
+
   &__grid {
     display: grid;
     gap: base(0.5);

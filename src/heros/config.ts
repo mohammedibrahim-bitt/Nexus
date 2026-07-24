@@ -67,6 +67,19 @@ export const hero: Field = {
       relationTo: 'media',
       required: true,
     },
+    {
+      name: 'overlayOpacity',
+      type: 'number',
+      defaultValue: 0,
+      label: 'Image Overlay Darkness (%)',
+      max: 90,
+      min: 0,
+      admin: {
+        condition: (_, { type } = {}) => type === 'highImpact',
+        description: 'Darkens the background image to improve text legibility, from 0 (none) to 90 (very dark).',
+        step: 5,
+      },
+    },
   ],
   label: false,
 }

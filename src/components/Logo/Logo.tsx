@@ -38,7 +38,7 @@ export const Logo = (props: Props) => {
   return (
     <span
       className={clsx(
-        'inline-block h-[34px] max-w-[9.375rem] w-full font-bold text-2xl tracking-tight leading-[34px]',
+        'inline-block h-[34px] max-w-[9.375rem] w-full font-proxemic font-bold text-xl uppercase tracking-[0.18em] leading-[34px]',
         className,
       )}
     >

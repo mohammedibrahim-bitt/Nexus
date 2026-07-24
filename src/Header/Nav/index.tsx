@@ -7,6 +7,7 @@ import type { Header as HeaderType } from '@/payload-types'
 import { AccountMenu } from '@/components/AccountMenu'
 import { CMSLink } from '@/components/Link'
 import { QuickSearch } from '@/components/QuickSearch'
+import { StaffNavLinks } from '@/components/StaffNavLinks'
 import { ThemeToggle } from '@/providers/Theme/ThemeToggle'
 import { navIconComponents } from '@/utilities/navIcons'
 
@@ -29,6 +30,7 @@ export const HeaderNav: React.FC<{ data: HeaderType }> = ({ data }) => {
         )
       })}
       <div className="ml-1 flex items-center gap-1">
+        <StaffNavLinks />
         <QuickSearch />
         <ThemeToggle />
         <AccountMenu />

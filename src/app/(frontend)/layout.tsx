@@ -3,51 +3,82 @@ import type { Metadata } from 'next'
 import { cn } from '@/utilities/ui'
 import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
+import { Inter, Outfit, Playfair_Display, Poppins, Sora, Space_Grotesk } from 'next/font/google'
 import React from 'react'
 
-import { AdminBar } from '@/components/AdminBar'
+import { Analytics } from '@/components/Analytics'
 import { BackToTop } from '@/components/BackToTop'
 import { BrandColor } from '@/components/BrandColor'
 import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
-import { StructuredData } from '@/components/StructuredData'
-import { getBrandData } from '@/utilities/getBrandData'
+import { getMergedSettings } from '@/utilities/getSettings'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import { websiteSchema } from '@/utilities/schema'
-import { draftMode } from 'next/headers'
 
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { isEnabled } = await draftMode()
-  const brand = await getBrandData()
+// Curated display-font options for Settings > Appearance — all preloaded
+// (self-hosted via next/font/google) so switching the admin's selection is
+// just a CSS variable swap in BrandColor, no extra network requests.
+const spaceGrotesk = Space_Grotesk({
+  display: 'swap',
+  subsets: ['latin'],
+  variable: '--font-space-grotesk',
+})
+const poppins = Poppins({
+  display: 'swap',
+  subsets: ['latin'],
+  variable: '--font-poppins',
+  weight: ['500', '600', '700'],
+})
+const sora = Sora({
+  display: 'swap',
+  subsets: ['latin'],
+  variable: '--font-sora',
+})
+const outfit = Outfit({
+  display: 'swap',
+  subsets: ['latin'],
+  variable: '--font-outfit',
+})
+const playfairDisplay = Playfair_Display({
+  display: 'swap',
+  subsets: ['latin'],
+  variable: '--font-playfair-display',
+})
+const interDisplay = Inter({
+  display: 'swap',
+  subsets: ['latin'],
+  variable: '--font-inter-display',
+})
 
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html className={cn(GeistSans.variable, GeistMono.variable)} lang="en" suppressHydrationWarning>
+    <html
+      className={cn(
+        GeistSans.variable,
+        GeistMono.variable,
+        spaceGrotesk.variable,
+        poppins.variable,
+        sora.variable,
+        outfit.variable,
+        playfairDisplay.variable,
+        interDisplay.variable,
+      )}
+      lang="en"
+      suppressHydrationWarning
+    >
       <head>
         <InitTheme />
         <BrandColor />
-        <StructuredData data={websiteSchema(brand)} />
-        {brand.favicon?.url ? (
-          <link href={brand.favicon.url} rel="icon" />
-        ) : (
-          <>
-            <link href="/favicon.ico" rel="icon" sizes="32x32" />
-            <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
-          </>
-        )}
+        <Analytics />
+        <link href="/favicon.ico" rel="icon" sizes="32x32" />
+        <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
       </head>
       <body>
         <Providers>
-          <AdminBar
-            adminBarProps={{
-              preview: isEnabled,
-            }}
-          />
-
           <Header />
           {children}
           <Footer />
@@ -59,11 +90,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brand = await getBrandData()
+  const settings = await getMergedSettings(0)
 
   return {
     metadataBase: new URL(getServerSideURL()),
-    openGraph: mergeOpenGraph(undefined, brand.siteName),
+    openGraph: mergeOpenGraph(undefined, settings?.siteName),
     twitter: {
       card: 'summary_large_image',
       creator: '@payloadcms',
