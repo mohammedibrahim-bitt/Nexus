@@ -39,7 +39,7 @@ export function Reveal({
       custom={delay}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: '0px 0px -60px 0px' }}
+      viewport={{ once: true, amount: 0 }}
       variants={variants}
     >
       {children}

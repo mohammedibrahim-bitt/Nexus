@@ -1,16 +1,28 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, ChevronDown, Link2, Lock, Paintbrush, RotateCcw, Type, Users } from 'lucide-react'
+import {
+  Check,
+  ChevronDown,
+  Link2,
+  Loader2,
+  Lock,
+  Paintbrush,
+  RotateCcw,
+  Type,
+  Users,
+} from 'lucide-react'
 import Link from 'next/link'
 import React, { useEffect, useRef, useState } from 'react'
 
+import type { User } from '@/payload-types'
+import { usersApi } from '@/nexus/api'
 import type { NexusRole } from '@/nexus/NexusProvider'
 import { parentSiteTokens, useNexus } from '@/nexus/NexusProvider'
 import { Reveal } from '@/nexus/Reveal'
 
 const ACCENTS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6']
-const ASSIGNABLE_ROLES: Exclude<NexusRole, null>[] = ['reader', 'author', 'admin']
+const ASSIGNABLE_ROLES: Exclude<NexusRole, null>[] = ['author', 'reviewer', 'admin']
 
 function RoleDropdown({
   value,
@@ -89,8 +101,33 @@ function RoleDropdown({
 }
 
 export default function SettingsPage() {
-  const { tr, role, users, setUserRole, settings, updateSettings, resetSettings } = useNexus()
+  const { tr, role, authLoading, settings, updateSettings, resetSettings } = useNexus()
   const [syncing, setSyncing] = useState(false)
+  const [users, setUsers] = useState<User[] | null>(null)
+
+  useEffect(() => {
+    if (role === 'admin') {
+      usersApi.list().then((res) => {
+        if (res.ok) setUsers(res.data.docs)
+      })
+    }
+  }, [role])
+
+  const setUserRole = async (id: number, newRole: string) => {
+    const prev = users
+    setUsers((u) => u?.map((usr) => (usr.id === id ? { ...usr, role: newRole as User['role'] } : usr)) ?? null)
+    const res = await usersApi.updateRole(String(id), newRole)
+    if (!res.ok) setUsers(prev)
+  }
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-24 text-sm text-nx-muted">
+        <Loader2 size={16} className="animate-spin" />
+        {tr('loading')}
+      </div>
+    )
+  }
 
   if (role !== 'admin') {
     return (
@@ -185,21 +222,28 @@ export default function SettingsPage() {
             </h2>
             <p className="mt-1 text-sm text-nx-muted">{tr('manageUsersSub')}</p>
           </div>
-          <div className="flex flex-col divide-y divide-nx-border">
-            {users.map((u) => (
-              <div key={u.id} className="flex items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-nx-text">{u.name}</p>
-                  <p className="truncate text-xs text-nx-muted">{u.email}</p>
+          {users === null ? (
+            <div className="flex items-center justify-center gap-2 py-8 text-sm text-nx-muted">
+              <Loader2 size={16} className="animate-spin" />
+              {tr('loading')}
+            </div>
+          ) : (
+            <div className="flex flex-col divide-y divide-nx-border">
+              {users.map((u) => (
+                <div key={u.id} className="flex items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-nx-text">{u.name}</p>
+                    <p className="truncate text-xs text-nx-muted">{u.email}</p>
+                  </div>
+                  <RoleDropdown
+                    value={u.role}
+                    onChange={(r) => setUserRole(u.id, r)}
+                    label={(r) => tr(r)}
+                  />
                 </div>
-                <RoleDropdown
-                  value={u.role}
-                  onChange={(r) => setUserRole(u.id, r)}
-                  label={(r) => tr(r)}
-                />
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </Reveal>
 

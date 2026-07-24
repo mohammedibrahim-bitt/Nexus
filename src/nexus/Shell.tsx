@@ -20,6 +20,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
+import { postsApi, toNexusBlog, type NexusBlog } from './api'
 import type { NexusRole } from './NexusProvider'
 import { useNexus } from './NexusProvider'
 
@@ -163,12 +164,12 @@ export function NexusShell({ children }: { children: React.ReactNode }) {
 const roleInitials: Record<Exclude<NexusRole, null>, string> = {
   admin: 'AD',
   author: 'AU',
-  reader: 'RE',
+  reviewer: 'RV',
 }
 
 /** Bottom-of-sidebar account row, styled after ChatGPT's: avatar + name, opens a small menu above it. */
 function SidebarUserMenu() {
-  const { role, logout, tr } = useNexus()
+  const { role, currentUser, logout, tr } = useNexus()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -232,8 +233,8 @@ function SidebarUserMenu() {
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-(--nx-accent) text-xs font-semibold text-white">
           {roleInitials[role]}
         </span>
-        <span className="min-w-0 flex-1 text-sm font-medium text-nx-text">
-          {tr(role === 'admin' ? 'admin' : role === 'author' ? 'author' : 'reader')}
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-nx-text">
+          {currentUser?.name || currentUser?.email}
         </span>
         <ChevronsUpDown size={15} className="shrink-0 text-nx-muted" />
       </button>
@@ -242,8 +243,9 @@ function SidebarUserMenu() {
 }
 
 function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { tr, lang, statuses, blogs } = useNexus()
+  const { tr, lang } = useNexus()
   const [query, setQuery] = useState('')
+  const [published, setPublished] = useState<NexusBlog[]>([])
   const router = useRouter()
   const inputRef = React.useRef<HTMLInputElement>(null)
 
@@ -251,18 +253,20 @@ function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }
     if (open) {
       setQuery('')
       inputRef.current?.focus()
+      postsApi.list({ 'where[status][equals]': 'approved', sort: '-createdAt' }).then((res) => {
+        if (res.ok) setPublished(res.data.docs.map(toNexusBlog))
+      })
     }
   }, [open])
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const published = blogs.filter((b) => statuses[b.id] === 'approved')
     if (!q) return published
     return published.filter(
       (b) =>
         b.title[lang].toLowerCase().includes(q) || b.description[lang].toLowerCase().includes(q),
     )
-  }, [query, lang, statuses, blogs])
+  }, [query, lang, published])
 
   // Kept mounted; visibility is animated so a stuck exit can never block the page.
   return (

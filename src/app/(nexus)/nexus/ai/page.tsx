@@ -4,26 +4,33 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Bot, Send, User } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 
+import { postsApi, toNexusBlog, type NexusBlog } from '@/nexus/api'
 import { useNexus } from '@/nexus/NexusProvider'
 import { Reveal } from '@/nexus/Reveal'
 
 type Msg = { id: number; from: 'user' | 'ai'; text: string }
 
 export default function AIChatPage() {
-  const { tr, lang, statuses, blogs } = useNexus()
+  const { tr, lang } = useNexus()
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
+  const [published, setPublished] = useState<NexusBlog[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, typing])
 
+  useEffect(() => {
+    postsApi.list({ 'where[status][equals]': 'approved', sort: '-createdAt' }).then((res) => {
+      if (res.ok) setPublished(res.data.docs.map(toNexusBlog))
+    })
+  }, [])
+
   // Demo responder — swap for a real API call to your model backend.
   const respond = (question: string): string => {
     const q = question.toLowerCase()
-    const published = blogs.filter((b) => statuses[b.id] === 'approved')
     const hit = published.find(
       (b) =>
         b.title.en.toLowerCase().split(' ').some((w) => w.length > 4 && q.includes(w)) ||

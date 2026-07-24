@@ -1,15 +1,43 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Clock, Lock, Settings, ShieldCheck } from 'lucide-react'
+import { Clock, Loader2, Lock, Settings, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
+import { postsApi, toNexusBlog, type NexusBlog } from '@/nexus/api'
 import { useNexus } from '@/nexus/NexusProvider'
 import { Reveal } from '@/nexus/Reveal'
 
 export default function AdminPanelPage() {
-  const { tr, lang, role, statuses, blogs } = useNexus()
+  const { tr, lang, role, authLoading } = useNexus()
+  const [pending, setPending] = useState<NexusBlog[] | null>(null)
+  const [error, setError] = useState(false)
+
+  const load = () => {
+    setError(false)
+    setPending(null)
+    postsApi.list({ 'where[status][equals]': 'pending', sort: '-createdAt' }).then((res) => {
+      if (!res.ok) {
+        setError(true)
+        return
+      }
+      setPending(res.data.docs.map(toNexusBlog))
+    })
+  }
+
+  useEffect(() => {
+    if (role === 'admin') load()
+  }, [role])
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-24 text-sm text-nx-muted">
+        <Loader2 size={16} className="animate-spin" />
+        {tr('loading')}
+      </div>
+    )
+  }
 
   if (role !== 'admin') {
     return (
@@ -25,8 +53,6 @@ export default function AdminPanelPage() {
       </div>
     )
   }
-
-  const pending = blogs.filter((b) => statuses[b.id] === 'pending')
 
   return (
     <div className="flex flex-col gap-8">
@@ -50,11 +76,29 @@ export default function AdminPanelPage() {
         </div>
       </Reveal>
 
-      {pending.length === 0 ? (
+      {pending === null && !error && (
+        <div className="flex items-center justify-center gap-2 py-16 text-sm text-nx-muted">
+          <Loader2 size={16} className="animate-spin" />
+          {tr('loading')}
+        </div>
+      )}
+
+      {error && (
+        <div className="flex flex-col items-center gap-3 py-16 text-sm text-nx-muted">
+          <p>{tr('loadError')}</p>
+          <button onClick={load} className="font-medium text-(--nx-accent)">
+            {tr('tryAgain')}
+          </button>
+        </div>
+      )}
+
+      {pending !== null && pending.length === 0 && (
         <Reveal>
           <div className="nx-card nx-space text-center text-nx-muted">{tr('adminEmpty')}</div>
         </Reveal>
-      ) : (
+      )}
+
+      {pending !== null && pending.length > 0 && (
         <div className="grid gap-5 sm:grid-cols-2">
           <AnimatePresence>
             {pending.map((blog, i) => (
@@ -74,14 +118,16 @@ export default function AdminPanelPage() {
                         <Clock size={13} />
                         {tr('pendingReview')}
                       </span>
-                      <span className="text-nx-muted">{blog.generatedAt}</span>
+                      <span className="text-nx-muted">{blog.createdAt}</span>
                     </div>
                     <h3 className="text-lg font-semibold text-nx-text">{blog.title[lang]}</h3>
                     <p className="line-clamp-2 text-sm leading-relaxed text-nx-muted">
                       {blog.description[lang]}
                     </p>
                     <p className="mt-auto pt-2 text-xs text-nx-muted">
-                      {blog.author ? `${tr('writtenBy')} ${blog.author}` : `${tr('generatedBy')} ${blog.model}`}
+                      {blog.author
+                        ? `${tr('writtenBy')} ${blog.author}`
+                        : `${tr('generatedBy')} ${blog.model}`}
                     </p>
                   </Link>
                 </motion.div>

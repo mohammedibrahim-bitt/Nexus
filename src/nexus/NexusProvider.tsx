@@ -1,42 +1,13 @@
 'use client'
 
+import type { User } from '@/payload-types'
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
-import type { BlogStatus, Lang, NexusBlog } from './data'
-import { demoBlogs, t } from './data'
+import { authApi } from './api'
+import type { Lang } from './data'
+import { t } from './data'
 
-export type BlogEdit = Partial<Pick<NexusBlog, 'title' | 'description' | 'content' | 'references'>>
-
-export type NexusRole = 'admin' | 'reader' | 'author' | null
-
-/** A frontend-only demo directory — no real accounts/auth, just a roster the admin can assign roles on. */
-export type NexusUser = {
-  id: string
-  name: string
-  email: string
-  role: Exclude<NexusRole, null>
-}
-
-const seedUsers: NexusUser[] = [
-  { id: 'u-1', name: 'Amara Osei', email: 'amara@example.com', role: 'reader' },
-  { id: 'u-2', name: 'Liam Chen', email: 'liam@example.com', role: 'reader' },
-  { id: 'u-3', name: 'Priya Nair', email: 'priya@example.com', role: 'author' },
-  { id: 'u-4', name: 'Sofia Martins', email: 'sofia@example.com', role: 'reader' },
-]
-
-export type NewBlogInput = {
-  title: string
-  description: string
-  content: string
-  references: string
-  tag: string
-}
-
-const slugify = (s: string) =>
-  s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '') || 'blog'
+export type NexusRole = 'admin' | 'author' | 'reviewer' | null
 
 export type UISettings = {
   accent: string
@@ -66,68 +37,47 @@ export const parentSiteTokens: Pick<UISettings, 'accent' | 'radius' | 'fontScale
   density: 'compact',
 }
 
+export type AuthResult = { ok: true; role: NexusRole } | { ok: false; error: string }
+
 type NexusState = {
   lang: Lang
   setLang: (l: Lang) => void
   dark: boolean
   setDark: (d: boolean) => void
+  currentUser: User | null
   role: NexusRole
-  login: (role: Exclude<NexusRole, null>) => void
-  logout: () => void
-  users: NexusUser[]
-  setUserRole: (id: string, role: Exclude<NexusRole, null>) => void
+  authLoading: boolean
+  signIn: (email: string, password: string) => Promise<AuthResult>
+  signUp: (name: string, email: string, password: string) => Promise<AuthResult>
+  logout: () => Promise<void>
   settings: UISettings
   updateSettings: (patch: Partial<UISettings>) => void
   resetSettings: () => void
-  statuses: Record<string, BlogStatus>
-  decide: (id: string, status: BlogStatus) => void
-  blogs: NexusBlog[]
-  updateBlog: (id: string, patch: BlogEdit) => void
-  createBlog: (input: NewBlogInput) => void
   tr: (key: string) => string
 }
 
 const NexusContext = createContext<NexusState | null>(null)
 
-const STORAGE_KEY = 'nexus-state-v1'
-
-type Persisted = {
-  lang: Lang
-  dark: boolean
-  role: NexusRole
-  settings: UISettings
-  statuses: Record<string, BlogStatus>
-  edits: Record<string, BlogEdit>
-  authorBlogs: NexusBlog[]
-  users: NexusUser[]
-}
+const SETTINGS_KEY = 'nexus-ui-settings-v1'
 
 export function NexusProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Lang>('en')
   const [dark, setDark] = useState(false)
-  const [role, setRole] = useState<NexusRole>(null)
   const [settings, setSettings] = useState<UISettings>(defaultSettings)
-  const [statuses, setStatuses] = useState<Record<string, BlogStatus>>(() =>
-    Object.fromEntries(demoBlogs.map((b) => [b.id, b.status])),
-  )
-  const [edits, setEdits] = useState<Record<string, BlogEdit>>({})
-  const [authorBlogs, setAuthorBlogs] = useState<NexusBlog[]>([])
-  const [users, setUsers] = useState<NexusUser[]>(seedUsers)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const [hydrated, setHydrated] = useState(false)
 
+  // UI-only preferences (theme, language, accent, etc.) stay client-side —
+  // there's nothing for a backend to own here.
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY)
+      const raw = localStorage.getItem(SETTINGS_KEY)
       if (raw) {
-        const p = JSON.parse(raw) as Partial<Persisted>
+        const p = JSON.parse(raw) as { lang?: Lang; dark?: boolean; settings?: UISettings }
         if (p.lang) setLang(p.lang)
         if (typeof p.dark === 'boolean') setDark(p.dark)
-        if (p.role !== undefined) setRole(p.role)
         if (p.settings) setSettings({ ...defaultSettings, ...p.settings })
-        if (p.statuses) setStatuses((s) => ({ ...s, ...p.statuses }))
-        if (p.edits) setEdits((e) => ({ ...e, ...p.edits }))
-        if (p.authorBlogs) setAuthorBlogs(p.authorBlogs)
-        if (p.users) setUsers(p.users)
       } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
         setDark(true)
       }
@@ -139,9 +89,8 @@ export function NexusProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return
-    const persisted: Persisted = { lang, dark, role, settings, statuses, edits, authorBlogs, users }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted))
-  }, [hydrated, lang, dark, role, settings, statuses, edits, authorBlogs, users])
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ lang, dark, settings }))
+  }, [hydrated, lang, dark, settings])
 
   // Reflect theme / direction / UI tokens on the document root.
   useEffect(() => {
@@ -155,8 +104,41 @@ export function NexusProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty('--nx-space', settings.density === 'compact' ? '0.75' : '1')
   }, [dark, lang, settings])
 
-  const setUserRole = useCallback((id: string, newRole: Exclude<NexusRole, null>) => {
-    setUsers((u) => u.map((user) => (user.id === id ? { ...user, role: newRole } : user)))
+  // Real session — ask the backend who's logged in via the payload-token cookie.
+  const refreshSession = useCallback(async () => {
+    setAuthLoading(true)
+    const res = await authApi.me()
+    setCurrentUser(res.ok ? (res.data.user ?? null) : null)
+    setAuthLoading(false)
+  }, [])
+
+  useEffect(() => {
+    refreshSession()
+  }, [refreshSession])
+
+  const signIn = useCallback(
+    async (email: string, password: string): Promise<AuthResult> => {
+      const res = await authApi.login(email, password)
+      if (!res.ok) return { ok: false, error: res.error }
+      setCurrentUser(res.data.user)
+      return { ok: true, role: (res.data.user.role as NexusRole) ?? null }
+    },
+    [],
+  )
+
+  const signUp = useCallback(
+    async (name: string, email: string, password: string): Promise<AuthResult> => {
+      const res = await authApi.signup(name, email, password)
+      if (!res.ok) return { ok: false, error: res.error }
+      // Payload doesn't log the new user in on creation — sign them in right away.
+      return signIn(email, password)
+    },
+    [signIn],
+  )
+
+  const logout = useCallback(async () => {
+    await authApi.logout()
+    setCurrentUser(null)
   }, [])
 
   const updateSettings = useCallback(
@@ -164,50 +146,7 @@ export function NexusProvider({ children }: { children: React.ReactNode }) {
     [],
   )
 
-  const updateBlog = useCallback(
-    (id: string, patch: BlogEdit) => setEdits((e) => ({ ...e, [id]: { ...e[id], ...patch } })),
-    [],
-  )
-
-  const createBlog = useCallback(
-    (input: NewBlogInput) => {
-      const title = input.title.trim()
-      const paragraphs = input.content
-        .split(/\n\s*\n/)
-        .map((p) => p.trim())
-        .filter(Boolean)
-      const references = input.references
-        .split('\n')
-        .map((r) => r.trim())
-        .filter(Boolean)
-      const wordCount = paragraphs.join(' ').split(/\s+/).filter(Boolean).length
-      const id = `${slugify(title)}-${Date.now().toString(36)}`
-
-      const blog: NexusBlog = {
-        id,
-        title: { en: title, ar: title },
-        description: { en: input.description.trim(), ar: input.description.trim() },
-        content: { en: paragraphs, ar: paragraphs },
-        references,
-        status: 'pending',
-        generatedAt: new Date().toISOString().slice(0, 10),
-        model: 'Human-written',
-        readMinutes: Math.max(1, Math.round(wordCount / 200)),
-        tag: { en: input.tag.trim() || 'Community', ar: input.tag.trim() || 'Community' },
-        author: 'Author',
-      }
-
-      setAuthorBlogs((b) => [blog, ...b])
-      setStatuses((s) => ({ ...s, [id]: 'pending' }))
-    },
-    [],
-  )
-
-  const blogs = useMemo<NexusBlog[]>(
-    () =>
-      [...demoBlogs, ...authorBlogs].map((b) => (edits[b.id] ? { ...b, ...edits[b.id] } : b)),
-    [edits, authorBlogs],
-  )
+  const role: NexusRole = (currentUser?.role as NexusRole) ?? null
 
   const value = useMemo<NexusState>(
     () => ({
@@ -215,34 +154,18 @@ export function NexusProvider({ children }: { children: React.ReactNode }) {
       setLang,
       dark,
       setDark,
+      currentUser,
       role,
-      login: (r) => setRole(r),
-      logout: () => setRole(null),
-      users,
-      setUserRole,
+      authLoading,
+      signIn,
+      signUp,
+      logout,
       settings,
       updateSettings,
       resetSettings: () => setSettings(defaultSettings),
-      statuses,
-      decide: (id, status) => setStatuses((s) => ({ ...s, [id]: status })),
-      blogs,
-      updateBlog,
-      createBlog,
       tr: (key) => t[key]?.[lang] ?? key,
     }),
-    [
-      lang,
-      dark,
-      role,
-      users,
-      setUserRole,
-      settings,
-      statuses,
-      updateSettings,
-      blogs,
-      updateBlog,
-      createBlog,
-    ],
+    [lang, dark, currentUser, role, authLoading, signIn, signUp, logout, settings, updateSettings],
   )
 
   return <NexusContext.Provider value={value}>{children}</NexusContext.Provider>

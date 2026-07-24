@@ -1,10 +1,11 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, Clock, Lock, PenLine, ThumbsDown, ThumbsUp } from 'lucide-react'
+import { Check, Clock, Loader2, Lock, PenLine, ThumbsDown, ThumbsUp } from 'lucide-react'
 import Link from 'next/link'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
+import { postsApi, toNexusBlog, type NexusBlog } from '@/nexus/api'
 import { useNexus } from '@/nexus/NexusProvider'
 import { Reveal } from '@/nexus/Reveal'
 
@@ -23,9 +24,34 @@ const statusStyle = {
 } as const
 
 export default function WritePage() {
-  const { tr, lang, role, blogs, statuses, createBlog } = useNexus()
+  const { tr, lang, role, authLoading, currentUser } = useNexus()
   const [form, setForm] = useState(emptyForm)
+  const [submitting, setSubmitting] = useState(false)
   const [justSubmitted, setJustSubmitted] = useState(false)
+  const [mySubmissions, setMySubmissions] = useState<NexusBlog[] | null>(null)
+
+  const loadMine = () => {
+    if (!currentUser) return
+    postsApi
+      .list({ 'where[author][equals]': String(currentUser.id), sort: '-createdAt' })
+      .then((res) => {
+        if (res.ok) setMySubmissions(res.data.docs.map(toNexusBlog))
+      })
+  }
+
+  useEffect(() => {
+    if (role === 'author' && currentUser) loadMine()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role, currentUser])
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-24 text-sm text-nx-muted">
+        <Loader2 size={16} className="animate-spin" />
+        {tr('loading')}
+      </div>
+    )
+  }
 
   if (role !== 'author') {
     return (
@@ -42,12 +68,14 @@ export default function WritePage() {
     )
   }
 
-  const mySubmissions = blogs.filter((b) => b.author)
-
-  const submit = () => {
-    createBlog(form)
+  const submit = async () => {
+    setSubmitting(true)
+    const res = await postsApi.create(form)
+    setSubmitting(false)
+    if (!res.ok) return
     setForm(emptyForm)
     setJustSubmitted(true)
+    loadMine()
   }
 
   return (
@@ -134,10 +162,10 @@ export default function WritePage() {
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={submit}
-            disabled={!form.title.trim() || !form.content.trim()}
+            disabled={!form.title.trim() || !form.content.trim() || submitting}
             className="flex items-center justify-center gap-2 rounded-nx bg-(--nx-accent) px-5 py-3 font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            <PenLine size={17} />
+            {submitting ? <Loader2 size={17} className="animate-spin" /> : <PenLine size={17} />}
             {tr('submitForReview')}
           </motion.button>
         </div>
@@ -146,15 +174,19 @@ export default function WritePage() {
       <Reveal>
         <section className="flex flex-col gap-3">
           <h2 className="text-lg font-semibold text-nx-text">{tr('mySubmissions')}</h2>
-          {mySubmissions.length === 0 ? (
+          {mySubmissions === null ? (
+            <div className="flex items-center justify-center gap-2 py-8 text-sm text-nx-muted">
+              <Loader2 size={16} className="animate-spin" />
+              {tr('loading')}
+            </div>
+          ) : mySubmissions.length === 0 ? (
             <p className="nx-card nx-space text-center text-sm text-nx-muted">
               {tr('noSubmissionsYet')}
             </p>
           ) : (
             <div className="flex flex-col gap-2">
               {mySubmissions.map((b) => {
-                const s = statuses[b.id] ?? b.status
-                const StatusIcon = statusIcon[s]
+                const StatusIcon = statusIcon[b.status]
                 return (
                   <Link
                     key={b.id}
@@ -163,10 +195,16 @@ export default function WritePage() {
                   >
                     <span className="text-sm font-medium text-nx-text">{b.title[lang]}</span>
                     <span
-                      className={`flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${statusStyle[s]}`}
+                      className={`flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${statusStyle[b.status]}`}
                     >
                       <StatusIcon size={12} />
-                      {tr(s === 'pending' ? 'pendingReview' : s === 'approved' ? 'approved' : 'rejected')}
+                      {tr(
+                        b.status === 'pending'
+                          ? 'pendingReview'
+                          : b.status === 'approved'
+                            ? 'approved'
+                            : 'rejected',
+                      )}
                     </span>
                   </Link>
                 )

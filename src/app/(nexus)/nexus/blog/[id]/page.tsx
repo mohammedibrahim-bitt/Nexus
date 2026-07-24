@@ -1,24 +1,46 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, Check, Pencil, ShieldCheck, X } from 'lucide-react'
+import { ArrowLeft, Check, Loader2, Pencil, ShieldCheck, Trash2, X } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
+import { postsApi, toNexusBlog, type NexusBlog } from '@/nexus/api'
 import { useNexus } from '@/nexus/NexusProvider'
 import { Reveal } from '@/nexus/Reveal'
 
 export default function BlogPage() {
   const { id } = useParams<{ id: string }>()
-  const { tr, lang, role, statuses, decide, blogs, updateBlog } = useNexus()
+  const { tr, lang, role, currentUser } = useNexus()
   const router = useRouter()
+
+  const [blog, setBlog] = useState<NexusBlog | null>(null)
+  const [notFound, setNotFound] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deciding, setDeciding] = useState(false)
   const [form, setForm] = useState({ title: '', description: '', content: '', references: '' })
 
-  const blog = blogs.find((b) => b.id === id)
-  if (!blog) {
+  useEffect(() => {
+    let cancelled = false
+    postsApi.get(id).then((res) => {
+      if (cancelled) return
+      if (!res.ok) {
+        setNotFound(true)
+        return
+      }
+      setBlog(toNexusBlog(res.data))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [id])
+
+  if (notFound) {
     return (
       <div className="py-20 text-center text-nx-muted">
         <p>{tr('notFoundBlog')}</p>
@@ -29,7 +51,16 @@ export default function BlogPage() {
     )
   }
 
-  const status = statuses[blog.id]
+  if (!blog) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-24 text-sm text-nx-muted">
+        <Loader2 size={16} className="animate-spin" />
+        {tr('loading')}
+      </div>
+    )
+  }
+
+  const status = blog.status
   const reviewing = role === 'admin' && status === 'pending'
   const backHref =
     status === 'pending' && role === 'author'
@@ -39,7 +70,12 @@ export default function BlogPage() {
         : '/nexus'
   const canEdit =
     (role === 'admin' && status !== 'approved') ||
-    (role === 'author' && status === 'pending' && Boolean(blog.author))
+    (role === 'author' &&
+      status === 'pending' &&
+      blog.authorId != null &&
+      currentUser != null &&
+      blog.authorId === String(currentUser.id))
+  const canDelete = role === 'admin' && status === 'approved'
 
   const startEditing = () => {
     setForm({
@@ -52,24 +88,46 @@ export default function BlogPage() {
     setEditing(true)
   }
 
-  const saveEdits = () => {
-    updateBlog(blog.id, {
-      title: { ...blog.title, [lang]: form.title.trim() },
-      description: { ...blog.description, [lang]: form.description.trim() },
-      content: {
-        ...blog.content,
-        [lang]: form.content
-          .split(/\n\s*\n/)
-          .map((p) => p.trim())
-          .filter(Boolean),
-      },
+  const saveEdits = async () => {
+    setSaving(true)
+    const patch: Record<string, unknown> = {
       references: form.references
         .split('\n')
         .map((r) => r.trim())
-        .filter(Boolean),
-    })
+        .filter(Boolean)
+        .map((value) => ({ value })),
+    }
+    if (lang === 'ar') {
+      patch.titleAr = form.title.trim()
+      patch.descriptionAr = form.description.trim()
+      patch.contentAr = form.content.trim()
+    } else {
+      patch.titleEn = form.title.trim()
+      patch.descriptionEn = form.description.trim()
+      patch.contentEn = form.content.trim()
+    }
+    const res = await postsApi.update(blog.id, patch)
+    setSaving(false)
+    if (!res.ok) return
+    setBlog(toNexusBlog(res.data.doc))
     setEditing(false)
     setSaved(true)
+  }
+
+  const decide = async (next: 'approved' | 'rejected') => {
+    setDeciding(true)
+    const res = await postsApi.decide(blog.id, next)
+    setDeciding(false)
+    if (!res.ok) return
+    router.push('/nexus/admin')
+  }
+
+  const confirmDelete = async () => {
+    setDeleting(true)
+    const res = await postsApi.remove(blog.id)
+    setDeleting(false)
+    if (!res.ok) return
+    router.push('/nexus')
   }
 
   return (
@@ -176,10 +234,10 @@ export default function BlogPage() {
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={saveEdits}
-                disabled={!form.title.trim()}
+                disabled={!form.title.trim() || saving}
                 className="flex flex-1 items-center justify-center gap-2 rounded-nx bg-(--nx-accent) px-5 py-3 font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
               >
-                <Check size={17} />
+                {saving ? <Loader2 size={17} className="animate-spin" /> : <Check size={17} />}
                 {tr('save')}
               </motion.button>
               <motion.button
@@ -198,7 +256,7 @@ export default function BlogPage() {
           <Reveal as="header">
             <div className="flex flex-col items-center gap-3 text-center">
               <span className="text-xs font-medium tracking-wide text-nx-muted uppercase">
-                {blog.tag[lang]} · {blog.generatedAt} · {blog.readMinutes} {tr('minRead')}
+                {blog.tag[lang]} · {blog.createdAt} · {blog.readMinutes} {tr('minRead')}
               </span>
               <h1 className="text-3xl font-bold tracking-tight text-nx-text sm:text-4xl">
                 {blog.title[lang]}
@@ -238,26 +296,76 @@ export default function BlogPage() {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <motion.button
                   whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    decide(blog.id, 'approved')
-                    router.push('/nexus/admin')
-                  }}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-nx bg-(--nx-accent) px-5 py-3.5 font-semibold text-white shadow-md transition-opacity hover:opacity-90"
+                  onClick={() => decide('approved')}
+                  disabled={deciding}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-nx bg-(--nx-accent) px-5 py-3.5 font-semibold text-white shadow-md transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   <Check size={18} />
                   {tr('approve')}
                 </motion.button>
                 <motion.button
                   whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    decide(blog.id, 'rejected')
-                    router.push('/nexus/admin')
-                  }}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-nx border border-nx-border bg-nx-surface px-5 py-3.5 font-semibold text-nx-text transition-colors hover:bg-nx-surface-2"
+                  onClick={() => decide('rejected')}
+                  disabled={deciding}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-nx border border-nx-border bg-nx-surface px-5 py-3.5 font-semibold text-nx-text transition-colors hover:bg-nx-surface-2 disabled:opacity-50"
                 >
                   <X size={18} />
                   {tr('reject')}
                 </motion.button>
+              </div>
+            </Reveal>
+          )}
+
+          {/* Delete — small icon, bottom of the blog */}
+          {canDelete && (
+            <Reveal>
+              <div className="flex flex-col items-center gap-3">
+                <AnimatePresence mode="wait">
+                  {confirmingDelete ? (
+                    <motion.div
+                      key="confirm"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 4 }}
+                      className="flex flex-col items-center gap-3 rounded-nx border border-red-500/30 bg-red-500/5 p-4 text-center"
+                    >
+                      <p className="text-sm font-medium text-nx-text">{tr('deleteBlogConfirm')}</p>
+                      <div className="flex gap-2">
+                        <motion.button
+                          whileTap={{ scale: 0.96 }}
+                          onClick={confirmDelete}
+                          disabled={deleting}
+                          className="flex items-center gap-2 rounded-nx bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                        >
+                          {deleting ? (
+                            <Loader2 size={15} className="animate-spin" />
+                          ) : (
+                            <Trash2 size={15} />
+                          )}
+                          {tr('confirmDelete')}
+                        </motion.button>
+                        <motion.button
+                          whileTap={{ scale: 0.96 }}
+                          onClick={() => setConfirmingDelete(false)}
+                          className="rounded-nx border border-nx-border bg-nx-surface px-4 py-2 text-sm font-medium text-nx-text transition-colors hover:bg-nx-surface-2"
+                        >
+                          {tr('cancel')}
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.button
+                      key="trigger"
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => setConfirmingDelete(true)}
+                      aria-label={tr('delete')}
+                      title={tr('delete')}
+                      className="flex h-9 w-9 items-center justify-center rounded-full text-nx-muted transition-colors hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
+                    >
+                      <Trash2 size={16} />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
               </div>
             </Reveal>
           )}

@@ -71,6 +71,7 @@ export interface Config {
     folders: Folder;
     pages: Page;
     posts: Post;
+    'nexus-posts': NexusPost;
     media: Media;
     categories: Category;
     users: User;
@@ -96,6 +97,7 @@ export interface Config {
     folders: FoldersSelect<false> | FoldersSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
+    'nexus-posts': NexusPostsSelect<false> | NexusPostsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -875,6 +877,45 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "nexus-posts".
+ */
+export interface NexusPost {
+  id: number;
+  titleEn: string;
+  titleAr?: string | null;
+  descriptionEn: string;
+  descriptionAr?: string | null;
+  /**
+   * Separate paragraphs with a blank line.
+   */
+  contentEn: string;
+  /**
+   * Separate paragraphs with a blank line.
+   */
+  contentAr?: string | null;
+  tagEn?: string | null;
+  tagAr?: string | null;
+  references?:
+    | {
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  status: 'pending' | 'approved' | 'rejected';
+  /**
+   * Set automatically to whoever submitted this post.
+   */
+  author?: (number | null) | User;
+  /**
+   * Name of the AI writer/model, for AI-drafted posts without a human author.
+   */
+  aiModel?: string | null;
+  readMinutes?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "customers".
  */
 export interface Customer {
@@ -1117,6 +1158,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'posts';
         value: number | Post;
+      } | null)
+    | ({
+        relationTo: 'nexus-posts';
+        value: number | NexusPost;
       } | null)
     | ({
         relationTo: 'media';
@@ -1401,6 +1446,32 @@ export interface PostsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "nexus-posts_select".
+ */
+export interface NexusPostsSelect<T extends boolean = true> {
+  titleEn?: T;
+  titleAr?: T;
+  descriptionEn?: T;
+  descriptionAr?: T;
+  contentEn?: T;
+  contentAr?: T;
+  tagEn?: T;
+  tagAr?: T;
+  references?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  status?: T;
+  author?: T;
+  aiModel?: T;
+  readMinutes?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
