@@ -26,6 +26,12 @@ export const NexusPosts: CollectionConfig = {
   },
   fields: [
     {
+      name: 'slug',
+      type: 'text',
+      label: 'Slug',
+      index: true,
+    },
+    {
       name: 'titleEn',
       type: 'text',
       label: 'Title (English)',
@@ -73,6 +79,14 @@ export const NexusPosts: CollectionConfig = {
       name: 'tagAr',
       type: 'text',
       label: 'Topic tag (Arabic)',
+    },
+    {
+      name: 'coverImageUrl',
+      type: 'text',
+      label: 'Top background photo URL',
+      admin: {
+        description: 'Optional image URL used as the article hero background.',
+      },
     },
     {
       name: 'references',

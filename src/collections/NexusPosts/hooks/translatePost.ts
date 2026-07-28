@@ -46,8 +46,19 @@ export const translatePost: CollectionBeforeValidateHook = async ({ data, operat
     // 4. Tag
     if (data.tagEn && !data.tagAr) {
       data.tagAr = await translateText(data.tagEn, 'ar')
-    } else if (data.tagAr && !data.tagEn) {
-      data.tagEn = await translateText(data.tagAr, 'en')
+    }
+
+    // 5. Slug
+    if (!data.slug || operation === 'create') {
+      const sourceTitle = data.titleEn || data.titleAr || ''
+      if (sourceTitle) {
+        data.slug = sourceTitle
+          .toLowerCase()
+          .trim()
+          .replace(/[^\w\s-\u0600-\u06FF]/g, '')
+          .replace(/[\s_-]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+      }
     }
   }
   return data

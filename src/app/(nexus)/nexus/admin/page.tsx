@@ -110,7 +110,7 @@ export default function AdminPanelPage() {
                   transition={{ type: 'spring', stiffness: 380, damping: 26 }}
                 >
                   <Link
-                    href={`/nexus/article/${blog.id}`}
+                    href={`/nexus/article/${blog.slug || blog.id}`}
                     className="nx-card nx-space flex h-full flex-col gap-3 transition-shadow hover:shadow-lg"
                   >
                     <div className="flex items-center justify-between text-xs">

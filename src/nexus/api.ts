@@ -1,11 +1,23 @@
 import type { NexusPost, User } from '@/payload-types'
 
+export function slugify(text: string): string {
+  if (!text) return ''
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-\u0600-\u06FF]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
 export type NexusBlog = {
   id: string
+  slug: string
   title: { en: string; ar: string }
   description: { en: string; ar: string }
   content: { en: string[]; ar: string[] }
   references: string[]
+  coverImageUrl?: string
   status: 'pending' | 'approved' | 'rejected'
   createdAt: string
   model: string
@@ -31,8 +43,12 @@ export function toNexusBlog(doc: NexusPost): NexusBlog {
         ? String(doc.author)
         : undefined
 
+  const docSlug = (doc as Record<string, unknown>).slug as string | undefined
+  const slug = docSlug || slugify(doc.titleEn || doc.titleAr || '') || String(doc.id)
+
   return {
     id: String(doc.id),
+    slug,
     title: { en: doc.titleEn, ar: doc.titleAr || doc.titleEn },
     description: { en: doc.descriptionEn, ar: doc.descriptionAr || doc.descriptionEn },
     content: {
@@ -40,6 +56,7 @@ export function toNexusBlog(doc: NexusPost): NexusBlog {
       ar: splitParagraphs(doc.contentAr || doc.contentEn),
     },
     references: (doc.references ?? []).map((r) => r.value),
+    coverImageUrl: doc.coverImageUrl ?? undefined,
     status: doc.status,
     createdAt: (doc.createdAt ?? '').slice(0, 10),
     model: doc.aiModel ?? '',
@@ -55,6 +72,7 @@ export type NewBlogInput = {
   description: string
   content: string
   references: string
+  coverImageUrl?: string
   tag: string
   lang?: 'en' | 'ar'
 }
@@ -103,12 +121,47 @@ const toQuery = (params: Record<string, string>) => {
 export const postsApi = {
   list: (params: Record<string, string> = {}) =>
     request<{ docs: NexusPost[] }>(`/nexus-posts${toQuery({ limit: '100', ...params })}`),
-  get: (id: string) => request<NexusPost>(`/nexus-posts/${id}`),
+  get: async (identifier: string): Promise<ApiResult<NexusPost>> => {
+    const raw = decodeURIComponent(identifier).trim()
+
+    // 1. Direct fetch if numeric ID
+    if (/^\d+$/.test(raw)) {
+      const directRes = await request<NexusPost>(`/nexus-posts/${raw}`)
+      if (directRes.ok) return directRes
+    }
+
+    // 2. Query Payload DB by slug index
+    const slugQuery = await request<{ docs: NexusPost[] }>(
+      `/nexus-posts?where[slug][equals]=${encodeURIComponent(raw)}&limit=1`
+    )
+    if (slugQuery.ok && slugQuery.data.docs && slugQuery.data.docs.length > 0) {
+      return { ok: true, data: slugQuery.data.docs[0] }
+    }
+
+    // 3. Fallback: list posts and match ID, slug, or title slug
+    const listRes = await request<{ docs: NexusPost[] }>('/nexus-posts?limit=100')
+    if (listRes.ok && listRes.data.docs) {
+      const matched = listRes.data.docs.find(
+        (doc) =>
+          String(doc.id) === raw ||
+          (doc as Record<string, unknown>).slug === raw ||
+          slugify(doc.titleEn || '') === raw ||
+          slugify(doc.titleAr || '') === raw
+      )
+      if (matched) {
+        return { ok: true, data: matched }
+      }
+    }
+
+    return request<NexusPost>(`/nexus-posts/${encodeURIComponent(raw)}`)
+  },
   create: (input: NewBlogInput) => {
     const isAr = input.lang === 'ar'
+    const generatedSlug = slugify(input.title)
     return request<{ doc: NexusPost }>('/nexus-posts', {
       method: 'POST',
       body: JSON.stringify({
+        slug: generatedSlug || undefined,
         titleEn: isAr ? undefined : input.title.trim(),
         titleAr: isAr ? input.title.trim() : undefined,
         descriptionEn: isAr ? undefined : input.description.trim(),
@@ -117,6 +170,7 @@ export const postsApi = {
         contentAr: isAr ? input.content.trim() : undefined,
         tagEn: isAr ? undefined : (input.tag.trim() || 'Community'),
         tagAr: isAr ? (input.tag.trim() || 'Community') : undefined,
+        coverImageUrl: input.coverImageUrl?.trim() || undefined,
         references: input.references
           .split('\n')
           .map((r) => r.trim())
@@ -126,11 +180,16 @@ export const postsApi = {
       }),
     })
   },
-  update: (id: string, patch: Record<string, unknown>) =>
-    request<{ doc: NexusPost }>(`/nexus-posts/${id}`, {
+  update: (id: string, patch: Record<string, unknown>) => {
+    const title = (patch.titleEn as string) || (patch.titleAr as string)
+    if (title && !patch.slug) {
+      patch.slug = slugify(title)
+    }
+    return request<{ doc: NexusPost }>(`/nexus-posts/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(patch),
-    }),
+    })
+  },
   decide: (id: string, status: 'approved' | 'rejected') =>
     request<{ doc: NexusPost }>(`/nexus-posts/${id}`, {
       method: 'PATCH',

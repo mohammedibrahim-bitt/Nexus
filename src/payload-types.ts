@@ -881,6 +881,7 @@ export interface Form {
  */
 export interface NexusPost {
   id: number;
+  slug?: string | null;
   titleEn: string;
   titleAr?: string | null;
   descriptionEn: string;
@@ -895,6 +896,10 @@ export interface NexusPost {
   contentAr?: string | null;
   tagEn?: string | null;
   tagAr?: string | null;
+  /**
+   * Optional image URL used as the article hero background.
+   */
+  coverImageUrl?: string | null;
   references?:
     | {
         value: string;
@@ -1452,6 +1457,7 @@ export interface PostsSelect<T extends boolean = true> {
  * via the `definition` "nexus-posts_select".
  */
 export interface NexusPostsSelect<T extends boolean = true> {
+  slug?: T;
   titleEn?: T;
   titleAr?: T;
   descriptionEn?: T;
@@ -1460,6 +1466,7 @@ export interface NexusPostsSelect<T extends boolean = true> {
   contentAr?: T;
   tagEn?: T;
   tagAr?: T;
+  coverImageUrl?: T;
   references?:
     | T
     | {

@@ -104,6 +104,7 @@ export const t: Record<string, { en: string; ar: string }> = {
   fieldDescription: { en: 'Description', ar: 'الوصف' },
   fieldContent: { en: 'Content (separate paragraphs with a blank line)', ar: 'المحتوى (افصل الفقرات بسطر فارغ)' },
   fieldReferences: { en: 'References (one per line)', ar: 'المراجع (مرجع في كل سطر)' },
+  fieldCoverImage: { en: 'Top background photo URL', ar: 'رابط صورة الخلفية العلوية' },
   save: { en: 'Save changes', ar: 'حفظ التعديلات' },
   cancel: { en: 'Cancel', ar: 'إلغاء' },
   saved: { en: 'Changes saved', ar: 'تم حفظ التعديلات' },

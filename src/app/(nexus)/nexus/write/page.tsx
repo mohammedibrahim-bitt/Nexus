@@ -10,7 +10,14 @@ import { postsApi, toNexusBlog, type NexusBlog } from '@/nexus/api'
 import { useNexus } from '@/nexus/NexusProvider'
 import { Reveal } from '@/nexus/Reveal'
 
-const emptyForm = { title: '', description: '', content: '', references: '', tag: '' }
+const emptyForm = {
+  title: '',
+  description: '',
+  content: '',
+  references: '',
+  tag: '',
+  coverImageUrl: '',
+}
 
 const statusIcon = {
   pending: Clock,
@@ -141,6 +148,17 @@ export default function WritePage() {
           </label>
 
           <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-nx-text">{tr('fieldCoverImage')}</span>
+            <input
+              type="url"
+              value={form.coverImageUrl}
+              onChange={(e) => setForm((f) => ({ ...f, coverImageUrl: e.target.value }))}
+              placeholder="https://example.com/photo.jpg"
+              className="h-11 rounded-[calc(var(--nx-radius)*0.6)] border border-nx-border bg-nx-surface-2 px-4 text-nx-text outline-none focus:ring-2 focus:ring-(--nx-accent)"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-nx-text">{tr('fieldContent')}</span>
             <textarea
               value={form.content}
@@ -191,7 +209,7 @@ export default function WritePage() {
                 return (
                   <Link
                     key={b.id}
-                    href={`/nexus/article/${b.id}`}
+                    href={`/nexus/article/${b.slug || b.id}`}
                     className="nx-card flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-nx-surface-2"
                   >
                     <span className="text-sm font-medium text-nx-text">{b.title[lang]}</span>
