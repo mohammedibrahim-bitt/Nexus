@@ -60,18 +60,15 @@ export default function LoginPage() {
 
       <Reveal delay={0.1}>
         <div className="nx-card nx-space flex flex-col gap-4 text-start">
-          <button
+          <motion.button
             type="button"
-            disabled
-            title={tr('comingSoon')}
-            className="flex items-center justify-center gap-2.5 rounded-nx border border-nx-border bg-nx-surface-2 px-5 py-3 font-semibold text-nx-muted opacity-70"
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center justify-center gap-2.5 rounded-nx border border-nx-border bg-nx-surface-2 px-5 py-3 font-semibold text-nx-text transition-colors hover:bg-nx-surface-2/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-(--nx-accent)"
           >
             <Chrome size={18} />
             {tr('continueWithGoogle')}
-            <span className="rounded-full bg-nx-surface px-2 py-0.5 text-xs font-medium">
-              {tr('comingSoon')}
-            </span>
-          </button>
+          </motion.button>
 
           <div className="flex items-center gap-3 text-xs text-nx-muted">
             <span className="h-px flex-1 bg-nx-border" />

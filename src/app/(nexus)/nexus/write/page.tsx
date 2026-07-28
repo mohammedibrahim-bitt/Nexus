@@ -71,7 +71,7 @@ export default function WritePage() {
 
   const submit = async () => {
     setSubmitting(true)
-    const res = await postsApi.create(form)
+    const res = await postsApi.create({ ...form, lang })
     setSubmitting(false)
     if (!res.ok) return
     setForm(emptyForm)

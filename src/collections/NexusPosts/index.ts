@@ -6,6 +6,7 @@ import { canCreateNexusPost } from './access/canCreateNexusPost'
 import { canReadNexusPost } from './access/canReadNexusPost'
 import { canUpdateNexusPost } from './access/canUpdateNexusPost'
 import { setAuthorOnCreate } from './hooks/setAuthorOnCreate'
+import { translatePost } from './hooks/translatePost'
 
 // Nexus is a standalone AI-drafted / human-approved blog: an author (or the
 // AI writer) drafts a post, an admin approves or rejects it, and approved
@@ -126,6 +127,7 @@ export const NexusPosts: CollectionConfig = {
     },
   ],
   hooks: {
+    beforeValidate: [translatePost],
     beforeChange: [setAuthorOnCreate],
   },
   timestamps: true,

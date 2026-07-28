@@ -73,7 +73,7 @@ function RoleDropdown({
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 450, damping: 32 }}
             role="listbox"
-            className="nx-card absolute end-0 top-[calc(100%+6px)] z-20 w-36 overflow-hidden p-1"
+            className="nx-card absolute end-0 top-[calc(100%+6px)] z-50 w-36 overflow-hidden p-1 shadow-lg"
           >
             {ASSIGNABLE_ROLES.map((r) => (
               <button
@@ -213,7 +213,7 @@ export default function SettingsPage() {
       </Reveal>
 
       {/* Manage user roles */}
-      <Reveal>
+      <Reveal className="relative z-20">
         <section className="nx-card nx-space flex flex-col gap-4">
           <div>
             <h2 className="flex items-center gap-2 font-semibold text-nx-text">
@@ -229,8 +229,12 @@ export default function SettingsPage() {
             </div>
           ) : (
             <div className="flex flex-col divide-y divide-nx-border">
-              {users.map((u) => (
-                <div key={u.id} className="flex items-center justify-between gap-3 py-3">
+              {users.map((u, i) => (
+                <div
+                  key={u.id}
+                  className="relative flex items-center justify-between gap-3 py-3"
+                  style={{ zIndex: users.length - i }}
+                >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-nx-text">{u.name}</p>
                     <p className="truncate text-xs text-nx-muted">{u.email}</p>
@@ -350,12 +354,12 @@ export default function SettingsPage() {
               role="switch"
               aria-checked={settings.animations}
               onClick={() => updateSettings({ animations: !settings.animations })}
-              className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${
-                settings.animations ? 'justify-end bg-(--nx-accent)' : 'justify-start bg-nx-surface-2'
+              className={`relative flex h-7 w-12 items-center rounded-full p-1 transition-colors ${
+                settings.animations ? 'bg-(--nx-accent)' : 'bg-nx-surface-2'
               }`}
             >
               <motion.span
-                layout
+                animate={{ x: settings.animations ? 20 : 0 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 32 }}
                 className="h-5 w-5 rounded-full bg-white shadow"
               />

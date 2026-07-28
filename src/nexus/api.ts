@@ -56,6 +56,7 @@ export type NewBlogInput = {
   content: string
   references: string
   tag: string
+  lang?: 'en' | 'ar'
 }
 
 type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string }
@@ -103,14 +104,19 @@ export const postsApi = {
   list: (params: Record<string, string> = {}) =>
     request<{ docs: NexusPost[] }>(`/nexus-posts${toQuery({ limit: '100', ...params })}`),
   get: (id: string) => request<NexusPost>(`/nexus-posts/${id}`),
-  create: (input: NewBlogInput) =>
-    request<{ doc: NexusPost }>('/nexus-posts', {
+  create: (input: NewBlogInput) => {
+    const isAr = input.lang === 'ar'
+    return request<{ doc: NexusPost }>('/nexus-posts', {
       method: 'POST',
       body: JSON.stringify({
-        titleEn: input.title.trim(),
-        descriptionEn: input.description.trim(),
-        contentEn: input.content.trim(),
-        tagEn: input.tag.trim() || 'Community',
+        titleEn: isAr ? undefined : input.title.trim(),
+        titleAr: isAr ? input.title.trim() : undefined,
+        descriptionEn: isAr ? undefined : input.description.trim(),
+        descriptionAr: isAr ? input.description.trim() : undefined,
+        contentEn: isAr ? undefined : input.content.trim(),
+        contentAr: isAr ? input.content.trim() : undefined,
+        tagEn: isAr ? undefined : (input.tag.trim() || 'Community'),
+        tagAr: isAr ? (input.tag.trim() || 'Community') : undefined,
         references: input.references
           .split('\n')
           .map((r) => r.trim())
@@ -118,7 +124,8 @@ export const postsApi = {
           .map((value) => ({ value })),
         readMinutes: Math.max(1, Math.round(input.content.trim().split(/\s+/).filter(Boolean).length / 200)),
       }),
-    }),
+    })
+  },
   update: (id: string, patch: Record<string, unknown>) =>
     request<{ doc: NexusPost }>(`/nexus-posts/${id}`, {
       method: 'PATCH',
