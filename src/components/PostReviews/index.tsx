@@ -32,8 +32,9 @@ export const PostReviews: React.FC<{ postId: number | string }> = async ({ postI
     id: String(review.id),
     comment: review.comment,
     createdAt: review.createdAt,
-    customerName:
-      review.customer && typeof review.customer === 'object' ? review.customer.name : 'A reader',
+    reviewerName:
+      (review.customer && typeof review.customer === 'object' ? review.customer.name : null) ||
+      'A reader',
     rating: review.rating,
   }))
 

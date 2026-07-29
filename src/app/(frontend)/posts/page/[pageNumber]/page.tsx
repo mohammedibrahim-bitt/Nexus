@@ -31,8 +31,9 @@ export default async function Page({ params: paramsPromise }: Args) {
     collection: 'posts',
     depth: 1,
     limit: 12,
-    page: sanitizedPageNumber,
     overrideAccess: false,
+    page: sanitizedPageNumber,
+    where: { _status: { equals: 'published' } },
   })
 
   return (
@@ -78,6 +79,7 @@ export async function generateStaticParams() {
   const { totalDocs } = await payload.count({
     collection: 'posts',
     overrideAccess: false,
+    where: { _status: { equals: 'published' } },
   })
 
   const totalPages = Math.ceil(totalDocs / 10)

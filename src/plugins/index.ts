@@ -1,4 +1,5 @@
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
+import { isAdmin } from '@/access/isAdmin'
 import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
 import { seoPlugin } from '@payloadcms/plugin-seo'
@@ -57,6 +58,18 @@ export const plugins: Plugin[] = [
   formBuilderPlugin({
     fields: {
       payment: false,
+    },
+    formSubmissionOverrides: {
+      access: {
+        // Contact-form messages and newsletter emails are PII/leads — the
+        // plugin's default (`read: !!user`) would let any self-registered
+        // author read them. Anyone can still submit (create stays open).
+        read: isAdmin,
+      },
+      admin: {
+        defaultColumns: ['form', 'createdAt'],
+        useAsTitle: 'createdAt',
+      },
     },
     formOverrides: {
       fields: ({ defaultFields }) => {

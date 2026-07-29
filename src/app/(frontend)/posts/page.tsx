@@ -4,28 +4,62 @@ import { CollectionArchive } from '@/components/CollectionArchive'
 import { PageRange } from '@/components/PageRange'
 import { Pagination } from '@/components/Pagination'
 import { getMergedSettings } from '@/utilities/getSettings'
-import { getCachedGlobal } from '@/utilities/getGlobals'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
-import React from 'react'
+import React, { Suspense } from 'react'
 import PageClient from './page.client'
+import { PostsFilterBar } from './PostsFilterBar'
 
-export const dynamic = 'force-static'
-export const revalidate = 600
+export const dynamic = 'force-dynamic'
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; category?: string; page?: string }>
+}) {
+  const { q, category, page: pageParam } = await searchParams
+  const currentPage = Number(pageParam) || 1
+
   const payload = await getPayload({ config: configPromise })
+
+  // Fetch categories for the filter bar
+  const categoriesResult = await payload.find({
+    collection: 'categories',
+    limit: 100,
+    depth: 0,
+  })
+
+  const categories = categoriesResult.docs.map((cat: any) => ({
+    slug: cat.slug as string,
+    title: cat.title as string,
+  }))
+
+  // Build the query — always published only, regardless of the viewer's
+  // own access level (staff previewing drafts belongs in the dashboard/
+  // live-preview, not mixed into the public listing).
+  const where: Record<string, any> = { _status: { equals: 'published' } }
+
+  if (q) {
+    where.title = { like: q }
+  }
+
+  if (category) {
+    where['categories.slug'] = { equals: category }
+  }
 
   const posts = await payload.find({
     collection: 'posts',
     depth: 1,
     limit: 12,
+    page: currentPage,
     overrideAccess: false,
+    where,
     select: {
       title: true,
       slug: true,
       categories: true,
       meta: true,
+      heroImage: true,
     },
   })
 
@@ -38,7 +72,14 @@ export default async function Page() {
         </div>
       </div>
 
+      {/* Search & Filter Bar */}
       <div className="container mb-8">
+        <Suspense fallback={null}>
+          <PostsFilterBar categories={categories} />
+        </Suspense>
+      </div>
+
+      <div className="container mb-8 mt-4">
         <PageRange
           collection="posts"
           currentPage={posts.page}

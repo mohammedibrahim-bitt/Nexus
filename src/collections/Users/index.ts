@@ -1,12 +1,14 @@
 import type { CollectionConfig } from 'payload'
 
 import { anyone } from '../../access/anyone'
-import { authenticated } from '../../access/authenticated'
 import { isAdmin } from '../../access/isAdmin'
 import { isAdminOrSelf } from '../../access/isAdminOrSelf'
 import { isAdminOrSelfField } from '../../access/isAdminOrSelfField'
+import { isStaffOrSelf } from '../../access/isStaffOrSelf'
+import { brandedEmailHTML, getBrandEmailData } from '../../utilities/brandedEmail'
 import { decryptSecret, encryptSecret } from '../../utilities/encryption'
 import { AI_PROVIDER_OPTIONS } from '../../utilities/seoResearch/aiProviders'
+import { getServerSideURL } from '../../utilities/getURL'
 import { assignFirstUserAsAdmin } from './hooks/assignFirstUserAsAdmin'
 import { trackLastLogin } from './hooks/trackLastLogin'
 
@@ -19,11 +21,12 @@ export const Users: CollectionConfig = {
     // just a hidden UI element.
     admin: isAdmin,
     // Anyone can register an account, but they always land in the collection
-    // as an "author" — see the `role` field's own access control below, and
+    // as a "reader" — see the `role` field's own access control below, and
     // the `assignFirstUserAsAdmin` hook for the one bootstrap exception.
+    // Only an admin can grant author/reviewer/admin.
     create: anyone,
     delete: isAdmin,
-    read: authenticated,
+    read: isStaffOrSelf,
     update: isAdminOrSelf,
   },
   admin: {
@@ -32,7 +35,47 @@ export const Users: CollectionConfig = {
     hidden: ({ user }) => user?.role !== 'admin',
     useAsTitle: 'name',
   },
-  auth: true,
+  auth: {
+    // Both links point at frontend pages (there is no Payload admin-panel
+    // verify/reset UI for non-admins to land on), matching the unified
+    // sign-in flow used across the whole site.
+    forgotPassword: {
+      generateEmailHTML: async (args) => {
+        const token = args?.token ?? ''
+        const user = args?.user
+        const brand = await getBrandEmailData(args?.req)
+        const url = `${getServerSideURL()}/reset-password?token=${token}`
+        return brandedEmailHTML({
+          brand,
+          bodyHtml: `<p>Hi ${user?.name || ''},</p><p>Click the button below to reset your ${brand.siteName} password.</p><p>If you didn't request this, you can safely ignore this email.</p>`,
+          buttonLabel: 'Reset password',
+          url,
+        })
+      },
+      generateEmailSubject: async (args) => {
+        const brand = await getBrandEmailData(args?.req)
+        return `Reset your ${brand.siteName} password`
+      },
+    },
+    verify: {
+      generateEmailHTML: async (args) => {
+        const token = args?.token ?? ''
+        const user = args?.user
+        const brand = await getBrandEmailData(args?.req)
+        const url = `${getServerSideURL()}/verify?token=${token}`
+        return brandedEmailHTML({
+          brand,
+          bodyHtml: `<p>Hi ${user?.name || ''},</p><p>Click the button below to verify your ${brand.siteName} account.</p>`,
+          buttonLabel: 'Verify account',
+          url,
+        })
+      },
+      generateEmailSubject: async (args) => {
+        const brand = await getBrandEmailData(args?.req)
+        return `Verify your ${brand.siteName} account`
+      },
+    },
+  },
   fields: [
     {
       name: 'name',
@@ -52,14 +95,16 @@ export const Users: CollectionConfig = {
         components: {
           Cell: '@/collections/Users/components/RoleCell#RoleCell',
         },
-        description: 'Only an admin can grant this. Admins can also author and review posts.',
+        description:
+          'Self-registered accounts always start as Reader. Only an admin can grant Author, Reviewer, or Admin.',
         position: 'sidebar',
       },
-      defaultValue: 'author',
+      defaultValue: 'reader',
       options: [
         { label: 'Admin', value: 'admin' },
         { label: 'Author', value: 'author' },
         { label: 'Reviewer', value: 'reviewer' },
+        { label: 'Reader', value: 'reader' },
       ],
       required: true,
     },

@@ -1,4 +1,5 @@
-import { sqliteAdapter } from '@payloadcms/db-sqlite'
+import { postgresAdapter } from '@payloadcms/db-postgres'
+import { resendAdapter } from '@payloadcms/email-resend'
 import sharp from 'sharp'
 import path from 'path'
 import { buildConfig, PayloadRequest } from 'payload'
@@ -6,11 +7,11 @@ import { fileURLToPath } from 'url'
 
 import { Categories } from './collections/Categories'
 import { ContentSources } from './collections/ContentSources'
-import { Customers } from './collections/Customers'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Reviews } from './collections/Reviews'
+import { SeoResearchRules } from './collections/SeoResearchRules'
 import { SeoResearchRuns } from './collections/SeoResearchRuns'
 import { Tags } from './collections/Tags'
 import { Users } from './collections/Users'
@@ -20,6 +21,7 @@ import { Settings } from './Settings/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { runSeoResearchTask } from './utilities/seoResearch/task'
+import { startSeoResearchScheduler } from './utilities/seoResearch/scheduler'
 import { getServerSideURL } from './utilities/getURL'
 
 const filename = fileURLToPath(import.meta.url)
@@ -40,6 +42,13 @@ export default buildConfig({
     },
     importMap: {
       baseDir: path.resolve(dirname),
+    },
+    // Static (set at build time, not live-synced from Settings — Payload's
+    // admin.meta isn't request-aware) but still swaps the default Payload
+    // branding for the site's own, since admins see this on every visit.
+    meta: {
+      icons: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+      titleSuffix: ' - Nexus Admin',
     },
     user: Users.slug,
     livePreview: {
@@ -67,10 +76,16 @@ export default buildConfig({
   },
   // This config helps us configure global or default features that the other editors can inherit
   editor: defaultLexical,
-  db: sqliteAdapter({
-    client: {
-      url: process.env.DATABASE_URL || 'file:./payload.db',
+  db: postgresAdapter({
+    pool: {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
     },
+  }),
+  email: resendAdapter({
+    apiKey: process.env.RESEND_API_KEY || '',
+    defaultFromAddress: 'onboarding@resend.dev',
+    defaultFromName: 'Nexus',
   }),
   collections: [
     {
@@ -94,13 +109,16 @@ export default buildConfig({
     Categories,
     Tags,
     Users,
-    Customers,
     Reviews,
     ContentSources,
     SeoResearchRuns,
+    SeoResearchRules,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer, Settings],
+  onInit: async (payload) => {
+    startSeoResearchScheduler(payload)
+  },
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,

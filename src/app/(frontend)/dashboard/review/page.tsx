@@ -17,11 +17,13 @@ export default function ReviewQueuePage() {
   const [busyId, setBusyId] = useState<null | string>(null)
   const [error, setError] = useState<null | string>(null)
 
+  const canReview = staff?.role === 'admin' || staff?.role === 'reviewer'
+
   useEffect(() => {
-    if (staff && staff.role === 'author') {
+    if (staff && !canReview) {
       router.replace('/dashboard')
     }
-  }, [staff, router])
+  }, [staff, canReview, router])
 
   const load = () => {
     fetch(
@@ -33,11 +35,11 @@ export default function ReviewQueuePage() {
   }
 
   useEffect(() => {
-    if (staff && staff.role !== 'author') load()
+    if (staff && canReview) load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [staff])
+  }, [staff, canReview])
 
-  if (!staff || staff.role === 'author') return null
+  if (!staff || !canReview) return null
 
   const approveAndPublish = async (postId: string) => {
     setBusyId(postId)

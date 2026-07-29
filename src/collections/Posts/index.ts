@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import {
   BlocksFeature,
+  EXPERIMENTAL_TableFeature,
   FixedToolbarFeature,
   HeadingFeature,
   HorizontalRuleFeature,
@@ -9,10 +10,10 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
-import { authenticated } from '../../access/authenticated'
 import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
 import { isAdminOrReviewer } from '../../access/isAdminOrReviewer'
 import { isAdminOrReviewerOrAuthor } from '../../access/isAdminOrReviewerOrAuthor'
+import { isStaffRole } from '../../access/isStaffRole'
 import { Banner } from '../../blocks/Banner/config'
 import { Code } from '../../blocks/Code/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
@@ -33,7 +34,7 @@ import { slugField } from 'payload'
 export const Posts: CollectionConfig<'posts'> = {
   slug: 'posts',
   access: {
-    create: authenticated,
+    create: isStaffRole,
     delete: isAdminOrReviewerOrAuthor,
     read: authenticatedOrPublished,
     update: isAdminOrReviewerOrAuthor,
@@ -96,6 +97,7 @@ export const Posts: CollectionConfig<'posts'> = {
                     FixedToolbarFeature(),
                     InlineToolbarFeature(),
                     HorizontalRuleFeature(),
+                    EXPERIMENTAL_TableFeature(),
                   ]
                 },
               }),
@@ -218,6 +220,11 @@ export const Posts: CollectionConfig<'posts'> = {
       type: 'relationship',
       admin: {
         position: 'sidebar',
+      },
+      filterOptions: {
+        role: {
+          in: ['admin', 'author', 'reviewer'],
+        },
       },
       hasMany: true,
       relationTo: 'users',

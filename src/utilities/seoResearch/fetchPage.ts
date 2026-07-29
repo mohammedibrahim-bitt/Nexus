@@ -32,7 +32,7 @@ export async function fetchCompetitorPage(url: string): Promise<CompetitorPage> 
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SeoResearchAgent/1.0)' },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(15000),
     })
 
     if (!res.ok) {

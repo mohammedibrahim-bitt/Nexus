@@ -13,6 +13,7 @@ import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
+import { getBrandData } from '@/utilities/getBrandData'
 import { getMergedSettings } from '@/utilities/getSettings'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 
@@ -55,6 +56,9 @@ const interDisplay = Inter({
 })
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const brand = await getBrandData()
+  const faviconUrl = brand.favicon?.url
+
   return (
     <html
       className={cn(
@@ -74,8 +78,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <InitTheme />
         <BrandColor />
         <Analytics />
-        <link href="/favicon.ico" rel="icon" sizes="32x32" />
-        <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+        {faviconUrl ? (
+          <link href={faviconUrl} rel="icon" type={brand.favicon?.mimeType || undefined} />
+        ) : (
+          <>
+            <link href="/favicon.ico" rel="icon" sizes="32x32" />
+            <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+          </>
+        )}
       </head>
       <body>
         <Providers>
@@ -92,12 +102,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getMergedSettings(0)
 
+  // Pull the X/Twitter handle out of Settings' social links, if one's set —
+  // never fall back to a hardcoded handle that isn't actually this site's.
+  const twitterLink = settings?.socialLinks?.find((link) => link.platform === 'twitter')?.url
+  const twitterHandle = twitterLink?.match(/(?:twitter|x)\.com\/@?([^/?#]+)/i)?.[1]
+
   return {
     metadataBase: new URL(getServerSideURL()),
     openGraph: mergeOpenGraph(undefined, settings?.siteName),
     twitter: {
       card: 'summary_large_image',
-      creator: '@payloadcms',
+      ...(twitterHandle ? { creator: `@${twitterHandle}` } : {}),
     },
   }
 }

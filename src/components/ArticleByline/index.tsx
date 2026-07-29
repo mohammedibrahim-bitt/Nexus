@@ -25,7 +25,7 @@ const Avatar: React.FC<{ name?: string; url?: null | string }> = ({ name, url })
   )
 }
 
-const PersonName: React.FC<{ id?: number | string; name: string }> = ({ id, name }) => {
+const PersonName: React.FC<{ id?: number | string | null; name: string }> = ({ id, name }) => {
   if (id === undefined || id === null) return <p className="font-semibold">{name}</p>
 
   return (

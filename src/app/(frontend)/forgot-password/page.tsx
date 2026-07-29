@@ -5,8 +5,10 @@ import React from 'react'
 
 import ForgotPasswordPageClient from './page.client'
 
-export default function ForgotPasswordPage() {
-  return <ForgotPasswordPageClient />
+export default async function ForgotPasswordPage() {
+  const brand = await getBrandData()
+
+  return <ForgotPasswordPageClient logo={brand.logo} siteName={brand.siteName} />
 }
 
 export async function generateMetadata(): Promise<Metadata> {

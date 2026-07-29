@@ -64,7 +64,12 @@ export const PostHero: React.FC<{
           </div>
 
           <div className="mt-6">
-            <SocialShare title={title} />
+            <SocialShare
+              authorSocialLinks={
+                (populatedAuthors?.[0]?.socialLinks as { platform: string; url: string }[] | null) ?? null
+              }
+              title={title}
+            />
           </div>
         </Reveal>
       </div>

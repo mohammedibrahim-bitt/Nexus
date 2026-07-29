@@ -25,24 +25,24 @@ export const DashboardStats: React.FC = () => {
       '/api/posts?where[_status][equals]=published&limit=1',
       '/api/posts?where[_status][equals]=draft&draft=true&limit=1',
       '/api/posts?where[_status][equals]=draft&where[reviewedBy][exists]=false&draft=true&limit=1',
-      '/api/users?limit=1',
+      '/api/users?where[role][not_equals]=reader&limit=1',
+      '/api/users?where[role][equals]=reader&limit=1',
       `/api/users?where[lastLoginAt][greater_than]=${encodeURIComponent(thirtyDaysAgo)}&limit=1`,
-      '/api/customers?limit=1',
       '/api/seo-research-runs?limit=1',
     ]
 
     Promise.allSettled(queries.map((url) => fetch(url, { credentials: 'include' }))).then(
       async (results) => {
-        const [published, drafts, pendingReview, totalStaff, activeUsers, readers, seoRuns] =
+        const [published, drafts, pendingReview, staffAccounts, readers, activeUsers, seoRuns] =
           await Promise.all(queries.map((_, i) => countFrom(results, i)))
 
         setStats([
           { label: 'Published posts', value: published },
           { label: 'Drafts', value: drafts },
           { label: 'Pending review', value: pendingReview },
-          { label: 'Staff accounts', value: totalStaff },
-          { label: 'Active users (30d)', value: activeUsers },
+          { label: 'Staff accounts', value: staffAccounts },
           { label: 'Registered readers', value: readers },
+          { label: 'Active users (30d)', value: activeUsers },
           { label: 'SEO research runs', value: seoRuns },
         ])
       },

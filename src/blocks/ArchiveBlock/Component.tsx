@@ -30,15 +30,14 @@ export const ArchiveBlock: React.FC<
       collection: 'posts',
       depth: 1,
       limit,
-      ...(flattenedCategories && flattenedCategories.length > 0
-        ? {
-            where: {
-              categories: {
-                in: flattenedCategories,
-              },
-            },
-          }
-        : {}),
+      overrideAccess: false,
+      // Public archive listings only ever show published posts — never
+      // rely on the viewer's own access level (an admin/reviewer viewing
+      // the site would otherwise see drafts mixed in with real content).
+      where:
+        flattenedCategories && flattenedCategories.length > 0
+          ? { and: [{ categories: { in: flattenedCategories } }, { _status: { equals: 'published' } }] }
+          : { _status: { equals: 'published' } },
     })
 
     posts = fetchedPosts.docs

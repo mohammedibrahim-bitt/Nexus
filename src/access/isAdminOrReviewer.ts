@@ -1,8 +1,4 @@
-import type { AccessArgs } from 'payload'
-
-import type { User } from '@/payload-types'
-
-type IsAdminOrReviewer = (args: AccessArgs<User>) => boolean
+type IsAdminOrReviewer = (args: any) => boolean
 
 export const isAdminOrReviewer: IsAdminOrReviewer = ({ req: { user } }) => {
   return Boolean(

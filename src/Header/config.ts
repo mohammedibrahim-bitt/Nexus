@@ -18,6 +18,15 @@ export const Header: GlobalConfig = {
           appearances: false,
         }),
         navIcon(),
+        {
+          name: 'staffOnly',
+          type: 'checkbox',
+          admin: {
+            description:
+              'Only show this link to logged-in staff (admin/author/reviewer) — hidden from readers and logged-out visitors, e.g. for a "New Post" shortcut.',
+          },
+          defaultValue: false,
+        },
       ],
       maxRows: 6,
       admin: {

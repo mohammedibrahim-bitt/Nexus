@@ -8,7 +8,7 @@ export type { AiProvider } from './aiProviders'
 
 const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5'
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o'
-const GOOGLE_MODEL = process.env.GOOGLE_MODEL || 'gemini-2.0-flash'
+const GOOGLE_MODEL = process.env.GOOGLE_MODEL || 'gemini-flash-latest'
 
 type ToolCallParams = {
   apiKey: string

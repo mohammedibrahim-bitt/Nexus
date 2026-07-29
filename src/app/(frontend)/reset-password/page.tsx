@@ -5,10 +5,12 @@ import React, { Suspense } from 'react'
 
 import ResetPasswordPageClient from './page.client'
 
-export default function ResetPasswordPage() {
+export default async function ResetPasswordPage() {
+  const brand = await getBrandData()
+
   return (
     <Suspense>
-      <ResetPasswordPageClient />
+      <ResetPasswordPageClient logo={brand.logo} siteName={brand.siteName} />
     </Suspense>
   )
 }

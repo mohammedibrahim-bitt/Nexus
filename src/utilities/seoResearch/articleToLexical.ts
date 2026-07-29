@@ -8,6 +8,8 @@ import { sectionsToLexical } from '../sectionsToLexical'
  * document. Thin wrapper over the shared sectionsToLexical helper, which is
  * also used by the frontend dashboard's post editor.
  */
-export function articleToLexical(article: Pick<GeneratedArticle, 'faq' | 'sections'>): Post['content'] {
-  return sectionsToLexical(article.sections, article.faq)
+export function articleToLexical(
+  article: Pick<GeneratedArticle, 'comparisonTable' | 'faq' | 'sections'>,
+): Post['content'] {
+  return sectionsToLexical(article.sections, article.faq, article.comparisonTable)
 }

@@ -1,15 +1,16 @@
 import type { CollectionConfig } from 'payload'
 
-import { authenticated } from '../../access/authenticated'
 import { isAdminOrTriggeredBy } from '../../access/isAdminOrTriggeredBy'
+import { isStaffRole } from '../../access/isStaffRole'
 
 export const SeoResearchRuns: CollectionConfig = {
   slug: 'seo-research-runs',
   access: {
     // Any staff member can trigger a run (gated by them having their own
     // API keys, enforced in the trigger route) — but can only see/manage
-    // runs they personally triggered, unless they're an admin.
-    create: authenticated,
+    // runs they personally triggered, unless they're an admin. Readers
+    // (the public self-signup default) are not staff.
+    create: isStaffRole,
     delete: isAdminOrTriggeredBy,
     read: isAdminOrTriggeredBy,
     update: isAdminOrTriggeredBy,
@@ -39,6 +40,17 @@ export const SeoResearchRuns: CollectionConfig = {
         readOnly: true,
       },
       relationTo: 'users',
+    },
+    {
+      name: 'triggeredByRule',
+      type: 'relationship',
+      admin: {
+        condition: (_, siblingData) => Boolean(siblingData?.triggeredByRule),
+        description: 'Set when this run was created automatically by a scheduled rule.',
+        position: 'sidebar',
+        readOnly: true,
+      },
+      relationTo: 'seo-research-rules',
     },
     {
       name: 'trigger',

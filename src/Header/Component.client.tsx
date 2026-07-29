@@ -13,9 +13,10 @@ import { HeaderNav } from './Nav'
 interface HeaderClientProps {
   data: Header
   brand?: BrandData
+  initialStaffRole: null | string
 }
 
-export const HeaderClient: React.FC<HeaderClientProps> = ({ data, brand }) => {
+export const HeaderClient: React.FC<HeaderClientProps> = ({ data, brand, initialStaffRole }) => {
   /* Storing the value in a useState to avoid hydration errors */
   const [theme, setTheme] = useState<string | null>(null)
   const { headerTheme, setHeaderTheme } = useHeaderTheme()
@@ -42,14 +43,14 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, brand }) => {
             <Link className="shrink-0 transition-opacity hover:opacity-80" href="/">
               <Logo className="text-foreground" logo={brand?.logo} siteName={brand?.siteName} />
             </Link>
-            <HeaderNav data={data} />
+            <HeaderNav data={data} initialStaffRole={initialStaffRole} />
           </div>
         ) : (
           <div className="flex items-center justify-between py-5">
             <Link className="shrink-0 transition-opacity hover:opacity-80" href="/">
               <Logo className="text-foreground" logo={brand?.logo} siteName={brand?.siteName} />
             </Link>
-            <HeaderNav data={data} />
+            <HeaderNav data={data} initialStaffRole={initialStaffRole} />
           </div>
         )}
       </div>

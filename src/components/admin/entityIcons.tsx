@@ -1,6 +1,5 @@
 import {
   ClipboardList,
-  Contact,
   File,
   Folder,
   Image,
@@ -21,7 +20,6 @@ import type React from 'react'
 // `#card-{slug}` ids that Payload's admin panel already renders.
 export const entityIcons: Record<string, React.ComponentType<{ size?: number }>> = {
   categories: Tag,
-  customers: Contact,
   'form-submissions': Inbox,
   forms: ClipboardList,
   folders: Folder,

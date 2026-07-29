@@ -5,10 +5,12 @@ import React, { Suspense } from 'react'
 
 import VerifyPageClient from './page.client'
 
-export default function VerifyPage() {
+export default async function VerifyPage() {
+  const brand = await getBrandData()
+
   return (
     <Suspense>
-      <VerifyPageClient />
+      <VerifyPageClient logo={brand.logo} siteName={brand.siteName} />
     </Suspense>
   )
 }

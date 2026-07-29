@@ -7,10 +7,19 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
-import { useCustomerAuth } from '@/providers/CustomerAuth'
+import type { BrandLogo } from '@/utilities/getBrandData'
 
-export default function SignupPageClient() {
-  const { customer, loading, signup } = useCustomerAuth()
+import { AuthLogo } from '@/components/AuthLogo'
+import { useStaffAuth } from '@/providers/StaffAuth'
+
+export default function SignupPageClient({
+  logo,
+  siteName,
+}: {
+  logo: BrandLogo
+  siteName: string
+}) {
+  const { staff, loading, signup } = useStaffAuth()
   const router = useRouter()
 
   const [name, setName] = useState('')
@@ -21,8 +30,8 @@ export default function SignupPageClient() {
   const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
-    if (!loading && customer) router.replace('/account')
-  }, [loading, customer, router])
+    if (!loading && staff) router.replace('/account')
+  }, [loading, staff, router])
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,6 +51,7 @@ export default function SignupPageClient() {
   if (submitted) {
     return (
       <div className="container max-w-sm py-24">
+        <AuthLogo logo={logo} siteName={siteName} />
         <h1 className="mb-4 text-3xl font-bold">Check your email</h1>
         <p className="text-muted-foreground">
           We sent a verification link to <span className="text-foreground">{email}</span>. Click it
@@ -56,6 +66,7 @@ export default function SignupPageClient() {
 
   return (
     <div className="container max-w-sm py-24">
+      <AuthLogo logo={logo} siteName={siteName} />
       <h1 className="mb-8 text-3xl font-bold">Sign up</h1>
 
       <form className="flex flex-col gap-4" onSubmit={onSubmit}>

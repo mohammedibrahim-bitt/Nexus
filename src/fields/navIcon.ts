@@ -4,6 +4,7 @@ export const navIconOptions = [
   { label: 'None', value: '' },
   { label: 'Home', value: 'home' },
   { label: 'Post / Article', value: 'file-text' },
+  { label: 'New / Add', value: 'file-plus' },
   { label: 'Mail', value: 'mail' },
   { label: 'Phone', value: 'phone' },
   { label: 'Info', value: 'info' },

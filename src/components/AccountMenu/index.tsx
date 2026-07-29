@@ -1,16 +1,15 @@
 'use client'
 
+import { getMediaUrl } from '@/utilities/getMediaUrl'
 import { LogOut, User } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useRef, useState } from 'react'
 
-import { useCustomerAuth } from '@/providers/CustomerAuth'
 import { useStaffAuth } from '@/providers/StaffAuth'
 
 export const AccountMenu: React.FC = () => {
-  const { customer, loading, logout } = useCustomerAuth()
-  const { staff, loading: staffLoading } = useStaffAuth()
+  const { loading, logout, staff } = useStaffAuth()
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -25,21 +24,9 @@ export const AccountMenu: React.FC = () => {
     return () => document.removeEventListener('mousedown', onClickOutside)
   }, [])
 
-  if (loading || staffLoading) return null
+  if (loading) return null
 
-  if (!customer && staff) {
-    return (
-      <Link
-        className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
-        href="/dashboard"
-      >
-        <User className="size-4" />
-        {staff.name || 'Dashboard'}
-      </Link>
-    )
-  }
-
-  if (!customer) {
+  if (!staff) {
     return (
       <Link
         className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
@@ -55,25 +42,30 @@ export const AccountMenu: React.FC = () => {
     <div className="relative" ref={containerRef}>
       <button
         aria-label="Account menu"
-        className="flex size-9 items-center justify-center rounded-full bg-muted text-sm font-medium text-foreground"
+        className="flex size-9 items-center justify-center overflow-hidden rounded-full bg-muted text-sm font-medium text-foreground"
         onClick={() => setOpen((v) => !v)}
         type="button"
       >
-        {customer.name.trim()[0]?.toUpperCase() || '?'}
+        {staff.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img alt="" className="size-full object-cover" src={getMediaUrl(staff.avatarUrl)} />
+        ) : (
+          staff.name.trim()[0]?.toUpperCase() || '?'
+        )}
       </button>
 
       {open && (
         <div className="absolute right-0 top-full mt-3 w-48 rounded-lg border border-border bg-background text-foreground shadow-lg">
           <div className="border-b border-border px-4 py-3">
-            <p className="truncate text-sm font-medium">{customer.name}</p>
-            <p className="truncate text-xs text-muted-foreground">{customer.email}</p>
+            <p className="truncate text-sm font-medium">{staff.name}</p>
+            <p className="truncate text-xs text-muted-foreground">{staff.email}</p>
           </div>
           <Link
             className="block px-4 py-2 text-sm hover:bg-muted"
-            href="/account"
+            href="/dashboard"
             onClick={() => setOpen(false)}
           >
-            Your account
+            Dashboard
           </Link>
           <button
             className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-muted"

@@ -56,12 +56,14 @@ export default async function AuthorPage({ params: paramsPromise }: Args) {
     overrideAccess: false,
     where: {
       authors: { contains: author.id },
+      _status: { equals: 'published' },
     },
     select: {
       title: true,
       slug: true,
       categories: true,
       meta: true,
+      heroImage: true,
     },
   })
 

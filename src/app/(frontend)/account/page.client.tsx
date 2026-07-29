@@ -4,17 +4,17 @@ import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import React, { useEffect } from 'react'
 
-import { useCustomerAuth } from '@/providers/CustomerAuth'
+import { useStaffAuth } from '@/providers/StaffAuth'
 
 export default function AccountPageClient() {
-  const { customer, loading, logout } = useCustomerAuth()
+  const { staff, loading, logout } = useStaffAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && !customer) router.replace('/login?redirect=/account')
-  }, [loading, customer, router])
+    if (!loading && !staff) router.replace('/login?redirect=/account')
+  }, [loading, staff, router])
 
-  if (loading || !customer) {
+  if (loading || !staff) {
     return <div className="container py-24">Loading...</div>
   }
 
@@ -24,12 +24,12 @@ export default function AccountPageClient() {
 
       <div className="flex flex-col gap-1 mb-8">
         <p className="text-sm text-muted-foreground">Name</p>
-        <p className="font-medium">{customer.name}</p>
+        <p className="font-medium">{staff.name}</p>
       </div>
 
       <div className="flex flex-col gap-1 mb-8">
         <p className="text-sm text-muted-foreground">Email</p>
-        <p className="font-medium">{customer.email}</p>
+        <p className="font-medium">{staff.email}</p>
       </div>
 
       <Button

@@ -25,7 +25,9 @@
     "@anthropic-ai/sdk": "^0.113.0",
     "@google/genai": "^2.13.0",
     "@payloadcms/admin-bar": "3.86.0",
+    "@payloadcms/db-postgres": "^3.86.0",
     "@payloadcms/db-sqlite": "3.86.0",
+    "@payloadcms/email-resend": "^3.86.0",
     "@payloadcms/live-preview-react": "3.86.0",
     "@payloadcms/next": "3.86.0",
     "@payloadcms/plugin-form-builder": "3.86.0",
@@ -54,6 +56,7 @@
     "prism-react-renderer": "^2.3.1",
     "react": "19.2.6",
     "react-dom": "19.2.6",
+    "react-easy-crop": "^6.2.3",
     "react-hook-form": "7.71.1",
     "sharp": "0.34.2",
     "tailwind-merge": "^3.4.0"

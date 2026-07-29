@@ -5,10 +5,12 @@ import React, { Suspense } from 'react'
 
 import SignupPageClient from './page.client'
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  const brand = await getBrandData()
+
   return (
     <Suspense>
-      <SignupPageClient />
+      <SignupPageClient logo={brand.logo} siteName={brand.siteName} />
     </Suspense>
   )
 }

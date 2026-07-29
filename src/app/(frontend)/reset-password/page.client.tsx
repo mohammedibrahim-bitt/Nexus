@@ -7,10 +7,19 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useState } from 'react'
 
-import { useCustomerAuth } from '@/providers/CustomerAuth'
+import type { BrandLogo } from '@/utilities/getBrandData'
 
-export default function ResetPasswordPageClient() {
-  const { resetPassword } = useCustomerAuth()
+import { AuthLogo } from '@/components/AuthLogo'
+import { useStaffAuth } from '@/providers/StaffAuth'
+
+export default function ResetPasswordPageClient({
+  logo,
+  siteName,
+}: {
+  logo: BrandLogo
+  siteName: string
+}) {
+  const { resetPassword } = useStaffAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
@@ -43,6 +52,7 @@ export default function ResetPasswordPageClient() {
   if (!token) {
     return (
       <div className="container max-w-sm py-24">
+        <AuthLogo logo={logo} siteName={siteName} />
         <h1 className="mb-4 text-3xl font-bold">Invalid link</h1>
         <p className="mb-6 text-muted-foreground">
           This password reset link is missing or invalid. Request a new one.
@@ -56,6 +66,7 @@ export default function ResetPasswordPageClient() {
 
   return (
     <div className="container max-w-sm py-24">
+      <AuthLogo logo={logo} siteName={siteName} />
       <h1 className="mb-8 text-3xl font-bold">Set a new password</h1>
 
       <form className="flex flex-col gap-4" onSubmit={onSubmit}>

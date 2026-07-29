@@ -6,10 +6,19 @@ import { Label } from '@/components/ui/label'
 import Link from 'next/link'
 import React, { useState } from 'react'
 
-import { useCustomerAuth } from '@/providers/CustomerAuth'
+import type { BrandLogo } from '@/utilities/getBrandData'
 
-export default function ForgotPasswordPageClient() {
-  const { forgotPassword } = useCustomerAuth()
+import { AuthLogo } from '@/components/AuthLogo'
+import { useStaffAuth } from '@/providers/StaffAuth'
+
+export default function ForgotPasswordPageClient({
+  logo,
+  siteName,
+}: {
+  logo: BrandLogo
+  siteName: string
+}) {
+  const { forgotPassword } = useStaffAuth()
 
   const [email, setEmail] = useState('')
   const [error, setError] = useState<null | string>(null)
@@ -34,6 +43,7 @@ export default function ForgotPasswordPageClient() {
   if (submitted) {
     return (
       <div className="container max-w-sm py-24">
+        <AuthLogo logo={logo} siteName={siteName} />
         <h1 className="mb-4 text-3xl font-bold">Check your email</h1>
         <p className="text-muted-foreground">
           If an account exists for <span className="text-foreground">{email}</span>, we&apos;ve sent
@@ -48,6 +58,7 @@ export default function ForgotPasswordPageClient() {
 
   return (
     <div className="container max-w-sm py-24">
+      <AuthLogo logo={logo} siteName={siteName} />
       <h1 className="mb-4 text-3xl font-bold">Forgot password</h1>
       <p className="mb-8 text-muted-foreground">
         Enter your email and we&apos;ll send you a link to reset your password.

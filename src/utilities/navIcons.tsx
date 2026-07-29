@@ -1,4 +1,5 @@
 import {
+  FilePlus2,
   FileText,
   Globe,
   Home,
@@ -13,6 +14,7 @@ import {
 import type React from 'react'
 
 export const navIconComponents: Record<string, React.ComponentType<{ className?: string }>> = {
+  'file-plus': FilePlus2,
   'file-text': FileText,
   globe: Globe,
   home: Home,

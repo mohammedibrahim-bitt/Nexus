@@ -23,7 +23,9 @@ export async function GET() {
     collection: 'posts',
     depth: 0,
     limit: 50,
+    overrideAccess: false,
     sort: '-publishedAt',
+    where: { _status: { equals: 'published' } },
     select: {
       title: true,
       slug: true,

@@ -10,9 +10,10 @@ type Counts = { drafts: number; pendingReview: number; published: number }
 export default function DashboardOverviewPage() {
   const { staff } = useStaffAuth()
   const [counts, setCounts] = useState<Counts | null>(null)
+  const canReview = staff?.role === 'admin' || staff?.role === 'reviewer'
 
   useEffect(() => {
-    if (!staff) return
+    if (!staff || staff.role === 'reader') return
 
     const load = async () => {
       const [draftsRes, publishedRes, reviewRes] = await Promise.all([
@@ -24,7 +25,7 @@ export default function DashboardOverviewPage() {
           `/api/posts?where[authors][contains]=${staff.id}&where[_status][equals]=published&limit=1`,
           { credentials: 'include' },
         ),
-        staff.role !== 'author'
+        canReview
           ? fetch(
               `/api/posts?where[_status][equals]=draft&where[reviewedBy][exists]=false&limit=1&draft=true`,
               { credentials: 'include' },
@@ -40,9 +41,34 @@ export default function DashboardOverviewPage() {
     }
 
     void load()
-  }, [staff])
+  }, [staff, canReview])
 
   if (!staff) return null
+
+  if (staff.role === 'reader') {
+    return (
+      <div className="flex flex-col gap-6">
+        <p className="text-muted-foreground">
+          Welcome, {staff.name}. You&apos;re signed in as a reader — manage your account or leave
+          reviews on posts you&apos;ve read.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+            href="/dashboard/profile"
+          >
+            Your profile
+          </Link>
+          <Link
+            className="rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
+            href="/posts"
+          >
+            Browse posts
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -55,7 +81,7 @@ export default function DashboardOverviewPage() {
           <p className="text-sm text-muted-foreground">Your published posts</p>
           <p className="text-3xl font-bold">{counts?.published ?? '—'}</p>
         </div>
-        {staff.role !== 'author' && (
+        {canReview && (
           <div className="rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-card)]">
             <p className="text-sm text-muted-foreground">Pending review (all authors)</p>
             <p className="text-3xl font-bold">{counts?.pendingReview ?? '—'}</p>
@@ -82,7 +108,7 @@ export default function DashboardOverviewPage() {
         >
           View my posts
         </Link>
-        {staff.role !== 'author' && (
+        {canReview && (
           <Link
             className="rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
             href="/dashboard/review"

@@ -7,10 +7,19 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
-import { useCustomerAuth } from '@/providers/CustomerAuth'
+import type { BrandLogo } from '@/utilities/getBrandData'
 
-export default function LoginPageClient() {
-  const { customer, loading, login } = useCustomerAuth()
+import { AuthLogo } from '@/components/AuthLogo'
+import { useStaffAuth } from '@/providers/StaffAuth'
+
+export default function LoginPageClient({
+  logo,
+  siteName,
+}: {
+  logo: BrandLogo
+  siteName: string
+}) {
+  const { staff, loading, login } = useStaffAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') || '/account'
@@ -21,8 +30,8 @@ export default function LoginPageClient() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (!loading && customer) router.replace(redirectTo)
-  }, [loading, customer, redirectTo, router])
+    if (!loading && staff) router.replace(redirectTo)
+  }, [loading, staff, redirectTo, router])
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,6 +50,7 @@ export default function LoginPageClient() {
 
   return (
     <div className="container max-w-sm py-24">
+      <AuthLogo logo={logo} siteName={siteName} />
       <h1 className="mb-8 text-3xl font-bold">Log in</h1>
 
       <form className="flex flex-col gap-4" onSubmit={onSubmit}>

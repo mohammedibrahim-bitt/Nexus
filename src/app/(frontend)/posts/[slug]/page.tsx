@@ -6,6 +6,7 @@ import { EditorialTeam } from '@/components/EditorialTeam'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
 import { PostReviews } from '@/components/PostReviews'
 import { ShareButtons } from '@/components/ShareButtons'
+import { TableOfContents } from '@/components/TableOfContents'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { draftMode } from 'next/headers'
@@ -17,6 +18,7 @@ import type { Post } from '@/payload-types'
 import { PostHero } from '@/heros/PostHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import { getServerSideURL } from '@/utilities/getURL'
+import { extractHeadings, estimateReadingTime } from '@/utilities/richTextHeadings'
 import PageClient from './page.client'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 
@@ -56,6 +58,9 @@ export default async function Post({ params: paramsPromise }: Args) {
 
   if (!post) return <PayloadRedirects url={url} />
 
+  const headings = extractHeadings(post.content)
+  const readingTimeMinutes = estimateReadingTime(post.content)
+
   return (
     <article className="pt-16 pb-16">
       <PageClient />
@@ -67,18 +72,31 @@ export default async function Post({ params: paramsPromise }: Args) {
 
       <PostHero post={post} />
 
-      <div className="flex flex-col items-center gap-4 pt-8">
+      <div className="pt-8">
         <div className="container">
           <div className="max-w-[48rem] mx-auto mb-8">
             <ArticleByline
               author={post.populatedAuthors?.[0]}
               expertVerified={post.expertVerified ?? undefined}
+              readingTimeMinutes={readingTimeMinutes}
               reviewer={post.populatedReviewedBy ?? undefined}
               updatedAt={post.updatedAt}
             />
           </div>
 
-          <RichText className="max-w-[48rem] mx-auto" data={post.content} enableGutter={false} />
+          {headings.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-12 items-start max-w-[68rem] mx-auto">
+              <div className="min-w-0">
+                <RichText className="max-w-[48rem]" data={post.content} enableGutter={false} />
+              </div>
+              <aside className="hidden lg:block sticky top-28">
+                <TableOfContents headings={headings} />
+              </aside>
+            </div>
+          ) : (
+            <RichText className="max-w-[48rem] mx-auto" data={post.content} enableGutter={false} />
+          )}
+
           {post.relatedPosts && post.relatedPosts.length > 0 && (
             <RelatedPosts
               className="mt-12 max-w-[52rem] lg:grid lg:grid-cols-subgrid col-start-1 col-span-3 grid-rows-[2fr]"

@@ -16,6 +16,7 @@ export async function synthesizeStrategy(
   analyses: CompetitorAnalysis[],
   apiKey: string,
   provider: AiProvider,
+  previousArticle?: null | { summary: string; title: string },
 ): Promise<ContentStrategy> {
   const summary = analyses
     .map(
@@ -35,8 +36,12 @@ export async function synthesizeStrategy(
     prompt: `Target keyword: "${keyword}"
 
 Competitor analyses:
-${summary}`,
-    systemPrompt: `You are an expert content strategist. Based on these competitor analyses, identify what's missing across all of them combined — content gaps, and specifically the most personalized, high-intent questions real users ask that none of the competitors answered well. Then propose a heading outline (H2/H3) for an article that would outperform all of them by filling those gaps, a set of FAQ questions with why each matters, and internal linking opportunities (topics/anchor text ideas, not literal URLs since this is a new site). Do not just combine what competitors already do — prioritize genuinely missing angles.`,
+${summary}${
+      previousArticle
+        ? `\n\nThis keyword was already covered before in an earlier article titled "${previousArticle.title}":\n${previousArticle.summary}\n\nThe new outline must take a genuinely different angle from that earlier article — do not just re-propose the same structure.`
+        : ''
+    }`,
+    systemPrompt: `You are an expert content strategist. Based on these competitor analyses, identify what's missing across all of them combined — content gaps, and specifically the most personalized, high-intent questions real users ask that none of the competitors answered well. Then propose a heading outline (H2/H3) for an article that would outperform all of them by filling those gaps, a set of FAQ questions with why each matters, and internal linking opportunities (topics/anchor text ideas, not literal URLs since this is a new site). Do not just combine what competitors already do — prioritize genuinely missing angles. If a previous article on this same keyword is mentioned, the outline must meaningfully differ from it.`,
     tool: {
       description: 'Submit the content strategy.',
       inputSchema: {

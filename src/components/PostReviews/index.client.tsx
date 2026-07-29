@@ -7,14 +7,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { MessageSquareText } from 'lucide-react'
 import React, { useState } from 'react'
 
-import { useCustomerAuth } from '@/providers/CustomerAuth'
+import { useStaffAuth } from '@/providers/StaffAuth'
 
 type ReviewItem = {
   id: string
   comment: string
   createdAt: string
-  customerName: string
   rating: number
+  reviewerName: string
 }
 
 const Stars: React.FC<{ onChange?: (value: number) => void; value: number }> = ({
@@ -44,7 +44,7 @@ export const PostReviewsClient: React.FC<{
   initialReviews: ReviewItem[]
   postId: string
 }> = ({ initialReviews, postId }) => {
-  const { customer, loading: checkingSession, login, signup } = useCustomerAuth()
+  const { staff, loading: checkingSession, login, signup } = useStaffAuth()
   const [reviews, setReviews] = useState(initialReviews)
   const [mode, setMode] = useState<'login' | 'signup'>('signup')
   const [name, setName] = useState('')
@@ -135,7 +135,7 @@ export const PostReviewsClient: React.FC<{
           <div className="border-b pb-4" key={review.id}>
             <div className="flex items-center gap-3 mb-1">
               <Stars value={review.rating} />
-              <span className="font-medium">{review.customerName}</span>
+              <span className="font-medium">{review.reviewerName}</span>
               <span className="text-sm text-neutral-500">
                 {new Date(review.createdAt).toLocaleDateString()}
               </span>
@@ -147,12 +147,12 @@ export const PostReviewsClient: React.FC<{
 
       {!checkingSession && (
         <div className="border rounded-xl bg-card p-6 shadow-[var(--shadow-card)]">
-          {awaitingVerification && !customer ? (
+          {awaitingVerification && !staff ? (
             <p>
               Almost there! We sent a verification link to <strong>{email}</strong>. Click it to
               activate your account, then log in to leave your review.
             </p>
-          ) : !customer ? (
+          ) : !staff ? (
             <form className="flex flex-col gap-4 max-w-sm" onSubmit={handleAuth}>
               <h3 className="text-lg font-medium">
                 {mode === 'signup' ? 'Create an account to leave a review' : 'Log in to leave a review'}
@@ -210,10 +210,10 @@ export const PostReviewsClient: React.FC<{
               </button>
             </form>
           ) : status === 'submitted' ? (
-            <p>Thanks, {customer.name}! Your review has been submitted and is awaiting approval.</p>
+            <p>Thanks, {staff.name}! Your review has been submitted and is awaiting approval.</p>
           ) : (
             <form className="flex flex-col gap-4 max-w-lg" onSubmit={handleSubmitReview}>
-              <h3 className="text-lg font-medium">Leave a review, {customer.name}</h3>
+              <h3 className="text-lg font-medium">Leave a review, {staff.name}</h3>
 
               <div className="flex flex-col gap-1">
                 <Label>Rating</Label>

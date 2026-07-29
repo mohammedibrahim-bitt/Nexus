@@ -5,10 +5,19 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
-import { useCustomerAuth } from '@/providers/CustomerAuth'
+import type { BrandLogo } from '@/utilities/getBrandData'
 
-export default function VerifyPageClient() {
-  const { verifyEmail } = useCustomerAuth()
+import { AuthLogo } from '@/components/AuthLogo'
+import { useStaffAuth } from '@/providers/StaffAuth'
+
+export default function VerifyPageClient({
+  logo,
+  siteName,
+}: {
+  logo: BrandLogo
+  siteName: string
+}) {
+  const { verifyEmail } = useStaffAuth()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
 
@@ -33,6 +42,7 @@ export default function VerifyPageClient() {
 
   return (
     <div className="container max-w-sm py-24">
+      <AuthLogo logo={logo} siteName={siteName} />
       {status === 'pending' && <p>Verifying your account...</p>}
 
       {status === 'success' && (

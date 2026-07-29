@@ -1,15 +1,20 @@
 import type { BasePayload } from 'payload'
 
 import type { AiProvider } from './aiClient'
+import type { CompetitorAnalysis } from './analyzeCompetitor'
 
 import { analyzeCompetitor } from './analyzeCompetitor'
 import { articleToLexical } from './articleToLexical'
 import { fetchCompetitorPage } from './fetchPage'
+import { findSimilarExistingPost } from './findSimilarExistingPost'
+import { generateHeroImage } from './generateHeroImage'
 import { fetchTopRankingPages } from './serp'
 import { synthesizeStrategy } from './synthesizeStrategy'
+import { withRetry } from './withRetry'
 import { writeArticle } from './writeArticle'
 
 const MAX_COMPETITORS = 5
+const MAX_LINK_TARGETS = 30
 
 const slugify = (text: string): string =>
   text
@@ -68,7 +73,17 @@ export async function runSeoResearch(
     data: { status: 'researching' },
   })
 
-  const serp = await fetchTopRankingPages(keyword, serpApiKey, MAX_COMPETITORS)
+  let serp
+  try {
+    serp = await withRetry(() => fetchTopRankingPages(keyword, serpApiKey, MAX_COMPETITORS), {
+      onRetry: (attempt, err) =>
+        payload.logger.warn(`[seoResearch] SerpApi attempt ${attempt} failed, retrying: ${err}`),
+    })
+  } catch (err) {
+    await fail(payload, runId, err instanceof Error ? err.message : 'SerpApi request failed.')
+    return
+  }
+
   if (serp.error || serp.urls.length === 0) {
     await fail(payload, runId, serp.error || 'No competitor pages found.')
     return
@@ -89,7 +104,7 @@ export async function runSeoResearch(
     data: { status: 'analyzing' },
   })
 
-  const analyses = []
+  const analyses: CompetitorAnalysis[] = []
   for (const url of serp.urls) {
     const page = await fetchCompetitorPage(url)
     if (page.error || !page.text) {
@@ -98,7 +113,8 @@ export async function runSeoResearch(
     }
 
     try {
-      analyses.push(await analyzeCompetitor(keyword, page, aiApiKey, aiProvider))
+      const analysis = await withRetry(() => analyzeCompetitor(keyword, page, aiApiKey, aiProvider))
+      analyses.push(analysis)
     } catch (err) {
       payload.logger.warn(
         `[seoResearch] analysis failed for ${url}: ${err instanceof Error ? err.message : err}`,
@@ -118,6 +134,13 @@ export async function runSeoResearch(
     data: { analysis: analyses },
   })
 
+  // Site-wide duplicate/cannibalization guard: if ANY existing post — from
+  // this rule's own past runs, a different rule, or something written by
+  // hand — already covers substantially the same topic, feed it in so the
+  // strategy/writing steps deliberately take a different angle instead of
+  // producing a near-duplicate.
+  const previousArticle = await findSimilarExistingPost(payload, keyword, aiApiKey, aiProvider)
+
   // Phase 3: synthesize strategy
   await payload.update({
     id: runId,
@@ -128,7 +151,9 @@ export async function runSeoResearch(
 
   let strategy
   try {
-    strategy = await synthesizeStrategy(keyword, analyses, aiApiKey, aiProvider)
+    strategy = await withRetry(() =>
+      synthesizeStrategy(keyword, analyses, aiApiKey, aiProvider, previousArticle),
+    )
   } catch (err) {
     await fail(payload, runId, err instanceof Error ? err.message : 'Failed to build strategy.')
     return
@@ -149,15 +174,103 @@ export async function runSeoResearch(
     data: { status: 'writing' },
   })
 
+  const { docs: categoryDocs } = await payload.find({
+    collection: 'categories',
+    limit: 100,
+    overrideAccess: false,
+  })
+  const availableCategories = categoryDocs.map((c) => ({ slug: c.slug || '', title: c.title }))
+
+  const { docs: linkTargetDocs } = await payload.find({
+    collection: 'posts',
+    limit: MAX_LINK_TARGETS,
+    overrideAccess: false,
+    select: { slug: true, title: true },
+    sort: '-publishedAt',
+    where: { _status: { equals: 'published' } },
+  })
+  const linkTargets = linkTargetDocs
+    .filter((p) => p.slug)
+    .map((p) => ({ slug: p.slug as string, title: p.title }))
+
   let article
   try {
-    article = await writeArticle(keyword, strategy, analyses, aiApiKey, aiProvider)
+    article = await withRetry(() =>
+      writeArticle(keyword, strategy, analyses, aiApiKey, aiProvider, {
+        availableCategories,
+        linkTargets,
+        previousArticle,
+      }),
+    )
   } catch (err) {
     await fail(payload, runId, err instanceof Error ? err.message : 'Failed to write article.')
     return
   }
 
   const slug = await uniqueSlug(payload, slugify(article.title).slice(0, 80) || 'seo-research-post')
+
+  // Resolve the AI's suggested category (if any) against the real list —
+  // never trust an AI-invented slug that doesn't actually exist.
+  const matchedCategory = article.categorySlug
+    ? categoryDocs.find((c) => c.slug === article.categorySlug)
+    : undefined
+
+  // Find-or-create tags for each suggested name.
+  const tagIds: number[] = []
+  for (const rawName of article.tagNames || []) {
+    const name = rawName.trim()
+    if (!name) continue
+
+    const tagSlug = slugify(name)
+    const { docs: existing } = await payload.find({
+      collection: 'tags',
+      limit: 1,
+      overrideAccess: false,
+      where: { slug: { equals: tagSlug } },
+    })
+
+    if (existing[0]) {
+      tagIds.push(Number(existing[0].id))
+      continue
+    }
+
+    try {
+      const created = await payload.create({
+        collection: 'tags',
+        context: { disableRevalidate: true },
+        data: { title: name, slug: tagSlug },
+      })
+      tagIds.push(Number(created.id))
+    } catch (err) {
+      payload.logger.warn(`[seoResearch] could not create tag "${name}": ${err}`)
+    }
+  }
+
+  // Best-effort hero image — never let a failure here fail the whole run.
+  let heroImageId: null | number = null
+  try {
+    const buffer = await generateHeroImage(
+      `A professional, editorial blog header image for an article about: ${article.title}. Photorealistic, no text overlay.`,
+      aiApiKey,
+      aiProvider,
+    )
+    if (buffer) {
+      const media = await payload.create({
+        collection: 'media',
+        context: { disableRevalidate: true },
+        data: { alt: article.title },
+        file: {
+          data: buffer,
+          mimetype: 'image/png',
+          name: `${slug}-hero.png`,
+          size: buffer.length,
+        },
+      })
+      heroImageId = Number(media.id)
+    }
+  } catch (err) {
+    payload.logger.warn(`[seoResearch] hero image generation failed, continuing without one: ${err}`)
+  }
 
   const post = await payload.create({
     collection: 'posts',
@@ -167,11 +280,14 @@ export async function runSeoResearch(
       slug,
       _status: 'draft',
       authors: [authorId],
+      categories: matchedCategory ? [Number(matchedCategory.id)] : undefined,
       content: articleToLexical(article),
+      heroImage: heroImageId ?? undefined,
       meta: {
         description: article.metaDescription,
         title: article.title,
       },
+      tags: tagIds.length > 0 ? tagIds : undefined,
     },
   })
 

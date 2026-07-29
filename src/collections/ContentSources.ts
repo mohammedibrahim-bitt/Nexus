@@ -1,14 +1,14 @@
 import type { CollectionConfig } from 'payload'
 
-import { authenticated } from '../access/authenticated'
+import { isAdmin } from '../access/isAdmin'
 
 export const ContentSources: CollectionConfig = {
   slug: 'content-sources',
   access: {
-    create: authenticated,
-    delete: authenticated,
-    read: authenticated,
-    update: authenticated,
+    create: isAdmin,
+    delete: isAdmin,
+    read: isAdmin,
+    update: isAdmin,
   },
   admin: {
     defaultColumns: ['name', 'feedUrl', 'active', 'lastFetchStatus'],

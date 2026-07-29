@@ -9,6 +9,7 @@ const ROLE_OPTIONS = [
   { label: 'Admin', value: 'admin' },
   { label: 'Author', value: 'author' },
   { label: 'Reviewer', value: 'reviewer' },
+  { label: 'Reader', value: 'reader' },
 ]
 
 const baseClass = 'role-cell'

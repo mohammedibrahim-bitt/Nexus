@@ -24,7 +24,7 @@ export async function fetchTopRankingPages(
     })
 
     const res = await fetch(`https://serpapi.com/search.json?${params.toString()}`, {
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(25000),
     })
 
     if (!res.ok) {

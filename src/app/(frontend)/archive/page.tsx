@@ -15,8 +15,10 @@ export default async function ArchivePage() {
     collection: 'posts',
     depth: 0,
     limit: 500,
+    overrideAccess: false,
     pagination: false,
     sort: '-publishedAt',
+    where: { _status: { equals: 'published' } },
     select: {
       title: true,
       slug: true,

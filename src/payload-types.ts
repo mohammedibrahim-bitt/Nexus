@@ -64,7 +64,6 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     users: UserAuthOperations;
-    customers: CustomerAuthOperations;
   };
   blocks: {};
   collections: {
@@ -75,10 +74,10 @@ export interface Config {
     categories: Category;
     tags: Tag;
     users: User;
-    customers: Customer;
     reviews: Review;
     'content-sources': ContentSource;
     'seo-research-runs': SeoResearchRun;
+    'seo-research-rules': SeoResearchRule;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -103,10 +102,10 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
-    customers: CustomersSelect<false> | CustomersSelect<true>;
     reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     'content-sources': ContentSourcesSelect<false> | ContentSourcesSelect<true>;
     'seo-research-runs': SeoResearchRunsSelect<false> | SeoResearchRunsSelect<true>;
+    'seo-research-rules': SeoResearchRulesSelect<false> | SeoResearchRulesSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -136,7 +135,7 @@ export interface Config {
   widgets: {
     collections: CollectionsWidget;
   };
-  user: User | Customer;
+  user: User;
   jobs: {
     tasks: {
       'run-seo-research': TaskRunSeoResearch;
@@ -150,24 +149,6 @@ export interface Config {
   };
 }
 export interface UserAuthOperations {
-  forgotPassword: {
-    email: string;
-    password: string;
-  };
-  login: {
-    email: string;
-    password: string;
-  };
-  registerFirstUser: {
-    email: string;
-    password: string;
-  };
-  unlock: {
-    email: string;
-    password: string;
-  };
-}
-export interface CustomerAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -572,9 +553,9 @@ export interface User {
   id: number;
   name?: string | null;
   /**
-   * Only an admin can grant this. Admins can also author and review posts.
+   * Self-registered accounts always start as Reader. Only an admin can grant Author, Reviewer, or Admin.
    */
-  role: 'admin' | 'author' | 'reviewer';
+  role: 'admin' | 'author' | 'reviewer' | 'reader';
   avatar?: (number | null) | Media;
   /**
    * e.g. "Senior Editor" or "Licensed Real Estate Broker" — shown under their name.
@@ -617,6 +598,8 @@ export interface User {
   resetPasswordExpiration?: string | null;
   salt?: string | null;
   hash?: string | null;
+  _verified?: boolean | null;
+  _verificationToken?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
   sessions?:
@@ -964,40 +947,12 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "customers".
- */
-export interface Customer {
-  id: number;
-  name: string;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  _verified?: boolean | null;
-  _verificationToken?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'customers';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "reviews".
  */
 export interface Review {
   id: number;
   post: number | Post;
-  customer: number | Customer;
+  customer: number | User;
   rating: number;
   comment: string;
   /**
@@ -1020,6 +975,10 @@ export interface SeoResearchRun {
    */
   keyword: string;
   triggeredBy?: (number | null) | User;
+  /**
+   * Set when this run was created automatically by a scheduled rule.
+   */
+  triggeredByRule?: (number | null) | SeoResearchRule;
   status?: ('queued' | 'researching' | 'analyzing' | 'strategizing' | 'writing' | 'completed' | 'failed') | null;
   generatedPost?: (number | null) | Post;
   error?: string | null;
@@ -1053,6 +1012,36 @@ export interface SeoResearchRun {
     | number
     | boolean
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Keywords the SEO Research Agent researches and drafts on its own, on a schedule — no one has to trigger it by hand. Every run still only ever produces a draft post; nothing is ever auto-published.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "seo-research-rules".
+ */
+export interface SeoResearchRule {
+  id: number;
+  /**
+   * The target keyword or search phrase to research. Can be a reusable template with bracketed instructions resolved fresh each time it runs — e.g. "best AI agents in [month] [year]", "[current quarter] SaaS pricing trends", or open-ended ones like "[trending AI model this week]". Leave it as a plain phrase with no brackets to search that exact keyword every time.
+   */
+  keyword: string;
+  /**
+   * Only active rules are considered when the scheduler checks for due work.
+   */
+  active?: boolean | null;
+  /**
+   * Whose SerpApi key and AI provider key to use — this person must have both saved on their profile. Automated runs are credited to them as the post author, same as if they'd triggered it manually.
+   */
+  runAsUser: number | User;
+  /**
+   * Run this keyword again this many days after its last run.
+   */
+  intervalDays: number;
+  lastRun?: (number | null) | SeoResearchRun;
+  lastRunAt?: string | null;
+  lastRunStatus?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1275,10 +1264,6 @@ export interface PayloadLockedDocument {
         value: number | User;
       } | null)
     | ({
-        relationTo: 'customers';
-        value: number | Customer;
-      } | null)
-    | ({
         relationTo: 'reviews';
         value: number | Review;
       } | null)
@@ -1289,6 +1274,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'seo-research-runs';
         value: number | SeoResearchRun;
+      } | null)
+    | ({
+        relationTo: 'seo-research-rules';
+        value: number | SeoResearchRule;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1311,15 +1300,10 @@ export interface PayloadLockedDocument {
         value: number | FolderInterface;
       } | null);
   globalSlug?: string | null;
-  user:
-    | {
-        relationTo: 'users';
-        value: number | User;
-      }
-    | {
-        relationTo: 'customers';
-        value: number | Customer;
-      };
+  user: {
+    relationTo: 'users';
+    value: number | User;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -1329,15 +1313,10 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: number;
-  user:
-    | {
-        relationTo: 'users';
-        value: number | User;
-      }
-    | {
-        relationTo: 'customers';
-        value: number | Customer;
-      };
+  user: {
+    relationTo: 'users';
+    value: number | User;
+  };
   key?: string | null;
   value?:
     | {
@@ -1711,29 +1690,6 @@ export interface UsersSelect<T extends boolean = true> {
   resetPasswordExpiration?: T;
   salt?: T;
   hash?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
-    | T
-    | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "customers_select".
- */
-export interface CustomersSelect<T extends boolean = true> {
-  name?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
   _verified?: T;
   _verificationToken?: T;
   loginAttempts?: T;
@@ -1783,6 +1739,7 @@ export interface ContentSourcesSelect<T extends boolean = true> {
 export interface SeoResearchRunsSelect<T extends boolean = true> {
   keyword?: T;
   triggeredBy?: T;
+  triggeredByRule?: T;
   status?: T;
   generatedPost?: T;
   error?: T;
@@ -1794,6 +1751,21 @@ export interface SeoResearchRunsSelect<T extends boolean = true> {
       };
   analysis?: T;
   strategy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "seo-research-rules_select".
+ */
+export interface SeoResearchRulesSelect<T extends boolean = true> {
+  keyword?: T;
+  active?: T;
+  runAsUser?: T;
+  intervalDays?: T;
+  lastRun?: T;
+  lastRunAt?: T;
+  lastRunStatus?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2103,6 +2075,7 @@ export interface Header {
               | ''
               | 'home'
               | 'file-text'
+              | 'file-plus'
               | 'mail'
               | 'phone'
               | 'info'
@@ -2113,6 +2086,10 @@ export interface Header {
               | 'message-square-text'
             )
           | null;
+        /**
+         * Only show this link to logged-in staff (admin/author/reviewer) — hidden from readers and logged-out visitors, e.g. for a "New Post" shortcut.
+         */
+        staffOnly?: boolean | null;
         id?: string | null;
       }[]
     | null;
@@ -2150,6 +2127,7 @@ export interface Footer {
               | ''
               | 'home'
               | 'file-text'
+              | 'file-plus'
               | 'mail'
               | 'phone'
               | 'info'
@@ -2275,6 +2253,7 @@ export interface HeaderSelect<T extends boolean = true> {
               label?: T;
             };
         icon?: T;
+        staffOnly?: T;
         id?: T;
       };
   updatedAt?: T;

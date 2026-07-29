@@ -2,6 +2,7 @@ import type { Post } from '@/payload-types'
 
 export type ContentSection = { heading: string; level: 2 | 3; paragraphs: string[] }
 export type FaqItem = { answer: string; question: string }
+export type ComparisonTable = { headers: string[]; rows: string[][] }
 
 const textNode = (text: string) => ({
   type: 'text',
@@ -13,9 +14,48 @@ const textNode = (text: string) => ({
   version: 1,
 })
 
+const linkNode = (text: string, url: string) => ({
+  type: 'link',
+  children: [textNode(text)],
+  direction: 'ltr' as const,
+  fields: {
+    linkType: 'custom' as const,
+    newTab: false,
+    url,
+  },
+  format: '',
+  indent: 0,
+  version: 3,
+})
+
+const MARKDOWN_LINK = /\[([^\]]+)\]\(([^)]+)\)/g
+
+// Splits a paragraph's plain text on any [anchor text](/url) markdown links
+// (which the SEO Research Agent's AI writing step is instructed to produce
+// for internal links) into a mix of plain text and real Lexical link nodes.
+// Paragraphs with no markdown links are unaffected — a single text child, as
+// before.
+const paragraphChildren = (text: string) => {
+  const children: ReturnType<typeof textNode | typeof linkNode>[] = []
+  let lastIndex = 0
+
+  for (const match of text.matchAll(MARKDOWN_LINK)) {
+    const [full, anchorText, url] = match
+    const index = match.index ?? 0
+
+    if (index > lastIndex) children.push(textNode(text.slice(lastIndex, index)))
+    children.push(linkNode(anchorText, url))
+    lastIndex = index + full.length
+  }
+
+  if (lastIndex < text.length) children.push(textNode(text.slice(lastIndex)))
+
+  return children.length > 0 ? children : [textNode(text)]
+}
+
 const paragraphNode = (text: string) => ({
   type: 'paragraph',
-  children: [textNode(text)],
+  children: paragraphChildren(text),
   direction: 'ltr' as const,
   format: '',
   indent: 0,
@@ -33,6 +73,39 @@ const headingNode = (level: 2 | 3, text: string) => ({
   version: 1,
 })
 
+// Header/data cell states per @lexical/table's TableCellHeaderStates —
+// NO_STATUS: 0, ROW: 1, COLUMN: 2, BOTH: 3.
+const tableCellNode = (text: string, isHeader: boolean) => ({
+  type: 'tablecell',
+  children: [paragraphNode(text)],
+  direction: 'ltr' as const,
+  format: '',
+  headerState: isHeader ? 1 : 0,
+  indent: 0,
+  version: 1,
+})
+
+const tableRowNode = (cells: string[], isHeaderRow: boolean) => ({
+  type: 'tablerow',
+  children: cells.map((cell) => tableCellNode(cell, isHeaderRow)),
+  direction: 'ltr' as const,
+  format: '',
+  indent: 0,
+  version: 1,
+})
+
+const tableNode = (table: ComparisonTable) => ({
+  type: 'table',
+  children: [
+    tableRowNode(table.headers, true),
+    ...table.rows.map((row) => tableRowNode(row, false)),
+  ],
+  direction: 'ltr' as const,
+  format: '',
+  indent: 0,
+  version: 1,
+})
+
 /**
  * Converts a simple {heading, level, paragraphs}[] structure (plus an
  * optional FAQ list) into a Lexical document matching the Posts collection's
@@ -40,14 +113,32 @@ const headingNode = (level: 2 | 3, text: string) => ({
  * dashboard's simplified post editor — both work with this same plain
  * structure rather than raw Lexical nodes.
  */
-export function sectionsToLexical(sections: ContentSection[], faq: FaqItem[] = []): Post['content'] {
+export function sectionsToLexical(
+  sections: ContentSection[],
+  faq: FaqItem[] = [],
+  comparisonTable?: ComparisonTable,
+): Post['content'] {
   const children: Post['content']['root']['children'] = []
 
-  for (const section of sections) {
+  sections.forEach((section, sectionIndex) => {
     if (section.heading) children.push(headingNode(section.level, section.heading))
     for (const paragraph of section.paragraphs) {
       if (paragraph.trim()) children.push(paragraphNode(paragraph))
     }
+
+    // Placed right after the first section (the intro) — the conventional
+    // "at a glance" position for a comparison table, before the reader
+    // commits to reading the full breakdown.
+    if (sectionIndex === 0 && comparisonTable && comparisonTable.headers.length > 0) {
+      children.push(headingNode(2, 'At a Glance'))
+      children.push(tableNode(comparisonTable))
+    }
+  })
+
+  // No sections at all but a table was provided — still include it.
+  if (sections.length === 0 && comparisonTable && comparisonTable.headers.length > 0) {
+    children.push(headingNode(2, 'At a Glance'))
+    children.push(tableNode(comparisonTable))
   }
 
   if (faq.length > 0) {

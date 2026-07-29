@@ -6,10 +6,13 @@ import { isAdminOrReviewer } from '../../access/isAdminOrReviewer'
 export const Reviews: CollectionConfig = {
   slug: 'reviews',
   access: {
-    create: ({ req: { user } }) => Boolean(user && user.collection === 'customers'),
+    create: ({ req: { user } }) => Boolean(user && user.collection === 'users'),
     delete: isAdmin,
     read: ({ req: { user } }) => {
-      if (user && user.collection === 'users') return true
+      // Moderation visibility is role-based, not just "any signed-in
+      // account" — anyone can self-register as an author, so plain authors
+      // (and the public) only ever see approved reviews.
+      if (user && (user.role === 'admin' || user.role === 'reviewer')) return true
       return {
         approved: {
           equals: true,
@@ -39,7 +42,7 @@ export const Reviews: CollectionConfig = {
       admin: {
         readOnly: true,
       },
-      relationTo: 'customers',
+      relationTo: 'users',
       required: true,
     },
     {
@@ -67,7 +70,7 @@ export const Reviews: CollectionConfig = {
   hooks: {
     beforeChange: [
       ({ req, data, operation }) => {
-        if (operation === 'create' && req.user && req.user.collection === 'customers') {
+        if (operation === 'create' && req.user && req.user.collection === 'users') {
           data.customer = req.user.id
         }
         return data

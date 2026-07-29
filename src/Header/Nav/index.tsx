@@ -7,12 +7,21 @@ import type { Header as HeaderType } from '@/payload-types'
 import { AccountMenu } from '@/components/AccountMenu'
 import { CMSLink } from '@/components/Link'
 import { QuickSearch } from '@/components/QuickSearch'
-import { StaffNavLinks } from '@/components/StaffNavLinks'
 import { ThemeToggle } from '@/providers/Theme/ThemeToggle'
 import { navIconComponents } from '@/utilities/navIcons'
+import { useStaffAuth } from '@/providers/StaffAuth'
 
-export const HeaderNav: React.FC<{ data: HeaderType }> = ({ data }) => {
-  const navItems = data?.navItems || []
+export const HeaderNav: React.FC<{ data: HeaderType; initialStaffRole: null | string }> = ({
+  data,
+  initialStaffRole,
+}) => {
+  const { loading, staff } = useStaffAuth()
+  // Matches the server's render until the client-side auth check resolves,
+  // so staff-only links can't cause a hydration mismatch or a pop-in flash.
+  const role = loading ? initialStaffRole : staff?.role
+  const isStaff = Boolean(role && role !== 'reader')
+
+  const navItems = (data?.navItems || []).filter((item) => !item.staffOnly || isStaff)
 
   return (
     <nav className="flex items-center gap-1">
@@ -30,7 +39,6 @@ export const HeaderNav: React.FC<{ data: HeaderType }> = ({ data }) => {
         )
       })}
       <div className="ml-1 flex items-center gap-1">
-        <StaffNavLinks />
         <QuickSearch />
         <ThemeToggle />
         <AccountMenu />

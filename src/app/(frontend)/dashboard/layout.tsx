@@ -3,14 +3,16 @@
 import { cn } from '@/utilities/ui'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import { useStaffAuth } from '@/providers/StaffAuth'
 
 const navItems = [
   { href: '/dashboard', label: 'Overview', rolesOnly: null as null | string[] },
-  { href: '/dashboard/posts', label: 'My Posts', rolesOnly: null },
+  { href: '/dashboard/posts', label: 'My Posts', rolesOnly: ['admin', 'author', 'reviewer'] },
   { href: '/dashboard/review', label: 'Review Queue', rolesOnly: ['admin', 'reviewer'] },
+  { href: '/dashboard/seo-rules', label: 'SEO Automation', rolesOnly: ['admin'] },
+  { href: '/dashboard/messages', label: 'Messages', rolesOnly: ['admin'] },
   { href: '/dashboard/profile', label: 'Profile', rolesOnly: null },
 ]
 
@@ -18,15 +20,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { loading, logout, staff } = useStaffAuth()
   const pathname = usePathname()
   const router = useRouter()
-  const isLoginPage = pathname === '/dashboard/login'
+  const [pendingReviewCount, setPendingReviewCount] = useState(0)
 
   useEffect(() => {
-    if (!loading && !staff && !isLoginPage) {
-      router.replace(`/dashboard/login?redirect=${encodeURIComponent(pathname)}`)
+    if (!loading && !staff) {
+      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`)
     }
-  }, [loading, staff, isLoginPage, pathname, router])
+  }, [loading, staff, pathname, router])
 
-  if (isLoginPage) return <>{children}</>
+  useEffect(() => {
+    if (!staff || (staff.role !== 'admin' && staff.role !== 'reviewer')) return
+
+    fetch(
+      '/api/posts?where[_status][equals]=draft&where[reviewedBy][exists]=false&limit=1&draft=true',
+      { credentials: 'include' },
+    )
+      .then((res) => res.json())
+      .then((data) => setPendingReviewCount(data.totalDocs ?? 0))
+      .catch(() => setPendingReviewCount(0))
+  }, [staff])
 
   if (loading || !staff) {
     return <div className="container py-24 text-muted-foreground">Loading...</div>
@@ -50,13 +62,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {visibleItems.map((item) => (
             <Link
               className={cn(
-                'rounded-full px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted',
+                'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted',
                 pathname === item.href && 'bg-muted',
               )}
               href={item.href}
               key={item.href}
             >
               {item.label}
+              {item.href === '/dashboard/review' && pendingReviewCount > 0 && (
+                <span className="flex min-w-4.5 items-center justify-center rounded-full bg-primary px-1 text-xs font-semibold text-primary-foreground">
+                  {pendingReviewCount}
+                </span>
+              )}
             </Link>
           ))}
           <button
