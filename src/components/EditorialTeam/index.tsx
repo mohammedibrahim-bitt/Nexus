@@ -76,8 +76,8 @@ const TeamMemberRow: React.FC<{ label: string; member: TeamMember }> = ({ label,
 
       <div className="flex shrink-0 gap-2">
         {member.socialLinks
-          ?.filter((link) => link.platform && link.url)
-          .map((link) => (
+          ?.filter((link: any) => link?.platform && link?.url)
+          .map((link: any) => (
             <a
               aria-label={`${member.name} on ${platformLabels[link.platform as string] ?? link.platform}`}
               className="flex size-9 items-center justify-center rounded-md border text-foreground hover:bg-muted"

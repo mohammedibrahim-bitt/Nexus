@@ -8,6 +8,7 @@ import { Categories } from './collections/Categories'
 import { ContentSources } from './collections/ContentSources'
 import { Customers } from './collections/Customers'
 import { Media } from './collections/Media'
+import { NexusPosts } from './collections/NexusPosts'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Reviews } from './collections/Reviews'
@@ -90,6 +91,7 @@ export default buildConfig({
     },
     Pages,
     Posts,
+    NexusPosts,
     Media,
     Categories,
     Tags,

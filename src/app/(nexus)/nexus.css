@@ -1,0 +1,89 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is([data-theme='dark'] *));
+
+/*
+ * "PROXEMIC" display font for the Nexus wordmark.
+ * Drop the licensed font files into /public/fonts/ to activate it;
+ * until then the stack falls back to a geometric sans.
+ */
+@font-face {
+  font-family: 'PROXEMIC';
+  src:
+    url('/fonts/Proxemic.woff2') format('woff2'),
+    url('/fonts/Proxemic.woff') format('woff');
+  font-weight: 400 800;
+  font-display: swap;
+}
+
+:root {
+  --nx-accent: #6366f1;
+  --nx-radius: 16px;
+  --nx-font-scale: 1;
+  --nx-space: 1;
+
+  --nx-bg: #f7f7fb;
+  --nx-surface: #ffffff;
+  --nx-surface-2: #f0f0f6;
+  --nx-text: #16161d;
+  --nx-muted: #6b7080;
+  --nx-border: rgb(22 22 29 / 0.09);
+  --nx-shadow: 0 1px 2px rgb(22 22 29 / 0.05), 0 12px 32px -16px rgb(22 22 29 / 0.18);
+}
+
+[data-theme='dark'] {
+  --nx-bg: #0d0d12;
+  --nx-surface: #16161d;
+  --nx-surface-2: #1e1e27;
+  --nx-text: #ececf2;
+  --nx-muted: #9298a8;
+  --nx-border: rgb(236 236 242 / 0.1);
+  --nx-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -16px rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --color-nx-accent: var(--nx-accent);
+  --color-nx-bg: var(--nx-bg);
+  --color-nx-surface: var(--nx-surface);
+  --color-nx-surface-2: var(--nx-surface-2);
+  --color-nx-text: var(--nx-text);
+  --color-nx-muted: var(--nx-muted);
+  --color-nx-border: var(--nx-border);
+  --radius-nx: var(--nx-radius);
+  --font-proxemic: 'PROXEMIC', 'Avenir Next', 'Futura', 'Century Gothic', ui-sans-serif, sans-serif;
+}
+
+html {
+  font-size: calc(100% * var(--nx-font-scale));
+}
+
+body {
+  background: var(--nx-bg);
+  color: var(--nx-text);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Noto Sans Arabic',
+    sans-serif;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+.nx-card {
+  background: var(--nx-surface);
+  border: 1px solid var(--nx-border);
+  border-radius: var(--nx-radius);
+  box-shadow: var(--nx-shadow);
+}
+
+.nx-space {
+  padding: calc(1.5rem * var(--nx-space));
+}
+
+::selection {
+  background: color-mix(in srgb, var(--nx-accent) 30%, transparent);
+}

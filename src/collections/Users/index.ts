@@ -19,7 +19,7 @@ export const Users: CollectionConfig = {
     // just a hidden UI element.
     admin: isAdmin,
     // Anyone can register an account, but they always land in the collection
-    // as an "author" — see the `role` field's own access control below, and
+    // as a normal "user" — see the `role` field's own access control below, and
     // the `assignFirstUserAsAdmin` hook for the one bootstrap exception.
     create: anyone,
     delete: isAdmin,
@@ -55,11 +55,12 @@ export const Users: CollectionConfig = {
         description: 'Only an admin can grant this. Admins can also author and review posts.',
         position: 'sidebar',
       },
-      defaultValue: 'author',
+      defaultValue: 'user',
       options: [
         { label: 'Admin', value: 'admin' },
         { label: 'Author', value: 'author' },
         { label: 'Reviewer', value: 'reviewer' },
+        { label: 'User', value: 'user' },
       ],
       required: true,
     },
