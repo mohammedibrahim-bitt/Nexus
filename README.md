@@ -67,6 +67,26 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) for the site, and [http://localhost:3000/admin](http://localhost:3000/admin) for the admin panel. On first run you'll be prompted to create an admin account — the very first account created always becomes an admin regardless of the normal reader-by-default signup rule.
 
+### 5. Load the real site content
+
+Migrations only create the database **schema** (tables/columns) — they don't add any content. A freshly migrated database has no pages, no posts, and no header/footer nav items, so the site will look bare (just the search icon, theme toggle, and sign-in button) until something populates it. The database itself is git-ignored on purpose — it holds real user accounts, password hashes, and per-user API keys, so it's never committed.
+
+To get the actual site content — the real pages, published posts, categories, forms, header/footer nav, and the images they use — run:
+
+```bash
+npm run seed:content
+```
+
+This reads the non-sensitive content bundle committed at [`content-seed/`](content-seed/) and imports it into your database. It's safe to run more than once: everything is upserted by slug/filename, and it will never overwrite your header/footer nav if you've already customized it. **Nothing sensitive is in this bundle or this command** — no user accounts, no passwords, no `aiApiKey`/`serpApiKey`, no draft posts, no contact-form submissions. The imported posts are attributed to a placeholder "Site Editor" account created automatically the first time you run it, not to any real person.
+
+To refresh `content-seed/` from the live database after editing content in `/admin` (e.g. before committing changes for others to pull), run:
+
+```bash
+node --import tsx/esm scripts/content-seed/export.mjs
+```
+
+Alternatively, the stock Payload **"Seed your database"** button on the `/admin` dashboard creates generic placeholder pages/posts instead — useful for exploring the template from scratch, but it does not use your real content and (unlike `seed:content`) it deletes existing pages/posts first.
+
 ## Database (Postgres / Supabase)
 
 This project uses Postgres, not SQLite. If you're using Supabase specifically, there's one non-obvious gotcha worth knowing:
