@@ -6,12 +6,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "customers" DISABLE ROW LEVEL SECURITY;
   DROP TABLE "customers_sessions" CASCADE;
   DROP TABLE "customers" CASCADE;
-  ALTER TABLE "reviews" DROP CONSTRAINT "reviews_customer_id_customers_id_fk";
-  
-  ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT "payload_locked_documents_rels_customers_fk";
-  
-  ALTER TABLE "payload_preferences_rels" DROP CONSTRAINT "payload_preferences_rels_customers_fk";
-  
+
   DROP INDEX "payload_locked_documents_rels_customers_id_idx";
   DROP INDEX "payload_preferences_rels_customers_id_idx";
   ALTER TABLE "users" ADD COLUMN "_verified" boolean;
