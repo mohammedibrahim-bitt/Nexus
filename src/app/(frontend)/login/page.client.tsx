@@ -49,9 +49,9 @@ export default function LoginPageClient({
   }
 
   return (
-    <div className="container max-w-sm py-24">
+    <div className="mx-auto my-20 w-[calc(100%-2rem)] max-w-md rounded-lg border border-border bg-card p-6 shadow-[var(--shadow-lg)] sm:p-8">
       <AuthLogo logo={logo} siteName={siteName} />
-      <h1 className="mb-8 text-3xl font-bold">Log in</h1>
+      <h1 className="mb-8 font-display text-3xl leading-tight font-semibold">Log in</h1>
 
       <form className="flex flex-col gap-4" onSubmit={onSubmit}>
         <div className="flex flex-col gap-1">
@@ -76,7 +76,14 @@ export default function LoginPageClient({
           />
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && (
+          <p
+            className="rounded-md border border-destructive/40 bg-error/40 px-3 py-2 text-sm text-foreground"
+            role="alert"
+          >
+            {error}
+          </p>
+        )}
 
         <Button disabled={submitting} type="submit">
           {submitting ? 'Logging in...' : 'Log in'}
@@ -85,12 +92,12 @@ export default function LoginPageClient({
 
       <p className="mt-6 text-sm text-muted-foreground">
         Don&apos;t have an account?{' '}
-        <Link className="underline" href="/signup">
+        <Link className="link-editorial" href="/signup">
           Sign up
         </Link>
       </p>
       <p className="mt-2 text-sm text-muted-foreground">
-        <Link className="underline" href="/forgot-password">
+        <Link className="link-editorial" href="/forgot-password">
           Forgot your password?
         </Link>
       </p>

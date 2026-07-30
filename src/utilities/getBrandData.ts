@@ -164,7 +164,7 @@ export async function getBrandData(): Promise<BrandData> {
         ? settings.analyticsProvider
         : 'none',
     copyrightText: settings?.copyrightText || null,
-    cornerRadius: typeof settings?.cornerRadius === 'number' ? settings.cornerRadius : 16,
+    cornerRadius: typeof settings?.cornerRadius === 'number' ? settings.cornerRadius : 12,
     defaultMetaDescription: settings?.defaultMetaDescription || null,
     defaultOgImage: typeof settings?.defaultOgImage === 'object' ? settings?.defaultOgImage || null : null,
     density: settings?.density === 'compact' ? 'compact' : 'comfortable',
@@ -175,7 +175,7 @@ export async function getBrandData(): Promise<BrandData> {
     footerTagline: settings?.footerTagline || null,
     headerLayout: settings?.headerLayout === 'centered' ? 'centered' : 'left',
     logo: typeof settings?.logo === 'object' && settings?.logo ? { type: 'media', media: settings.logo } : null,
-    primaryColor: settings?.primaryColor || '#171717',
+    primaryColor: settings?.primaryColor || '#dc2626',
     secondaryColor: settings?.secondaryColor || null,
     siteName: settings?.siteName || 'Nexus',
     socialLinks: (settings?.socialLinks || [])

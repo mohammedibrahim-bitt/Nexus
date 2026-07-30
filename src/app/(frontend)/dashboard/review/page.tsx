@@ -73,7 +73,7 @@ export default function ReviewQueuePage() {
         Drafts waiting on a reviewer. Approving publishes the post immediately.
       </p>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {posts === null && <p className="text-muted-foreground">Loading...</p>}
       {posts?.length === 0 && <p className="text-muted-foreground">Nothing waiting for review.</p>}

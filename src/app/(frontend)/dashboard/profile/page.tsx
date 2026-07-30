@@ -319,7 +319,7 @@ export default function ProfilePage() {
         </>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
       {saved && <p className="text-sm text-emerald-600">Saved.</p>}
 
       <Button disabled={saving} type="submit">

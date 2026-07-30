@@ -66,8 +66,11 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
     <div className="pt-24 pb-24">
       <PageClient />
       <div className="container mb-16">
-        <div className="prose dark:prose-invert max-w-none text-center">
-          <h1 className="mb-8 lg:mb-16">Search</h1>
+        <div className="text-center">
+          <p className="kicker mb-2">Find a story</p>
+          <h1 className="mb-8 font-display text-4xl leading-tight font-semibold md:text-5xl lg:mb-16">
+            Search
+          </h1>
 
           <div className="max-w-[50rem] mx-auto">
             <Search />

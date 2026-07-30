@@ -1,6 +1,6 @@
 'use client'
 
-import { SearchIcon } from 'lucide-react'
+import { SearchIcon, XIcon } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useEffect, useRef, useState } from 'react'
 
@@ -51,9 +51,9 @@ export const PostsFilterBar: React.FC<{ categories: Category[] }> = ({ categorie
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
       <div className="relative flex-1">
-        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+        <SearchIcon className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <input
-          className="w-full rounded-md border border-border bg-background py-2 pr-3 pl-9 text-sm outline-none focus:ring-2 focus:ring-ring"
+          className="h-11 w-full rounded-md border border-input bg-card py-2 pr-4 pl-10 text-sm transition-[border-color,box-shadow] duration-200 ease-out focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/25 focus-visible:outline-none"
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search posts..."
           type="text"
@@ -62,7 +62,7 @@ export const PostsFilterBar: React.FC<{ categories: Category[] }> = ({ categorie
       </div>
 
       <select
-        className="rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring sm:w-56"
+        className="h-11 cursor-pointer rounded-md border border-input bg-card px-4 text-sm transition-[border-color,box-shadow] duration-200 ease-out focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/25 focus-visible:outline-none sm:w-56"
         onChange={(e) => pushParams({ category: e.target.value || null })}
         value={currentCategory}
       >
@@ -76,11 +76,12 @@ export const PostsFilterBar: React.FC<{ categories: Category[] }> = ({ categorie
 
       {currentTag && (
         <button
-          className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
+          className="flex h-11 cursor-pointer items-center gap-1.5 rounded-md border border-input px-4 text-sm text-muted-foreground transition-colors duration-200 hover:border-primary hover:bg-muted hover:text-foreground"
           onClick={() => pushParams({ tag: null })}
           type="button"
         >
-          Tag: #{currentTag} ✕
+          Tag: #{currentTag}
+          <XIcon aria-hidden className="size-3.5" />
         </button>
       )}
     </div>

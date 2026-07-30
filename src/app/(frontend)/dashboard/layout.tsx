@@ -50,34 +50,44 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="container py-12">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-6">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b-2 border-rule pb-6">
         <div>
-          <h1 className="text-2xl font-bold">Staff Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="kicker mb-1.5">Staff</p>
+          <h1 className="font-display text-3xl leading-tight font-semibold">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Signed in as {staff.name} ({staff.role})
           </p>
         </div>
 
-        <nav className="flex flex-wrap items-center gap-2">
+        <nav className="flex flex-wrap items-center gap-1">
           {visibleItems.map((item) => (
             <Link
               className={cn(
-                'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted',
-                pathname === item.href && 'bg-muted',
+                'flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-muted',
+                pathname === item.href
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                  : 'text-foreground/75 hover:text-foreground',
               )}
               href={item.href}
               key={item.href}
             >
               {item.label}
               {item.href === '/dashboard/review' && pendingReviewCount > 0 && (
-                <span className="flex min-w-4.5 items-center justify-center rounded-full bg-primary px-1 text-xs font-semibold text-primary-foreground">
+                <span
+                  className={cn(
+                    'flex min-w-4.5 items-center justify-center rounded-full px-1 text-xs font-semibold',
+                    pathname === item.href
+                      ? 'bg-primary-foreground text-primary'
+                      : 'bg-primary text-primary-foreground',
+                  )}
+                >
                   {pendingReviewCount}
                 </span>
               )}
             </Link>
           ))}
           <button
-            className="rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
+            className="ml-1 cursor-pointer rounded-md border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
             onClick={async () => {
               await logout()
               router.push('/')

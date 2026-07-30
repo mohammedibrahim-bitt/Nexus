@@ -42,7 +42,7 @@ export default function ForgotPasswordPageClient({
 
   if (submitted) {
     return (
-      <div className="container max-w-sm py-24">
+      <div className="mx-auto my-20 w-[calc(100%-2rem)] max-w-md rounded-lg border border-border bg-card p-6 shadow-[var(--shadow-lg)] sm:p-8">
         <AuthLogo logo={logo} siteName={siteName} />
         <h1 className="mb-4 text-3xl font-bold">Check your email</h1>
         <p className="text-muted-foreground">
@@ -57,7 +57,7 @@ export default function ForgotPasswordPageClient({
   }
 
   return (
-    <div className="container max-w-sm py-24">
+    <div className="mx-auto my-20 w-[calc(100%-2rem)] max-w-md rounded-lg border border-border bg-card p-6 shadow-[var(--shadow-lg)] sm:p-8">
       <AuthLogo logo={logo} siteName={siteName} />
       <h1 className="mb-4 text-3xl font-bold">Forgot password</h1>
       <p className="mb-8 text-muted-foreground">
@@ -76,7 +76,7 @@ export default function ForgotPasswordPageClient({
           />
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
         <Button disabled={submitting} type="submit">
           {submitting ? 'Sending...' : 'Send reset link'}
@@ -84,7 +84,7 @@ export default function ForgotPasswordPageClient({
       </form>
 
       <p className="mt-6 text-sm text-muted-foreground">
-        <Link className="underline" href="/login">
+        <Link className="link-editorial" href="/login">
           Back to log in
         </Link>
       </p>

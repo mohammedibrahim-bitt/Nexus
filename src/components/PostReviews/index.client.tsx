@@ -192,7 +192,7 @@ export const PostReviewsClient: React.FC<{
                 />
               </div>
 
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && <p className="text-sm text-destructive">{error}</p>}
 
               <Button type="submit">{mode === 'signup' ? 'Sign up' : 'Log in'}</Button>
 
@@ -231,7 +231,7 @@ export const PostReviewsClient: React.FC<{
                 />
               </div>
 
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && <p className="text-sm text-destructive">{error}</p>}
 
               <Button disabled={status === 'submitting'} type="submit">
                 {status === 'submitting' ? 'Submitting...' : 'Submit review'}

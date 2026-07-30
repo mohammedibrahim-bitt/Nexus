@@ -3,24 +3,34 @@ import { Slot } from '@radix-ui/react-slot'
 import { type VariantProps, cva } from 'class-variance-authority'
 import * as React from 'react'
 
+/*
+ * Soft UI Evolution buttons: 200ms transitions, a 1px lift on hover (never a
+ * scale — that shifts neighbouring layout), and an always-visible focus ring.
+ * `cta` carries the design system's editorial link-blue for conversion
+ * actions, kept separate from `default` so the CMS brand color can't eat it.
+ */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 ring-ring/10 dark:ring-ring/20 dark:outline-ring/40 outline-ring/50 focus-visible:ring-4 focus-visible:outline-1 aria-invalid:focus-visible:ring-0",
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-[color,background-color,box-shadow,transform,border-color] duration-200 ease-out disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90',
-        destructive: 'bg-destructive text-destructive-foreground shadow-xs hover:bg-destructive/90',
+        default:
+          'bg-primary text-primary-foreground shadow-[var(--shadow-sm)] hover:bg-primary/90 hover:shadow-[var(--shadow-md)] hover:-translate-y-px active:translate-y-0',
+        cta: 'bg-link text-white shadow-[var(--shadow-sm)] hover:bg-link-hover hover:shadow-[var(--shadow-md)] hover:-translate-y-px active:translate-y-0',
+        destructive:
+          'bg-destructive text-destructive-foreground shadow-[var(--shadow-sm)] hover:bg-destructive/90 hover:shadow-[var(--shadow-md)] hover:-translate-y-px active:translate-y-0',
         outline:
-          'border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground',
-        secondary: 'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80',
+          'border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-primary-foreground',
+        secondary:
+          'border border-border bg-secondary text-secondary-foreground hover:bg-accent hover:shadow-[var(--shadow-sm)]',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
+        link: 'text-link underline underline-offset-4 decoration-1 hover:text-link-hover',
       },
       size: {
         clear: '',
-        default: 'h-10 px-4 py-2 has-[>svg]:px-3',
-        sm: 'h-9 rounded-md px-3 has-[>svg]:px-2.5',
-        lg: 'h-11 rounded-md px-8 has-[>svg]:px-4',
+        default: 'h-10 px-5 py-2 has-[>svg]:px-4',
+        sm: 'h-9 rounded-md px-3.5 text-[0.8125rem] has-[>svg]:px-3',
+        lg: 'h-12 rounded-md px-7 text-base has-[>svg]:px-5',
         icon: 'size-10',
       },
     },

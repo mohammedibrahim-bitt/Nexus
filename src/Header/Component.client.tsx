@@ -34,9 +34,12 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, brand, initial
 
   return (
     <header
-      className="sticky top-0 z-20 bg-background/80 backdrop-blur border-b border-border"
+      className="sticky top-0 z-20 border-b border-border bg-background/85 shadow-[var(--shadow-sm)] backdrop-blur-md"
       {...(theme ? { 'data-theme': theme } : {})}
     >
+      {/* Masthead band — the newspaper cue that anchors the brand color. */}
+      <div aria-hidden className="h-[3px] w-full bg-primary" />
+
       <div className="container">
         {brand?.headerLayout === 'centered' ? (
           <div className="flex flex-col items-center gap-3 py-5">
@@ -46,7 +49,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, brand, initial
             <HeaderNav data={data} initialStaffRole={initialStaffRole} />
           </div>
         ) : (
-          <div className="flex items-center justify-between py-5">
+          <div className="flex items-center justify-between gap-4 py-4">
             <Link className="shrink-0 transition-opacity hover:opacity-80" href="/">
               <Logo className="text-foreground" logo={brand?.logo} siteName={brand?.siteName} />
             </Link>

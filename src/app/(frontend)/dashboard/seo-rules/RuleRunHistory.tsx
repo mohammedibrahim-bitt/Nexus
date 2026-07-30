@@ -57,11 +57,11 @@ export const RuleRunHistory: React.FC<{ ruleId: string }> = ({ ruleId }) => {
             </div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               {post && (
-                <Link className="underline" href={`/dashboard/posts/${post.id}/edit`}>
+                <Link className="link-editorial" href={`/dashboard/posts/${post.id}/edit`}>
                   View draft
                 </Link>
               )}
-              {run.error && <span className="text-red-600" title={run.error}>error</span>}
+              {run.error && <span className="text-destructive" title={run.error}>error</span>}
               <span>{new Date(run.createdAt).toLocaleString()}</span>
             </div>
           </div>

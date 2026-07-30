@@ -101,7 +101,7 @@ export default function ResearchPage() {
           Enter a keyword and this finds top-ranking competitor pages, scores them, and drafts an
           original post designed to outperform them. Uses your own SerpApi key and your choice of
           AI provider — set them on your{' '}
-          <Link className="underline" href="/dashboard/profile">
+          <Link className="link-editorial" href="/dashboard/profile">
             profile
           </Link>{' '}
           first.
@@ -141,7 +141,7 @@ export default function ResearchPage() {
           )}
           {run.status === 'completed' && generatedPostId && (
             <p className="mt-2">
-              <Link className="underline" href={`/dashboard/posts/${generatedPostId}/edit`}>
+              <Link className="link-editorial" href={`/dashboard/posts/${generatedPostId}/edit`}>
                 Open the draft →
               </Link>
             </p>

@@ -34,6 +34,7 @@
     font-weight: unset;
     font-size: unset;
     font-family: var(--font-display);
+    letter-spacing: -0.015em;
   }
 }
 
@@ -59,8 +60,9 @@
   --breakpoint-xl: 80rem;
   --breakpoint-2xl: 86rem;
   --font-mono: var(--font-geist-mono);
-  --font-sans: var(--font-geist-sans);
-  --font-display: var(--font-space-grotesk);
+  --font-sans: var(--font-roboto), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, 'Times New Roman', serif;
+  --font-display: var(--font-newsreader);
   --font-proxemic: 'PROXEMIC', 'Avenir Next', 'Futura', 'Century Gothic', ui-sans-serif, sans-serif;
 }
 
@@ -103,87 +105,139 @@
   }
 }
 
+/*
+ * Design system: Nexus — News/Media Platform
+ * Style "Soft UI Evolution" · type pairing Newsreader / Roboto
+ * Palette: breaking red (--primary) + link blue (--link)
+ *
+ * Note on layering: `--primary`, `--secondary`, `--accent`, `--ring`, `--radius`
+ * and `--font-display` are re-declared at runtime by <BrandColor /> from the
+ * CMS Settings global, so the values here are defaults it can override. The
+ * editorial blue lives in its own `--link` token precisely so an admin's brand
+ * color choice never eats the link/CTA color.
+ */
 :root {
-  --background: #f7f7fb;
-  --foreground: #16161d;
+  --background: #fdf7f7;
+  --foreground: #1c1416;
   --card: #ffffff;
-  --card-foreground: #16161d;
+  --card-foreground: #1c1416;
   --popover: #ffffff;
-  --popover-foreground: #16161d;
-  --primary: #6366f1;
+  --popover-foreground: #1c1416;
+  --primary: #dc2626;
   --primary-foreground: #ffffff;
-  --secondary: #f0f0f6;
-  --secondary-foreground: #16161d;
-  --muted: #f0f0f6;
-  --muted-foreground: #6b7080;
-  --accent: #f0f0f6;
-  --accent-foreground: #16161d;
-  --destructive: oklch(57.7% 0.245 27.325deg);
-  --destructive-foreground: oklch(57.7% 0.245 27.325deg);
-  --border: rgb(22 22 29 / 0.09);
-  --input: rgb(22 22 29 / 0.09);
-  --ring: #6366f1;
-  --shadow-card:
-    0 1px 2px rgb(22 22 29 / 0.05),
-    0 12px 32px -16px rgb(22 22 29 / 0.18);
-  --chart-1: oklch(64.6% 0.222 41.116deg);
-  --chart-2: oklch(60% 0.118 184.704deg);
-  --chart-3: oklch(39.8% 0.07 227.392deg);
-  --chart-4: oklch(82.8% 0.189 84.429deg);
-  --chart-5: oklch(76.9% 0.188 70.08deg);
-  --radius: 1rem;
-  --sidebar: oklch(98.5% 0 0deg);
-  --sidebar-foreground: oklch(14.5% 0 0deg);
-  --sidebar-primary: oklch(20.5% 0 0deg);
-  --sidebar-primary-foreground: oklch(98.5% 0 0deg);
-  --sidebar-accent: oklch(97% 0 0deg);
-  --sidebar-accent-foreground: oklch(20.5% 0 0deg);
-  --sidebar-border: oklch(92.2% 0 0deg);
-  --sidebar-ring: oklch(70.8% 0 0deg);
-  --success: oklch(78% 0.08 200deg);
-  --warning: oklch(89% 0.1 75deg);
-  --error: oklch(75% 0.15 25deg);
+  --secondary: #f4efef;
+  --secondary-foreground: #1c1416;
+  --muted: #f4efef;
+  --muted-foreground: #5c5155;
+  --accent: #f4efef;
+  --accent-foreground: #1c1416;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: rgb(28 20 22 / 0.11);
+  --input: rgb(28 20 22 / 0.14);
+  --ring: #dc2626;
+
+  /* Editorial accents — not touched by <BrandColor /> */
+  --link: #1e40af;
+  --link-hover: #1a3696;
+  --kicker: #b91c1c;
+  --rule: #fecaca;
+
+  /* Soft UI Evolution: softer than flat, clearer than neumorphism */
+  --shadow-sm: 0 1px 2px rgb(28 20 22 / 0.05);
+  --shadow-md:
+    0 2px 4px rgb(28 20 22 / 0.06),
+    0 8px 16px -8px rgb(28 20 22 / 0.1);
+  --shadow-lg:
+    0 4px 8px rgb(28 20 22 / 0.07),
+    0 16px 32px -12px rgb(28 20 22 / 0.14);
+  --shadow-xl:
+    0 8px 16px rgb(28 20 22 / 0.08),
+    0 28px 48px -16px rgb(28 20 22 / 0.2);
+  --shadow-card: var(--shadow-md);
+
+  /* Spacing scale — density 4/10 (standard) */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  --chart-1: #dc2626;
+  --chart-2: #1e40af;
+  --chart-3: #b45309;
+  --chart-4: #0f766e;
+  --chart-5: #7e22ce;
+  --radius: 0.75rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1c1416;
+  --sidebar-primary: #dc2626;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f4efef;
+  --sidebar-accent-foreground: #1c1416;
+  --sidebar-border: rgb(28 20 22 / 0.11);
+  --sidebar-ring: #dc2626;
+  --success: #d1fae5;
+  --warning: #fef3c7;
+  --error: #fee2e2;
 }
 
 [data-theme='dark'] {
-  --background: #0d0d12;
-  --foreground: #ececf2;
-  --card: #16161d;
-  --card-foreground: #ececf2;
-  --popover: #16161d;
-  --popover-foreground: #ececf2;
-  --primary: #6366f1;
-  --primary-foreground: #ffffff;
-  --secondary: #1e1e27;
-  --secondary-foreground: #ececf2;
-  --muted: #1e1e27;
-  --muted-foreground: #9298a8;
-  --accent: #1e1e27;
-  --accent-foreground: #ececf2;
-  --destructive: oklch(39.6% 0.141 25.723deg);
-  --destructive-foreground: oklch(63.7% 0.237 25.331deg);
-  --border: rgb(236 236 242 / 0.1);
-  --input: rgb(236 236 242 / 0.1);
-  --ring: #6366f1;
-  --shadow-card:
-    0 1px 2px rgb(0 0 0 / 0.4),
-    0 12px 32px -16px rgb(0 0 0 / 0.6);
-  --chart-1: oklch(48.8% 0.243 264.376deg);
-  --chart-2: oklch(69.6% 0.17 162.48deg);
-  --chart-3: oklch(76.9% 0.188 70.08deg);
-  --chart-4: oklch(62.7% 0.265 303.9deg);
-  --chart-5: oklch(64.5% 0.246 16.439deg);
-  --sidebar: oklch(20.5% 0 0deg);
-  --sidebar-foreground: oklch(98.5% 0 0deg);
-  --sidebar-primary: oklch(48.8% 0.243 264.376deg);
-  --sidebar-primary-foreground: oklch(98.5% 0 0deg);
-  --sidebar-accent: oklch(26.9% 0 0deg);
-  --sidebar-accent-foreground: oklch(98.5% 0 0deg);
-  --sidebar-border: oklch(26.9% 0 0deg);
-  --sidebar-ring: oklch(43.9% 0 0deg);
-  --success: oklch(28% 0.1 200deg);
-  --warning: oklch(35% 0.08 70deg);
-  --error: oklch(45% 0.1 25deg);
+  --background: #131011;
+  --foreground: #f2eceb;
+  --card: #1b1718;
+  --card-foreground: #f2eceb;
+  --popover: #1b1718;
+  --popover-foreground: #f2eceb;
+  --primary: #f87171;
+  --primary-foreground: #1c1416;
+  --secondary: #262021;
+  --secondary-foreground: #f2eceb;
+  --muted: #262021;
+  --muted-foreground: #a49a9c;
+  --accent: #262021;
+  --accent-foreground: #f2eceb;
+  --destructive: #f87171;
+  --destructive-foreground: #1c1416;
+  --border: rgb(242 236 235 / 0.12);
+  --input: rgb(242 236 235 / 0.16);
+  --ring: #f87171;
+
+  --link: #a8c3ff;
+  --link-hover: #c7d8ff;
+  --kicker: #fca5a5;
+  --rule: rgb(248 113 113 / 0.32);
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md:
+    0 2px 4px rgb(0 0 0 / 0.4),
+    0 8px 16px -8px rgb(0 0 0 / 0.55);
+  --shadow-lg:
+    0 4px 8px rgb(0 0 0 / 0.45),
+    0 16px 32px -12px rgb(0 0 0 / 0.65);
+  --shadow-xl:
+    0 8px 16px rgb(0 0 0 / 0.5),
+    0 28px 48px -16px rgb(0 0 0 / 0.75);
+  --shadow-card: var(--shadow-md);
+
+  --chart-1: #f87171;
+  --chart-2: #93b4fe;
+  --chart-3: #fbbf24;
+  --chart-4: #5eead4;
+  --chart-5: #d8b4fe;
+  --sidebar: #1b1718;
+  --sidebar-foreground: #f2eceb;
+  --sidebar-primary: #f87171;
+  --sidebar-primary-foreground: #1c1416;
+  --sidebar-accent: #262021;
+  --sidebar-accent-foreground: #f2eceb;
+  --sidebar-border: rgb(242 236 235 / 0.12);
+  --sidebar-ring: #f87171;
+  --success: #064e3b;
+  --warning: #4a3209;
+  --error: #4c1d1d;
 }
 
 @theme inline {
@@ -206,6 +260,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-link: var(--link);
+  --color-link-hover: var(--link-hover);
+  --color-kicker: var(--kicker);
+  --color-rule: var(--rule);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -226,6 +284,10 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-error: var(--error);
+  --shadow-soft-sm: var(--shadow-sm);
+  --shadow-soft-md: var(--shadow-md);
+  --shadow-soft-lg: var(--shadow-lg);
+  --shadow-soft-xl: var(--shadow-xl);
 }
 
 @layer base {
@@ -234,6 +296,75 @@
   }
   body {
     @apply bg-background text-foreground min-h-[100vh] flex flex-col;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Every interactive element gets a visible keyboard focus ring. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  a,
+  button,
+  [role='button'],
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  /*
+   * Editorial kicker — the small red category line above a headline.
+   * Reads as "section label", the standard newsroom cue.
+   */
+  .kicker {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--kicker);
+  }
+
+  /* Thin red rule used to separate masthead / section headers. */
+  .editorial-rule {
+    border-top: 2px solid var(--rule);
+  }
+
+  /* Card/tile hover: lift without shifting neighbours (no scale). */
+  .hover-lift {
+    transition:
+      box-shadow 220ms ease,
+      transform 220ms ease,
+      border-color 220ms ease;
+  }
+
+  .hover-lift:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  /* Inline editorial link styling for body copy. */
+  .link-editorial {
+    color: var(--link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+    transition: color 200ms ease;
+  }
+
+  .link-editorial:hover {
+    color: var(--link-hover);
   }
 }
 
@@ -247,5 +378,38 @@ html[data-theme='light'] {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--primary) 30%, transparent);
+  background: color-mix(in srgb, var(--primary) 26%, transparent);
+}
+
+/* Long-form reading: serif headings, blue links, comfortable measure. */
+.prose :where(a):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
+  color: var(--link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: color 200ms ease;
+}
+
+.prose :where(a):not(:where([class~='not-prose'], [class~='not-prose'] *)):hover {
+  color: var(--link-hover);
+}
+
+.prose :where(blockquote):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
+  border-inline-start-color: var(--primary);
+  font-family: var(--font-serif);
+  font-style: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .hover-lift:hover {
+    transform: none;
+  }
 }

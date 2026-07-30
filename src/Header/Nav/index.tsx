@@ -24,13 +24,13 @@ export const HeaderNav: React.FC<{ data: HeaderType; initialStaffRole: null | st
   const navItems = (data?.navItems || []).filter((item) => !item.staffOnly || isStaff)
 
   return (
-    <nav className="flex items-center gap-1">
+    <nav className="flex items-center gap-0.5">
       {navItems.map(({ icon, link }, i) => {
         const Icon = icon ? navIconComponents[icon] : undefined
 
         return (
           <span
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+            className="relative flex items-center gap-1.5 px-2.5 py-2 text-[0.8125rem] font-semibold tracking-wide text-foreground/75 uppercase transition-colors duration-200 after:absolute after:inset-x-2.5 after:-bottom-0.5 after:h-[2px] after:origin-left after:scale-x-0 after:bg-primary after:transition-transform after:duration-200 hover:text-foreground hover:after:scale-x-100"
             key={i}
           >
             {Icon && <Icon className="size-4" />}
@@ -38,7 +38,7 @@ export const HeaderNav: React.FC<{ data: HeaderType; initialStaffRole: null | st
           </span>
         )
       })}
-      <div className="ml-1 flex items-center gap-1">
+      <div className="ml-2 flex items-center gap-1 border-l border-border pl-2">
         <QuickSearch />
         <ThemeToggle />
         <AccountMenu />

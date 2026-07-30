@@ -51,13 +51,13 @@ export default function ResetPasswordPageClient({
 
   if (!token) {
     return (
-      <div className="container max-w-sm py-24">
+      <div className="mx-auto my-20 w-[calc(100%-2rem)] max-w-md rounded-lg border border-border bg-card p-6 shadow-[var(--shadow-lg)] sm:p-8">
         <AuthLogo logo={logo} siteName={siteName} />
         <h1 className="mb-4 text-3xl font-bold">Invalid link</h1>
         <p className="mb-6 text-muted-foreground">
           This password reset link is missing or invalid. Request a new one.
         </p>
-        <Link className="underline" href="/forgot-password">
+        <Link className="link-editorial" href="/forgot-password">
           Request a new link
         </Link>
       </div>
@@ -65,7 +65,7 @@ export default function ResetPasswordPageClient({
   }
 
   return (
-    <div className="container max-w-sm py-24">
+    <div className="mx-auto my-20 w-[calc(100%-2rem)] max-w-md rounded-lg border border-border bg-card p-6 shadow-[var(--shadow-lg)] sm:p-8">
       <AuthLogo logo={logo} siteName={siteName} />
       <h1 className="mb-8 text-3xl font-bold">Set a new password</h1>
 
@@ -81,7 +81,7 @@ export default function ResetPasswordPageClient({
           />
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
         <Button disabled={submitting} type="submit">
           {submitting ? 'Saving...' : 'Reset password'}
