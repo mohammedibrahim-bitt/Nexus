@@ -19,7 +19,7 @@ export default function AccountPageClient() {
   }
 
   return (
-    <div className="container max-w-sm py-24">
+    <div className="mx-auto my-20 w-[calc(100%-2rem)] max-w-md rounded-lg border border-border bg-card p-6 shadow-[var(--shadow-lg)] sm:p-8">
       <h1 className="mb-8 text-3xl font-bold">Your account</h1>
 
       <div className="flex flex-col gap-1 mb-8">

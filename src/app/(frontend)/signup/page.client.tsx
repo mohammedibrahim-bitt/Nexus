@@ -50,7 +50,7 @@ export default function SignupPageClient({
 
   if (submitted) {
     return (
-      <div className="container max-w-sm py-24">
+      <div className="mx-auto my-20 w-[calc(100%-2rem)] max-w-md rounded-lg border border-border bg-card p-6 shadow-[var(--shadow-lg)] sm:p-8">
         <AuthLogo logo={logo} siteName={siteName} />
         <h1 className="mb-4 text-3xl font-bold">Check your email</h1>
         <p className="text-muted-foreground">
@@ -65,7 +65,7 @@ export default function SignupPageClient({
   }
 
   return (
-    <div className="container max-w-sm py-24">
+    <div className="mx-auto my-20 w-[calc(100%-2rem)] max-w-md rounded-lg border border-border bg-card p-6 shadow-[var(--shadow-lg)] sm:p-8">
       <AuthLogo logo={logo} siteName={siteName} />
       <h1 className="mb-8 text-3xl font-bold">Sign up</h1>
 
@@ -97,7 +97,7 @@ export default function SignupPageClient({
           />
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
         <Button disabled={submitting} type="submit">
           {submitting ? 'Creating account...' : 'Sign up'}
@@ -106,7 +106,7 @@ export default function SignupPageClient({
 
       <p className="mt-6 text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link className="underline" href="/login">
+        <Link className="link-editorial" href="/login">
           Log in
         </Link>
       </p>

@@ -78,7 +78,7 @@ export const Settings: GlobalConfig = {
             {
               name: 'primaryColor',
               type: 'text',
-              defaultValue: '#171717',
+              defaultValue: '#dc2626',
               label: 'Brand Color',
               required: true,
               admin: {
@@ -104,7 +104,7 @@ export const Settings: GlobalConfig = {
             {
               name: 'cornerRadius',
               type: 'number',
-              defaultValue: 16,
+              defaultValue: 12,
               label: 'Corner Radius (px)',
               max: 28,
               min: 0,

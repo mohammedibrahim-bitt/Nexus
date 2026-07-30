@@ -20,7 +20,9 @@ export const PostHero: React.FC<{
     <div className="relative -mt-[10.4rem] flex items-end">
       <div className="container z-10 relative lg:grid lg:grid-cols-[1fr_48rem_1fr] text-white pb-8">
         <Reveal className="col-start-1 col-span-1 md:col-start-2 md:col-span-2">
-          <div className="uppercase text-sm mb-6">
+          {/* Always sits on the dark scrim, so the kicker uses the light red
+          rather than the theme-dependent --kicker token. */}
+          <div className="mb-5 text-[0.6875rem] font-bold tracking-[0.1em] text-red-300 uppercase">
             {categories?.map((category, index) => {
               if (typeof category === 'object' && category !== null) {
                 const { title: categoryTitle } = category
@@ -32,7 +34,7 @@ export const PostHero: React.FC<{
                 return (
                   <React.Fragment key={index}>
                     {titleToUse}
-                    {!isLast && <React.Fragment>, &nbsp;</React.Fragment>}
+                    {!isLast && <React.Fragment> · </React.Fragment>}
                   </React.Fragment>
                 )
               }
@@ -40,26 +42,26 @@ export const PostHero: React.FC<{
             })}
           </div>
 
-          <div className="">
-            <h1 className="mb-6 text-3xl md:text-5xl lg:text-6xl">{title}</h1>
-          </div>
+          <h1 className="mb-6 max-w-[40ch] text-3xl leading-[1.1] font-semibold text-balance [text-shadow:0_1px_16px_rgb(0_0_0/0.45)] md:text-5xl lg:text-6xl">
+            {title}
+          </h1>
 
-          <div className="flex flex-col md:flex-row gap-4 md:gap-16">
+          <div className="flex flex-col gap-2 border-t border-white/20 pt-5 text-sm md:flex-row md:items-center md:gap-3">
             {hasAuthors && (
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm">Author</p>
-
-                  <p>{formatAuthors(populatedAuthors)}</p>
-                </div>
-              </div>
+              <p className="font-medium text-white">
+                <span className="text-white/60">By </span>
+                {formatAuthors(populatedAuthors)}
+              </p>
+            )}
+            {hasAuthors && publishedAt && (
+              <span aria-hidden className="hidden text-white/40 md:inline">
+                ·
+              </span>
             )}
             {publishedAt && (
-              <div className="flex flex-col gap-1">
-                <p className="text-sm">Date Published</p>
-
-                <time dateTime={publishedAt}>{formatDateTime(publishedAt)}</time>
-              </div>
+              <time className="text-white/70" dateTime={publishedAt}>
+                {formatDateTime(publishedAt)}
+              </time>
             )}
           </div>
 

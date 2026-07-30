@@ -1,6 +1,7 @@
 'use client'
 import { cn } from '@/utilities/ui'
 import useClickableCard from '@/utilities/useClickableCard'
+import { NewspaperIcon } from 'lucide-react'
 import Link from 'next/link'
 import React, { Fragment } from 'react'
 
@@ -33,18 +34,36 @@ export const Card: React.FC<{
   return (
     <article
       className={cn(
-        'border border-border rounded-xl overflow-hidden bg-card shadow-[var(--shadow-card)] transition-shadow hover:shadow-lg hover:cursor-pointer',
+        'group hover-lift flex flex-col overflow-hidden rounded-lg border border-border bg-card shadow-[var(--shadow-md)] hover:cursor-pointer hover:border-rule',
         className,
       )}
       ref={card.ref}
     >
-      <div className="relative w-full ">
-        {!imageToUse && <div className="">No image</div>}
-        {imageToUse && typeof imageToUse !== 'string' && <Media resource={imageToUse} size="33vw" />}
+      {/* Fixed ratio keeps the grid on a consistent baseline whether or not a
+      post has artwork; the image scales inside its own clipped box so the
+      hover never nudges neighbouring cards. */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+        {!imageToUse && (
+          <div className="flex h-full w-full items-center justify-center">
+            <NewspaperIcon aria-hidden className="size-8 text-muted-foreground/40" />
+          </div>
+        )}
+        {imageToUse && typeof imageToUse !== 'string' && (
+          <Media
+            fill
+            imgClassName="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+            resource={imageToUse}
+            size="33vw"
+          />
+        )}
       </div>
-      <div style={{ padding: 'calc(1rem * var(--space-scale, 1))' }}>
+
+      <div
+        className="flex flex-1 flex-col gap-2"
+        style={{ padding: 'calc(1.25rem * var(--space-scale, 1))' }}
+      >
         {showCategories && hasCategories && (
-          <div className="uppercase text-sm mb-4">
+          <div className="kicker">
             {categories?.map((category, index) => {
               if (typeof category === 'object') {
                 const { title: titleFromCategory } = category
@@ -56,7 +75,7 @@ export const Card: React.FC<{
                 return (
                   <Fragment key={index}>
                     {categoryTitle}
-                    {!isLast && <Fragment>, &nbsp;</Fragment>}
+                    {!isLast && <Fragment> · </Fragment>}
                   </Fragment>
                 )
               }
@@ -65,16 +84,20 @@ export const Card: React.FC<{
             })}
           </div>
         )}
+
         {titleToUse && (
-          <div className="prose">
-            <h3>
-              <Link className="not-prose" href={href} ref={link.ref}>
-                {titleToUse}
-              </Link>
-            </h3>
-          </div>
+          <h3 className="font-display text-xl leading-snug font-semibold text-balance transition-colors duration-200 group-hover:text-primary">
+            <Link className="not-prose" href={href} ref={link.ref}>
+              {titleToUse}
+            </Link>
+          </h3>
         )}
-        {description && <div className="mt-2">{description && <p>{sanitizedDescription}</p>}</div>}
+
+        {description && (
+          <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+            {sanitizedDescription}
+          </p>
+        )}
       </div>
     </article>
   )

@@ -3,7 +3,16 @@ import type { Metadata } from 'next'
 import { cn } from '@/utilities/ui'
 import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
-import { Inter, Outfit, Playfair_Display, Poppins, Sora, Space_Grotesk } from 'next/font/google'
+import {
+  Inter,
+  Newsreader,
+  Outfit,
+  Playfair_Display,
+  Poppins,
+  Roboto,
+  Sora,
+  Space_Grotesk,
+} from 'next/font/google'
 import React from 'react'
 
 import { Analytics } from '@/components/Analytics'
@@ -20,9 +29,24 @@ import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
 
+// Body copy for the whole site — Roboto, paired with Newsreader per the
+// Nexus design system's news/editorial type pairing.
+const roboto = Roboto({
+  display: 'swap',
+  subsets: ['latin'],
+  variable: '--font-roboto',
+  weight: ['300', '400', '500', '700'],
+})
+
 // Curated display-font options for Settings > Appearance — all preloaded
 // (self-hosted via next/font/google) so switching the admin's selection is
 // just a CSS variable swap in BrandColor, no extra network requests.
+const newsreader = Newsreader({
+  display: 'swap',
+  subsets: ['latin'],
+  variable: '--font-newsreader',
+  weight: ['400', '500', '600', '700'],
+})
 const spaceGrotesk = Space_Grotesk({
   display: 'swap',
   subsets: ['latin'],
@@ -64,6 +88,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       className={cn(
         GeistSans.variable,
         GeistMono.variable,
+        roboto.variable,
+        newsreader.variable,
         spaceGrotesk.variable,
         poppins.variable,
         sora.variable,

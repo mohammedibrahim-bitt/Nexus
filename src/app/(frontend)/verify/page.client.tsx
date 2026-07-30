@@ -41,7 +41,7 @@ export default function VerifyPageClient({
   }, [token])
 
   return (
-    <div className="container max-w-sm py-24">
+    <div className="mx-auto my-20 w-[calc(100%-2rem)] max-w-md rounded-lg border border-border bg-card p-6 shadow-[var(--shadow-lg)] sm:p-8">
       <AuthLogo logo={logo} siteName={siteName} />
       {status === 'pending' && <p>Verifying your account...</p>}
 

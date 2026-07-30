@@ -2189,7 +2189,7 @@ export interface Setting {
   /**
    * Used for headings and the text logo site-wide. Body text stays on the readable base font.
    */
-  fontFamily?: ('space-grotesk' | 'poppins' | 'sora' | 'outfit' | 'playfair-display' | 'inter') | null;
+  fontFamily?: ('newsreader' | 'space-grotesk' | 'poppins' | 'sora' | 'outfit' | 'playfair-display' | 'inter') | null;
   /**
    * Controls how the logo and navigation are arranged in the site header.
    */

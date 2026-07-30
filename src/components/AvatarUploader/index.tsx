@@ -111,7 +111,7 @@ export const AvatarUploader: React.FC<{
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {pendingImageSrc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">

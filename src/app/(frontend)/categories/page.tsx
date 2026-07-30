@@ -34,9 +34,9 @@ export default async function CategoriesPage() {
   return (
     <div className="pt-24 pb-24">
       <div className="container mb-16">
-        <div className="prose dark:prose-invert max-w-none">
-          <h1>Categories</h1>
-        </div>
+        <p className="kicker mb-2">Sections</p>
+        <h1 className="font-display text-4xl leading-tight font-semibold md:text-5xl">Categories</h1>
+        <div aria-hidden className="editorial-rule mt-5" />
       </div>
 
       <div className="container">

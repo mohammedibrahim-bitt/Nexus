@@ -40,9 +40,9 @@ export default async function Page({ params: paramsPromise }: Args) {
     <div className="pt-24 pb-24">
       <PageClient />
       <div className="container mb-16">
-        <div className="prose dark:prose-invert max-w-none">
-          <h1>Posts</h1>
-        </div>
+        <p className="kicker mb-2">All coverage</p>
+        <h1 className="font-display text-4xl leading-tight font-semibold md:text-5xl">Posts</h1>
+        <div aria-hidden className="editorial-rule mt-5" />
       </div>
 
       <div className="container mb-8">

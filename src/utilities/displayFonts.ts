@@ -11,7 +11,8 @@ export type DisplayFontOption = {
  * between them just swaps which CSS variable `--font-display` points at.
  */
 export const DISPLAY_FONT_OPTIONS: DisplayFontOption[] = [
-  { cssVar: '--font-space-grotesk', label: 'Space Grotesk (default)', value: 'space-grotesk' },
+  { cssVar: '--font-newsreader', label: 'Newsreader (editorial serif, default)', value: 'newsreader' },
+  { cssVar: '--font-space-grotesk', label: 'Space Grotesk', value: 'space-grotesk' },
   { cssVar: '--font-poppins', label: 'Poppins', value: 'poppins' },
   { cssVar: '--font-sora', label: 'Sora', value: 'sora' },
   { cssVar: '--font-outfit', label: 'Outfit', value: 'outfit' },
@@ -19,7 +20,7 @@ export const DISPLAY_FONT_OPTIONS: DisplayFontOption[] = [
   { cssVar: '--font-inter-display', label: 'Inter (minimal)', value: 'inter' },
 ]
 
-export const DEFAULT_DISPLAY_FONT = 'space-grotesk'
+export const DEFAULT_DISPLAY_FONT = 'newsreader'
 
 export const getDisplayFontCssVar = (value: string | null | undefined): string =>
-  DISPLAY_FONT_OPTIONS.find((f) => f.value === value)?.cssVar || '--font-space-grotesk'
+  DISPLAY_FONT_OPTIONS.find((f) => f.value === value)?.cssVar || '--font-newsreader'
