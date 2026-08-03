@@ -40,6 +40,6 @@ export const migrations = [
   {
     up: migration_20260731_080955_add_multi_tenant.up,
     down: migration_20260731_080955_add_multi_tenant.down,
-    name: '20260731_080955_add_multi_tenant'
+    name: '20260731_080955_add_multi_tenant',
   },
 ];

@@ -41,7 +41,7 @@ export default function ResetPasswordPageClient({
 
     try {
       await resetPassword(token, password)
-      router.push('/account')
+      router.push('/')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not reset your password')
     } finally {

@@ -12,17 +12,11 @@ import type { BrandLogo } from '@/utilities/getBrandData'
 import { AuthLogo } from '@/components/AuthLogo'
 import { useStaffAuth } from '@/providers/StaffAuth'
 
-export default function LoginPageClient({
-  logo,
-  siteName,
-}: {
-  logo: BrandLogo
-  siteName: string
-}) {
+export default function LoginPageClient({ logo, siteName }: { logo: BrandLogo; siteName: string }) {
   const { staff, loading, login } = useStaffAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirect') || '/account'
+  const redirectTo = searchParams.get('redirect') || '/'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

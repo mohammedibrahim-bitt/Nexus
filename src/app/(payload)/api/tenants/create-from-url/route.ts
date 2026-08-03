@@ -4,6 +4,7 @@ import { headers as getHeaders } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 import { fetchRemoteBrand } from '@/utilities/getBrandData'
+import { ensureDefaultTenantContent } from '@/utilities/tenantDefaultContent'
 
 /**
  * Creates a tenant, its per-tenant Settings document, and runs the brand-sync
@@ -126,6 +127,16 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: `Failed to create tenant settings: ${err instanceof Error ? err.message : 'unknown error'}` },
       { status: 500 },
+    )
+  }
+
+  try {
+    await ensureDefaultTenantContent(payload, tenant.id)
+  } catch (err) {
+    // Non-fatal: the tenant and its branding are already valid without the
+    // standard About/Contact pages and nav — just log so it can be retried.
+    payload.logger.warn(
+      `[tenants] failed to seed default content for "${slug}": ${err instanceof Error ? err.message : 'unknown error'}`,
     )
   }
 

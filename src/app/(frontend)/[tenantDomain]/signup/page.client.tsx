@@ -30,7 +30,7 @@ export default function SignupPageClient({
   const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
-    if (!loading && staff) router.replace('/account')
+    if (!loading && staff) router.replace('/')
   }, [loading, staff, router])
 
   const onSubmit = async (e: React.FormEvent) => {

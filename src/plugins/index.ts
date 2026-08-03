@@ -71,6 +71,48 @@ export const plugins: Plugin[] = [
         defaultColumns: ['form', 'createdAt'],
         useAsTitle: 'createdAt',
       },
+      fields: ({ defaultFields }) => {
+        return defaultFields.map((field) => {
+          if ('name' in field && field.name === 'form') {
+            return {
+              ...field,
+              admin: {
+                ...field.admin,
+                components: {
+                  ...field.admin?.components,
+                  Cell: '@/components/admin/FormSubmissionFormCell#FormSubmissionFormCell',
+                },
+              },
+            }
+          }
+          return field
+        })
+      },
+      hooks: {
+        // Anonymous visitors submit this collection directly (no admin
+        // session, no tenant cookie), so the multi-tenant plugin's own
+        // tenant-field default can't resolve one — derive it from the
+        // referenced form instead, the same way Reviews derives its tenant
+        // from the referenced Post.
+        beforeChange: [
+          async ({ data, req }) => {
+            if (data?.form) {
+              const formId = typeof data.form === 'object' ? data.form.id : data.form
+              const form = await req.payload.findByID({
+                collection: 'forms',
+                id: formId,
+                depth: 0,
+                overrideAccess: true,
+              })
+              const tenantId = form?.tenant
+              if (tenantId) {
+                return { ...data, tenant: typeof tenantId === 'object' ? tenantId.id : tenantId }
+              }
+            }
+            return data
+          },
+        ],
+      },
     },
     formOverrides: {
       fields: ({ defaultFields }) => {
@@ -124,6 +166,8 @@ export const plugins: Plugin[] = [
       'seo-research-runs': {},
       'seo-research-rules': {},
       search: {},
+      forms: {},
+      'form-submissions': {},
       // One row per tenant, surfaced in the admin as a singleton rather than
       // a list — these were Payload Globals before multi-tenancy.
       settings: { isGlobal: true },
