@@ -23,6 +23,7 @@ import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { getBrandData } from '@/utilities/getBrandData'
+import { getRequestTenant } from '@/utilities/getTenant'
 import { getMergedSettings } from '@/utilities/getSettings'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 
@@ -80,7 +81,11 @@ const interDisplay = Inter({
 })
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const brand = await getBrandData()
+  // Sits above the [tenantDomain] route segment, so there's no route param
+  // here — resolve the tenant from the Host header instead (see the same
+  // note in BrandColor).
+  const tenant = await getRequestTenant()
+  const brand = await getBrandData(tenant?.slug)
   const faviconUrl = brand.favicon?.url
 
   return (
@@ -126,7 +131,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getMergedSettings(0)
+  const tenant = await getRequestTenant()
+  const settings = await getMergedSettings(0, tenant?.slug)
 
   // Pull the X/Twitter handle out of Settings' social links, if one's set —
   // never fall back to a hardcoded handle that isn't actually this site's.

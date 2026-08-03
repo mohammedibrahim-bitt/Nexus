@@ -14,6 +14,7 @@ import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
 import { isAdminOrReviewer } from '../../access/isAdminOrReviewer'
 import { isAdminOrReviewerOrAuthor } from '../../access/isAdminOrReviewerOrAuthor'
 import { isStaffRole } from '../../access/isStaffRole'
+import { uniqueSlugPerTenant } from '../../utilities/uniqueSlugPerTenant'
 import { Banner } from '../../blocks/Banner/config'
 import { Code } from '../../blocks/Code/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
@@ -337,7 +338,14 @@ export const Posts: CollectionConfig<'posts'> = {
         },
       ],
     },
-    slugField(),
+    slugField({
+      disableUnique: true,
+      overrides: (baseField) => {
+        const slugTextField = baseField.fields[1]
+        if (slugTextField.type === 'text') slugTextField.validate = uniqueSlugPerTenant('posts')
+        return baseField
+      },
+    }),
   ],
   hooks: {
     beforeChange: [requireReviewToPublish],

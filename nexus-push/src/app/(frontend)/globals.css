@@ -1,0 +1,415 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@config '../../../tailwind.config.mjs';
+
+/*
+ * "PROXEMIC" display font for the Nexus wordmark.
+ * Drop the licensed font files into /public/fonts/ to activate it;
+ * until then the stack falls back to a geometric sans.
+ */
+@font-face {
+  font-family: 'PROXEMIC';
+  src:
+    url('/fonts/Proxemic.woff2') format('woff2'),
+    url('/fonts/Proxemic.woff') format('woff');
+  font-weight: 400 800;
+  font-display: swap;
+}
+
+@custom-variant dark (&:is([data-theme='dark'] *));
+@custom-variant sm (@media (width >= theme(--breakpoint-sm)));
+@custom-variant md (@media (width >= theme(--breakpoint-md)));
+@custom-variant lg (@media (width >= theme(--breakpoint-lg)));
+@custom-variant xl (@media (width >= theme(--breakpoint-xl)));
+@custom-variant 2xl (@media (width >= theme(--breakpoint-2xl)));
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: unset;
+    font-size: unset;
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+}
+
+@plugin "@tailwindcss/typography";
+
+@source inline("lg:col-span-4");
+@source inline("lg:col-span-6");
+@source inline("lg:col-span-8");
+@source inline("lg:col-span-12");
+@source inline("border-border");
+@source inline("bg-card");
+@source inline("border-error");
+@source inline("bg-error/30");
+@source inline("border-success");
+@source inline("bg-success/30");
+@source inline("border-warning");
+@source inline("bg-warning/30");
+
+@theme {
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+  --breakpoint-2xl: 86rem;
+  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-roboto), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, 'Times New Roman', serif;
+  --font-display: var(--font-newsreader);
+  --font-proxemic: 'PROXEMIC', 'Avenir Next', 'Futura', 'Century Gothic', ui-sans-serif, sans-serif;
+}
+
+@layer utilities {
+  .container {
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  @variant sm {
+    .container {
+      max-width: var(--breakpoint-sm);
+    }
+  }
+
+  @variant md {
+    .container {
+      max-width: var(--breakpoint-md);
+      padding-inline: 2rem;
+    }
+  }
+
+  @variant lg {
+    .container {
+      max-width: var(--breakpoint-lg);
+    }
+  }
+
+  @variant xl {
+    .container {
+      max-width: var(--breakpoint-xl);
+    }
+  }
+
+  @variant 2xl {
+    .container {
+      max-width: var(--breakpoint-2xl);
+    }
+  }
+}
+
+/*
+ * Design system: Nexus — News/Media Platform
+ * Style "Soft UI Evolution" · type pairing Newsreader / Roboto
+ * Palette: breaking red (--primary) + link blue (--link)
+ *
+ * Note on layering: `--primary`, `--secondary`, `--accent`, `--ring`, `--radius`
+ * and `--font-display` are re-declared at runtime by <BrandColor /> from the
+ * CMS Settings global, so the values here are defaults it can override. The
+ * editorial blue lives in its own `--link` token precisely so an admin's brand
+ * color choice never eats the link/CTA color.
+ */
+:root {
+  --background: #fdf7f7;
+  --foreground: #1c1416;
+  --card: #ffffff;
+  --card-foreground: #1c1416;
+  --popover: #ffffff;
+  --popover-foreground: #1c1416;
+  --primary: #dc2626;
+  --primary-foreground: #ffffff;
+  --secondary: #f4efef;
+  --secondary-foreground: #1c1416;
+  --muted: #f4efef;
+  --muted-foreground: #5c5155;
+  --accent: #f4efef;
+  --accent-foreground: #1c1416;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: rgb(28 20 22 / 0.11);
+  --input: rgb(28 20 22 / 0.14);
+  --ring: #dc2626;
+
+  /* Editorial accents — not touched by <BrandColor /> */
+  --link: #1e40af;
+  --link-hover: #1a3696;
+  --kicker: #b91c1c;
+  --rule: #fecaca;
+
+  /* Soft UI Evolution: softer than flat, clearer than neumorphism */
+  --shadow-sm: 0 1px 2px rgb(28 20 22 / 0.05);
+  --shadow-md:
+    0 2px 4px rgb(28 20 22 / 0.06),
+    0 8px 16px -8px rgb(28 20 22 / 0.1);
+  --shadow-lg:
+    0 4px 8px rgb(28 20 22 / 0.07),
+    0 16px 32px -12px rgb(28 20 22 / 0.14);
+  --shadow-xl:
+    0 8px 16px rgb(28 20 22 / 0.08),
+    0 28px 48px -16px rgb(28 20 22 / 0.2);
+  --shadow-card: var(--shadow-md);
+
+  /* Spacing scale — density 4/10 (standard) */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  --chart-1: #dc2626;
+  --chart-2: #1e40af;
+  --chart-3: #b45309;
+  --chart-4: #0f766e;
+  --chart-5: #7e22ce;
+  --radius: 0.75rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1c1416;
+  --sidebar-primary: #dc2626;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f4efef;
+  --sidebar-accent-foreground: #1c1416;
+  --sidebar-border: rgb(28 20 22 / 0.11);
+  --sidebar-ring: #dc2626;
+  --success: #d1fae5;
+  --warning: #fef3c7;
+  --error: #fee2e2;
+}
+
+[data-theme='dark'] {
+  --background: #131011;
+  --foreground: #f2eceb;
+  --card: #1b1718;
+  --card-foreground: #f2eceb;
+  --popover: #1b1718;
+  --popover-foreground: #f2eceb;
+  --primary: #f87171;
+  --primary-foreground: #1c1416;
+  --secondary: #262021;
+  --secondary-foreground: #f2eceb;
+  --muted: #262021;
+  --muted-foreground: #a49a9c;
+  --accent: #262021;
+  --accent-foreground: #f2eceb;
+  --destructive: #f87171;
+  --destructive-foreground: #1c1416;
+  --border: rgb(242 236 235 / 0.12);
+  --input: rgb(242 236 235 / 0.16);
+  --ring: #f87171;
+
+  --link: #a8c3ff;
+  --link-hover: #c7d8ff;
+  --kicker: #fca5a5;
+  --rule: rgb(248 113 113 / 0.32);
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md:
+    0 2px 4px rgb(0 0 0 / 0.4),
+    0 8px 16px -8px rgb(0 0 0 / 0.55);
+  --shadow-lg:
+    0 4px 8px rgb(0 0 0 / 0.45),
+    0 16px 32px -12px rgb(0 0 0 / 0.65);
+  --shadow-xl:
+    0 8px 16px rgb(0 0 0 / 0.5),
+    0 28px 48px -16px rgb(0 0 0 / 0.75);
+  --shadow-card: var(--shadow-md);
+
+  --chart-1: #f87171;
+  --chart-2: #93b4fe;
+  --chart-3: #fbbf24;
+  --chart-4: #5eead4;
+  --chart-5: #d8b4fe;
+  --sidebar: #1b1718;
+  --sidebar-foreground: #f2eceb;
+  --sidebar-primary: #f87171;
+  --sidebar-primary-foreground: #1c1416;
+  --sidebar-accent: #262021;
+  --sidebar-accent-foreground: #f2eceb;
+  --sidebar-border: rgb(242 236 235 / 0.12);
+  --sidebar-ring: #f87171;
+  --success: #064e3b;
+  --warning: #4a3209;
+  --error: #4c1d1d;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-link: var(--link);
+  --color-link-hover: var(--link-hover);
+  --color-kicker: var(--kicker);
+  --color-rule: var(--rule);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --shadow-soft-sm: var(--shadow-sm);
+  --shadow-soft-md: var(--shadow-md);
+  --shadow-soft-lg: var(--shadow-lg);
+  --shadow-soft-xl: var(--shadow-xl);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground min-h-[100vh] flex flex-col;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Every interactive element gets a visible keyboard focus ring. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  a,
+  button,
+  [role='button'],
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  /*
+   * Editorial kicker — the small red category line above a headline.
+   * Reads as "section label", the standard newsroom cue.
+   */
+  .kicker {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--kicker);
+  }
+
+  /* Thin red rule used to separate masthead / section headers. */
+  .editorial-rule {
+    border-top: 2px solid var(--rule);
+  }
+
+  /* Card/tile hover: lift without shifting neighbours (no scale). */
+  .hover-lift {
+    transition:
+      box-shadow 220ms ease,
+      transform 220ms ease,
+      border-color 220ms ease;
+  }
+
+  .hover-lift:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  /* Inline editorial link styling for body copy. */
+  .link-editorial {
+    color: var(--link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+    transition: color 200ms ease;
+  }
+
+  .link-editorial:hover {
+    color: var(--link-hover);
+  }
+}
+
+html {
+  opacity: 0;
+}
+
+html[data-theme='dark'],
+html[data-theme='light'] {
+  opacity: initial;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary) 26%, transparent);
+}
+
+/* Long-form reading: serif headings, blue links, comfortable measure. */
+.prose :where(a):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
+  color: var(--link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: color 200ms ease;
+}
+
+.prose :where(a):not(:where([class~='not-prose'], [class~='not-prose'] *)):hover {
+  color: var(--link-hover);
+}
+
+.prose :where(blockquote):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
+  border-inline-start-color: var(--primary);
+  font-family: var(--font-serif);
+  font-style: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .hover-lift:hover {
+    transform: none;
+  }
+}

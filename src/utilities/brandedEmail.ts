@@ -12,15 +12,29 @@ export type BrandEmailData = {
  * machinery, which assumes a full page-render request context these auth
  * hooks don't always run inside.
  */
-export async function getBrandEmailData(req?: PayloadRequest): Promise<BrandEmailData> {
+export async function getBrandEmailData(
+  req?: PayloadRequest,
+  tenantId?: null | number | string,
+): Promise<BrandEmailData> {
   if (!req?.payload) {
-    return { primaryColor: '#171717', siteName: 'Nexus' }
+    return { primaryColor: '#dc2626', siteName: 'Nexus' }
   }
 
-  const settings = await req.payload.findGlobal({ slug: 'settings' })
+  // Settings is one row per tenant now. Without a tenant to attribute the
+  // email to (auth emails aren't always sent from a tenant-aware context) we
+  // fall back to the oldest row, which is the default tenant's.
+  const { docs } = await req.payload.find({
+    collection: 'settings',
+    depth: 0,
+    limit: 1,
+    sort: 'createdAt',
+    ...(tenantId ? { where: { tenant: { equals: tenantId } } } : {}),
+  })
+
+  const settings = docs[0]
 
   return {
-    primaryColor: settings?.primaryColor || '#171717',
+    primaryColor: settings?.primaryColor || '#dc2626',
     siteName: settings?.siteName || 'Nexus',
   }
 }

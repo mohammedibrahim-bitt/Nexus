@@ -1,4 +1,6 @@
-import type { CollectionSlug, GlobalSlug, Payload, PayloadRequest, File } from 'payload'
+import type { CollectionSlug, Payload, PayloadRequest, File } from 'payload'
+
+import { DEFAULT_TENANT_SLUG } from '@/utilities/getTenant'
 
 import { contactForm as contactFormData } from './contact-form'
 import { contact as contactPageData } from './contact-page'
@@ -20,9 +22,44 @@ const collections: CollectionSlug[] = [
   'search',
 ]
 
-const globals: GlobalSlug[] = ['header', 'footer']
+// Header/footer are per-tenant "global" collections now, so seeding them means
+// upserting the row belonging to a specific tenant rather than writing a
+// singleton Payload Global.
+const tenantGlobals = ['header', 'footer'] as const
 
 const categories = ['Technology', 'News', 'Finance', 'Design', 'Software', 'Engineering']
+
+async function upsertTenantGlobal(
+  payload: Payload,
+  slug: (typeof tenantGlobals)[number],
+  tenantId: number,
+  data: Record<string, unknown>,
+): Promise<void> {
+  const { docs } = await payload.find({
+    collection: slug,
+    depth: 0,
+    limit: 1,
+    where: { tenant: { equals: tenantId } },
+  })
+
+  if (docs[0]) {
+    await payload.update({
+      collection: slug,
+      id: docs[0].id,
+      data,
+      depth: 0,
+      context: { disableRevalidate: true },
+    })
+    return
+  }
+
+  await payload.create({
+    collection: slug,
+    data: { ...data, tenant: tenantId },
+    depth: 0,
+    context: { disableRevalidate: true },
+  })
+}
 
 // Next.js revalidation errors are normal when seeding the database without a server running
 // i.e. running `yarn seed` locally instead of using the admin UI within an active app
@@ -43,20 +80,26 @@ export const seed = async ({
   // the custom `/api/seed` endpoint does not
   payload.logger.info(`— Clearing collections and globals...`)
 
+  // Everything this seeder writes belongs to the default tenant — the one the
+  // multi-tenant migration backfilled the pre-existing site into.
+  const { docs: defaultTenants } = await payload.find({
+    collection: 'tenants',
+    depth: 0,
+    limit: 1,
+    where: { slug: { equals: DEFAULT_TENANT_SLUG } },
+  })
+
+  const defaultTenant = defaultTenants[0]
+
+  if (!defaultTenant) {
+    throw new Error(
+      `Cannot seed: no tenant with slug "${DEFAULT_TENANT_SLUG}" exists. Run the multi-tenant migration first.`,
+    )
+  }
+
   // clear the database
   await Promise.all(
-    globals.map((global) =>
-      payload.updateGlobal({
-        slug: global,
-        data: {
-          navItems: [],
-        },
-        depth: 0,
-        context: {
-          disableRevalidate: true,
-        },
-      }),
-    ),
+    tenantGlobals.map((slug) => upsertTenantGlobal(payload, slug, defaultTenant.id, { navItems: [] })),
   )
 
   await Promise.all(
@@ -240,52 +283,46 @@ export const seed = async ({
   payload.logger.info(`— Seeding globals...`)
 
   await Promise.all([
-    payload.updateGlobal({
-      slug: 'header',
-      data: {
-        navItems: [
-          {
-            link: {
-              type: 'custom',
-              label: 'Posts',
-              url: '/posts',
+    upsertTenantGlobal(payload, 'header', defaultTenant.id, {
+      navItems: [
+        {
+          link: {
+            type: 'custom',
+            label: 'Posts',
+            url: '/posts',
+          },
+        },
+        {
+          link: {
+            type: 'reference',
+            label: 'Contact',
+            reference: {
+              relationTo: 'pages',
+              value: contactPage.id,
             },
           },
-          {
-            link: {
-              type: 'reference',
-              label: 'Contact',
-              reference: {
-                relationTo: 'pages',
-                value: contactPage.id,
-              },
-            },
-          },
-        ],
-      },
+        },
+      ],
     }),
-    payload.updateGlobal({
-      slug: 'footer',
-      data: {
-        navItems: [
-          {
-            link: {
-              type: 'custom',
-              label: 'Source Code',
-              newTab: true,
-              url: 'https://github.com/payloadcms/payload/tree/3.x/templates/website',
-            },
+    upsertTenantGlobal(payload, 'footer', defaultTenant.id, {
+      navItems: [
+        {
+          link: {
+            type: 'custom',
+            label: 'Source Code',
+            newTab: true,
+            url: 'https://github.com/payloadcms/payload/tree/3.x/templates/website',
           },
-          {
-            link: {
-              type: 'custom',
-              label: 'Payload',
-              newTab: true,
-              url: 'https://payloadcms.com/',
-            },
+        },
+        {
+          link: {
+            type: 'custom',
+            label: 'Payload',
+            newTab: true,
+            url: 'https://payloadcms.com/',
           },
-        ],
-      },
+        },
+      ],
     }),
   ])
 

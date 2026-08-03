@@ -14,6 +14,7 @@ import { Reviews } from './collections/Reviews'
 import { SeoResearchRules } from './collections/SeoResearchRules'
 import { SeoResearchRuns } from './collections/SeoResearchRuns'
 import { Tags } from './collections/Tags'
+import { Tenants } from './collections/Tenants'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -23,6 +24,7 @@ import { defaultLexical } from '@/fields/defaultLexical'
 import { runSeoResearchTask } from './utilities/seoResearch/task'
 import { startSeoResearchScheduler } from './utilities/seoResearch/scheduler'
 import { getServerSideURL } from './utilities/getURL'
+import { devSafeEmailAdapter } from './utilities/devSafeEmailAdapter'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -82,11 +84,16 @@ export default buildConfig({
       ssl: { rejectUnauthorized: false },
     },
   }),
-  email: resendAdapter({
-    apiKey: process.env.RESEND_API_KEY || '',
-    defaultFromAddress: 'onboarding@resend.dev',
-    defaultFromName: 'Nexus',
-  }),
+  // devSafeEmailAdapter is a no-op wrapper in production — see its own
+  // comment for why local dev needs it (Resend sandbox mode without a
+  // verified domain can only send to the account owner's own address).
+  email: devSafeEmailAdapter(
+    resendAdapter({
+      apiKey: process.env.RESEND_API_KEY || '',
+      defaultFromAddress: 'onboarding@resend.dev',
+      defaultFromName: 'Nexus',
+    }),
+  ),
   collections: [
     {
       slug: 'folders',
@@ -108,14 +115,20 @@ export default buildConfig({
     Media,
     Categories,
     Tags,
+    Tenants,
     Users,
     Reviews,
     ContentSources,
     SeoResearchRuns,
     SeoResearchRules,
+    // Formerly Payload Globals. Payload Globals can't be tenant-scoped, so
+    // these are collections registered with the multi-tenant plugin's
+    // `isGlobal: true` — one row per tenant. See src/plugins/index.ts.
+    Settings,
+    Header,
+    Footer,
   ],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [Header, Footer, Settings],
   onInit: async (payload) => {
     startSeoResearchScheduler(payload)
   },

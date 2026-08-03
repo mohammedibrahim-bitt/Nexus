@@ -1,13 +1,26 @@
-import type { GlobalConfig } from 'payload'
+import type { CollectionConfig } from 'payload'
 
+import { isAdmin } from '@/access/isAdmin'
 import { link } from '@/fields/link'
 import { navIcon } from '@/fields/navIcon'
 import { revalidateHeader } from './hooks/revalidateHeader'
 
-export const Header: GlobalConfig = {
+// Per-tenant "global" — see the note on Settings for why this is a collection
+// rather than a Payload Global.
+export const Header: CollectionConfig = {
   slug: 'header',
   access: {
     read: () => true,
+    create: isAdmin,
+    delete: isAdmin,
+    update: isAdmin,
+  },
+  admin: {
+    group: 'Site',
+  },
+  labels: {
+    plural: 'Header',
+    singular: 'Header',
   },
   fields: [
     {

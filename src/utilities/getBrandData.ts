@@ -1,6 +1,7 @@
 import type { Media as MediaType } from '@/payload-types'
 
-import { getCachedGlobal } from './getGlobals'
+import { getCachedTenantDoc } from './getTenantDoc'
+import { resolveTenant } from './getTenant'
 import { DEFAULT_DISPLAY_FONT } from './displayFonts'
 
 export type BrandLogo = { type: 'media'; media: MediaType } | { type: 'remote'; url: string } | null
@@ -122,7 +123,12 @@ async function isImageUrl(url: string): Promise<boolean> {
   }
 }
 
-async function fetchRemoteBrand(url: string): Promise<RemoteBrand | null> {
+/**
+ * Resolves a tenant's brand source: JSON first, falling back to scraping the
+ * page's meta tags and favicon. Exported so tenant creation can run it
+ * immediately rather than waiting for the 5-minute revalidate window.
+ */
+export async function fetchRemoteBrand(url: string): Promise<RemoteBrand | null> {
   try {
     const res = await fetch(url, {
       next: { revalidate: 300 },
@@ -154,8 +160,13 @@ async function fetchRemoteBrand(url: string): Promise<RemoteBrand | null> {
   }
 }
 
-export async function getBrandData(): Promise<BrandData> {
-  const settings = await getCachedGlobal('settings', 1)()
+/**
+ * @param tenantHostOrSlug The request's hostname (or a bare tenant slug).
+ * Omitted callers fall back to the default tenant — see resolveTenant.
+ */
+export async function getBrandData(tenantHostOrSlug?: null | string): Promise<BrandData> {
+  const tenant = await resolveTenant(tenantHostOrSlug)
+  const settings = tenant ? await getCachedTenantDoc('settings', tenant.id, 1)() : null
 
   const brand: BrandData = {
     analyticsId: settings?.analyticsId || null,
@@ -183,8 +194,13 @@ export async function getBrandData(): Promise<BrandData> {
       .map((link) => ({ platform: link.platform || 'other', url: link.url })),
   }
 
-  if (settings?.brandSyncUrl) {
-    const remote = await fetchRemoteBrand(settings.brandSyncUrl)
+  // The tenant's own sourceUrl is the fallback when this tenant's Settings doc
+  // carries no explicit override, so a tenant created from a URL is branded
+  // even before anyone opens its Settings.
+  const brandSyncUrl = settings?.brandSyncUrl || tenant?.sourceUrl
+
+  if (brandSyncUrl) {
+    const remote = await fetchRemoteBrand(brandSyncUrl)
 
     if (remote) {
       if (typeof remote.siteName === 'string' && remote.siteName.trim()) {

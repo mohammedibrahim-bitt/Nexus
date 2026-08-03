@@ -24,14 +24,20 @@ const slugify = (text: string): string =>
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
 
-const uniqueSlug = async (payload: BasePayload, base: string): Promise<string> => {
+// Slugs only need to be unique within a tenant — two tenants can each own an
+// "ai-tools-2026" post, and they render on different subdomains.
+const uniqueSlug = async (
+  payload: BasePayload,
+  base: string,
+  tenantId: number,
+): Promise<string> => {
   let candidate = base
   let suffix = 1
 
   while (true) {
     const { totalDocs } = await payload.count({
       collection: 'posts',
-      where: { slug: { equals: candidate } },
+      where: { and: [{ tenant: { equals: tenantId } }, { slug: { equals: candidate } }] },
     })
 
     if (totalDocs === 0) return candidate
@@ -54,11 +60,17 @@ const fail = async (payload: BasePayload, runId: number | string, message: strin
 export async function runSeoResearch(
   payload: BasePayload,
   runId: number | string,
-  keys: { aiApiKey: string; aiProvider: AiProvider; authorId: number; serpApiKey: string },
+  keys: {
+    aiApiKey: string
+    aiProvider: AiProvider
+    authorId: number
+    serpApiKey: string
+    tenantId: number
+  },
 ): Promise<void> {
   const run = await payload.findByID({ id: runId, collection: 'seo-research-runs' })
   const keyword = run.keyword
-  const { aiApiKey, aiProvider, authorId, serpApiKey } = keys
+  const { aiApiKey, aiProvider, authorId, serpApiKey, tenantId } = keys
 
   if (!keyword || !keyword.trim()) {
     await fail(payload, runId, 'No keyword was provided.')
@@ -178,6 +190,7 @@ export async function runSeoResearch(
     collection: 'categories',
     limit: 100,
     overrideAccess: false,
+    where: { tenant: { equals: tenantId } },
   })
   const availableCategories = categoryDocs.map((c) => ({ slug: c.slug || '', title: c.title }))
 
@@ -187,7 +200,9 @@ export async function runSeoResearch(
     overrideAccess: false,
     select: { slug: true, title: true },
     sort: '-publishedAt',
-    where: { _status: { equals: 'published' } },
+    where: {
+      and: [{ tenant: { equals: tenantId } }, { _status: { equals: 'published' } }],
+    },
   })
   const linkTargets = linkTargetDocs
     .filter((p) => p.slug)
@@ -207,7 +222,11 @@ export async function runSeoResearch(
     return
   }
 
-  const slug = await uniqueSlug(payload, slugify(article.title).slice(0, 80) || 'seo-research-post')
+  const slug = await uniqueSlug(
+    payload,
+    slugify(article.title).slice(0, 80) || 'seo-research-post',
+    tenantId,
+  )
 
   // Resolve the AI's suggested category (if any) against the real list —
   // never trust an AI-invented slug that doesn't actually exist.
@@ -226,7 +245,7 @@ export async function runSeoResearch(
       collection: 'tags',
       limit: 1,
       overrideAccess: false,
-      where: { slug: { equals: tagSlug } },
+      where: { and: [{ tenant: { equals: tenantId } }, { slug: { equals: tagSlug } }] },
     })
 
     if (existing[0]) {
@@ -238,7 +257,7 @@ export async function runSeoResearch(
       const created = await payload.create({
         collection: 'tags',
         context: { disableRevalidate: true },
-        data: { title: name, slug: tagSlug },
+        data: { title: name, slug: tagSlug, tenant: tenantId },
       })
       tagIds.push(Number(created.id))
     } catch (err) {
@@ -258,7 +277,7 @@ export async function runSeoResearch(
       const media = await payload.create({
         collection: 'media',
         context: { disableRevalidate: true },
-        data: { alt: article.title },
+        data: { alt: article.title, tenant: tenantId },
         file: {
           data: buffer,
           mimetype: 'image/png',
@@ -279,6 +298,7 @@ export async function runSeoResearch(
       title: article.title,
       slug,
       _status: 'draft',
+      tenant: tenantId,
       authors: [authorId],
       categories: matchedCategory ? [Number(matchedCategory.id)] : undefined,
       content: articleToLexical(article),

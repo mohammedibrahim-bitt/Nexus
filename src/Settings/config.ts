@@ -1,5 +1,6 @@
-import type { GlobalConfig } from 'payload'
+import type { CollectionConfig } from 'payload'
 
+import { isAdmin } from '../access/isAdmin'
 import { revalidateSettings } from './hooks/revalidateSettings'
 import { DEFAULT_DISPLAY_FONT, DISPLAY_FONT_OPTIONS } from '../utilities/displayFonts'
 
@@ -34,13 +35,29 @@ const urlValidate = (value: string | null | undefined) => {
   }
 }
 
-export const Settings: GlobalConfig = {
+// A per-tenant "global": registered with the multi-tenant plugin as
+// `isGlobal: true`, so Payload treats it as a singleton *per tenant* rather
+// than a list. It was a true Payload Global before multi-tenancy; Globals
+// can't be tenant-scoped, which is why it's a collection now.
+export const Settings: CollectionConfig = {
   slug: 'settings',
   access: {
+    // Branding is read on every public page render, so reads stay open.
     read: () => true,
+    // Previously this was a Global, where Payload's default update access is
+    // merely "is authenticated" — which would have let any self-registered
+    // reader rewrite site branding. Restricted to admins now.
+    create: isAdmin,
+    delete: isAdmin,
+    update: isAdmin,
   },
   admin: {
     group: 'Site',
+    useAsTitle: 'siteName',
+  },
+  labels: {
+    plural: 'Settings',
+    singular: 'Settings',
   },
   fields: [
     {

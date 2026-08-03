@@ -2,13 +2,15 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { headers as getHeaders } from 'next/headers'
 import { HeaderClient } from './Component.client'
-import { getCachedGlobal } from '@/utilities/getGlobals'
+import { getCachedTenantDoc } from '@/utilities/getTenantDoc'
+import { getRequestTenant } from '@/utilities/getTenant'
 import { getBrandData } from '@/utilities/getBrandData'
 import React from 'react'
 
 export async function Header() {
-  const headerData = await getCachedGlobal('header', 1)()
-  const brand = await getBrandData()
+  const tenant = await getRequestTenant()
+  const headerData = tenant ? await getCachedTenantDoc('header', tenant.id, 1)() : null
+  const brand = await getBrandData(tenant?.slug)
 
   // Resolved server-side (from the request's own auth cookie) so
   // staff-only nav links like "New Post" render in the initial HTML

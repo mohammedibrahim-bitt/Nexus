@@ -1,4 +1,5 @@
-import { getCachedGlobal } from '@/utilities/getGlobals'
+import { getCachedTenantDoc } from '@/utilities/getTenantDoc'
+import { getRequestTenant } from '@/utilities/getTenant'
 import { getBrandData } from '@/utilities/getBrandData'
 import { darkShade } from '@/utilities/colorShade'
 import Link from 'next/link'
@@ -11,8 +12,9 @@ import { navIconComponents } from '@/utilities/navIcons'
 import { socialIconComponents, socialPlatformLabels } from '@/utilities/socialIcons'
 
 export async function Footer() {
-  const footerData = await getCachedGlobal('footer', 1)()
-  const brand = await getBrandData()
+  const tenant = await getRequestTenant()
+  const footerData = tenant ? await getCachedTenantDoc('footer', tenant.id, 1)() : null
+  const brand = await getBrandData(tenant?.slug)
 
   const navItems = footerData?.navItems || []
 

@@ -1,0 +1,146 @@
+import { postgresAdapter } from '@payloadcms/db-postgres'
+import { resendAdapter } from '@payloadcms/email-resend'
+import sharp from 'sharp'
+import path from 'path'
+import { buildConfig, PayloadRequest } from 'payload'
+import { fileURLToPath } from 'url'
+
+import { Categories } from './collections/Categories'
+import { ContentSources } from './collections/ContentSources'
+import { Media } from './collections/Media'
+import { Pages } from './collections/Pages'
+import { Posts } from './collections/Posts'
+import { Reviews } from './collections/Reviews'
+import { SeoResearchRules } from './collections/SeoResearchRules'
+import { SeoResearchRuns } from './collections/SeoResearchRuns'
+import { Tags } from './collections/Tags'
+import { Users } from './collections/Users'
+import { Footer } from './Footer/config'
+import { Header } from './Header/config'
+import { Settings } from './Settings/config'
+import { plugins } from './plugins'
+import { defaultLexical } from '@/fields/defaultLexical'
+import { runSeoResearchTask } from './utilities/seoResearch/task'
+import { startSeoResearchScheduler } from './utilities/seoResearch/scheduler'
+import { getServerSideURL } from './utilities/getURL'
+
+const filename = fileURLToPath(import.meta.url)
+const dirname = path.dirname(filename)
+
+export default buildConfig({
+  admin: {
+    components: {
+      actions: ['@/components/admin/ThemeToggle'],
+      afterDashboard: ['@/components/admin/DashboardCardIcons'],
+      afterNavLinks: ['@/components/admin/NavIcons'],
+      // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
+      // Feel free to delete this at any time. Simply remove the line below.
+      beforeLogin: ['@/components/BeforeLogin'],
+      // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
+      // Feel free to delete this at any time. Simply remove the line below.
+      beforeDashboard: ['@/components/BeforeDashboard'],
+    },
+    importMap: {
+      baseDir: path.resolve(dirname),
+    },
+    // Static (set at build time, not live-synced from Settings — Payload's
+    // admin.meta isn't request-aware) but still swaps the default Payload
+    // branding for the site's own, since admins see this on every visit.
+    meta: {
+      icons: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+      titleSuffix: ' - Nexus Admin',
+    },
+    user: Users.slug,
+    livePreview: {
+      breakpoints: [
+        {
+          label: 'Mobile',
+          name: 'mobile',
+          width: 375,
+          height: 667,
+        },
+        {
+          label: 'Tablet',
+          name: 'tablet',
+          width: 768,
+          height: 1024,
+        },
+        {
+          label: 'Desktop',
+          name: 'desktop',
+          width: 1440,
+          height: 900,
+        },
+      ],
+    },
+  },
+  // This config helps us configure global or default features that the other editors can inherit
+  editor: defaultLexical,
+  db: postgresAdapter({
+    pool: {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    },
+  }),
+  email: resendAdapter({
+    apiKey: process.env.RESEND_API_KEY || '',
+    defaultFromAddress: 'onboarding@resend.dev',
+    defaultFromName: 'Nexus',
+  }),
+  collections: [
+    {
+      slug: 'folders',
+      folders: true,
+      admin: {
+        useAsTitle: 'name',
+      },
+      fields: [
+        {
+          name: 'name',
+          type: 'text',
+          required: true,
+          label: 'Folder Name',
+        },
+      ],
+    },
+    Pages,
+    Posts,
+    Media,
+    Categories,
+    Tags,
+    Users,
+    Reviews,
+    ContentSources,
+    SeoResearchRuns,
+    SeoResearchRules,
+  ],
+  cors: [getServerSideURL()].filter(Boolean),
+  globals: [Header, Footer, Settings],
+  onInit: async (payload) => {
+    startSeoResearchScheduler(payload)
+  },
+  plugins,
+  secret: process.env.PAYLOAD_SECRET,
+  sharp,
+  typescript: {
+    outputFile: path.resolve(dirname, 'payload-types.ts'),
+  },
+  jobs: {
+    access: {
+      run: ({ req }: { req: PayloadRequest }): boolean => {
+        // Allow logged in users to execute this endpoint (default)
+        if (req.user) return true
+
+        const secret = process.env.CRON_SECRET
+        if (!secret) return false
+
+        // If there is no logged in user, then check
+        // for the Vercel Cron secret to be present as an
+        // Authorization header:
+        const authHeader = req.headers.get('authorization')
+        return authHeader === `Bearer ${secret}`
+      },
+    },
+    tasks: [runSeoResearchTask],
+  },
+})

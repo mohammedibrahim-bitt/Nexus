@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { anyone } from '../access/anyone'
 import { isStaffRole } from '../access/isStaffRole'
+import { uniqueSlugPerTenant } from '../utilities/uniqueSlugPerTenant'
 import { slugField } from 'payload'
 
 export const Tags: CollectionConfig = {
@@ -23,6 +24,12 @@ export const Tags: CollectionConfig = {
     },
     slugField({
       position: undefined,
+      disableUnique: true,
+      overrides: (baseField) => {
+        const slugTextField = baseField.fields[1]
+        if (slugTextField.type === 'text') slugTextField.validate = uniqueSlugPerTenant('tags')
+        return baseField
+      },
     }),
   ],
 }

@@ -61,18 +61,40 @@ export const Reviews: CollectionConfig = {
       name: 'approved',
       type: 'checkbox',
       admin: {
-        description: 'Only approved reviews are shown publicly.',
+        description:
+          'Reviews are shown publicly as soon as they\'re submitted. Uncheck to hide a specific review.',
         position: 'sidebar',
       },
-      defaultValue: false,
+      defaultValue: true,
     },
   ],
   hooks: {
     beforeChange: [
-      ({ req, data, operation }) => {
+      async ({ req, data, operation }) => {
         if (operation === 'create' && req.user && req.user.collection === 'users') {
           data.customer = req.user.id
         }
+
+        // Reviews is tenant-scoped, but the field has no admin UI (it's
+        // sidebar-only, allowCreate/allowEdit: false — see the multi-tenant
+        // plugin's tenantField) and the public review form never sends one.
+        // A review belongs to whichever tenant the post it's on belongs to,
+        // not necessarily the reviewer's own tenant — a reader could review
+        // a post on a tenant they're not "assigned" to at all.
+        if (operation === 'create' && !data.tenant && data.post) {
+          const postId = typeof data.post === 'object' ? data.post.id : data.post
+          const post = await req.payload.findByID({
+            id: postId,
+            collection: 'posts',
+            depth: 0,
+            req,
+          })
+
+          if (post?.tenant) {
+            data.tenant = typeof post.tenant === 'object' ? post.tenant.id : post.tenant
+          }
+        }
+
         return data
       },
     ],

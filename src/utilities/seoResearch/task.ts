@@ -11,6 +11,7 @@ export const runSeoResearchTask: TaskConfig<{
     authorId: string
     runId: string
     serpApiKey: string
+    tenantId: string
   }
   output: object
 }> = {
@@ -21,6 +22,9 @@ export const runSeoResearchTask: TaskConfig<{
       aiProvider: input.aiProvider,
       authorId: Number(input.authorId),
       serpApiKey: input.serpApiKey,
+      // Job inputs are text fields on the queue, so widen back to the numeric
+      // id the collections actually store.
+      tenantId: Number(input.tenantId),
     })
     return { output: {} }
   },
@@ -30,6 +34,7 @@ export const runSeoResearchTask: TaskConfig<{
     { name: 'aiApiKey', type: 'text', required: true },
     { name: 'aiProvider', type: 'text', required: true },
     { name: 'authorId', type: 'text', required: true },
+    { name: 'tenantId', type: 'text', required: true },
   ],
   label: 'Run SEO Research',
 }

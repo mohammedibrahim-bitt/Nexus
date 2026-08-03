@@ -27,10 +27,11 @@ const getImageURL = (
 
 export const generateMeta = async (args: {
   doc: Partial<Page> | Partial<Post> | null
+  tenantDomain?: string
 }): Promise<Metadata> => {
-  const { doc } = args
+  const { doc, tenantDomain } = args
 
-  const brand = await getBrandData()
+  const brand = await getBrandData(tenantDomain)
   const siteName = brand.siteName
 
   const ogImage = getImageURL(

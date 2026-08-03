@@ -11,7 +11,7 @@ import { ThemeToggle } from '@/providers/Theme/ThemeToggle'
 import { navIconComponents } from '@/utilities/navIcons'
 import { useStaffAuth } from '@/providers/StaffAuth'
 
-export const HeaderNav: React.FC<{ data: HeaderType; initialStaffRole: null | string }> = ({
+export const HeaderNav: React.FC<{ data: HeaderType | null; initialStaffRole: null | string }> = ({
   data,
   initialStaffRole,
 }) => {

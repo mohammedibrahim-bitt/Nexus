@@ -73,11 +73,15 @@ export interface Config {
     media: Media;
     categories: Category;
     tags: Tag;
+    tenants: Tenant;
     users: User;
     reviews: Review;
     'content-sources': ContentSource;
     'seo-research-runs': SeoResearchRun;
     'seo-research-rules': SeoResearchRule;
+    settings: Setting;
+    header: Header;
+    footer: Footer;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -101,11 +105,15 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
+    tenants: TenantsSelect<false> | TenantsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     'content-sources': ContentSourcesSelect<false> | ContentSourcesSelect<true>;
     'seo-research-runs': SeoResearchRunsSelect<false> | SeoResearchRunsSelect<true>;
     'seo-research-rules': SeoResearchRulesSelect<false> | SeoResearchRulesSelect<true>;
+    settings: SettingsSelect<false> | SettingsSelect<true>;
+    header: HeaderSelect<false> | HeaderSelect<true>;
+    footer: FooterSelect<false> | FooterSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -121,16 +129,8 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {
-    header: Header;
-    footer: Footer;
-    settings: Setting;
-  };
-  globalsSelect: {
-    header: HeaderSelect<false> | HeaderSelect<true>;
-    footer: FooterSelect<false> | FooterSelect<true>;
-    settings: SettingsSelect<false> | SettingsSelect<true>;
-  };
+  globals: {};
+  globalsSelect: {};
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -213,6 +213,7 @@ export interface FolderInterface {
  */
 export interface Media {
   id: number;
+  tenant?: (number | null) | Tenant;
   alt?: string | null;
   caption?: {
     root: {
@@ -301,11 +302,92 @@ export interface Media {
   };
 }
 /**
+ * Each tenant is an independent site on its own subdomain, with fully isolated content, media, and branding.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenants".
+ */
+export interface Tenant {
+  id: number;
+  /**
+   * Display name for this tenant, e.g. "Acme Insights".
+   */
+  name: string;
+  /**
+   * The subdomain label this tenant is served from — "acme" serves acme.yourdomain.com.
+   */
+  slug: string;
+  /**
+   * Optional. A full custom hostname for this tenant (e.g. news.acme.com). Takes precedence over the subdomain when matching an incoming request.
+   */
+  domain?: string | null;
+  /**
+   * The tenant's main website. Used to sync branding (name, colors, logo) — either a brand.json or the homepage, whose meta tags and favicon are read automatically. Also the site cloned by the full-site clone pipeline, once its domain is DNS-verified.
+   */
+  sourceUrl?: string | null;
+  /**
+   * Derived automatically from the Brand Source URL — the bare hostname the TXT record must live under.
+   */
+  sourceDomain?: string | null;
+  /**
+   * Generated once per tenant. The client puts this exact value in their DNS TXT record.
+   */
+  dnsVerificationToken?: string | null;
+  /**
+   * Set only by a successful DNS lookup. Cannot be toggled by hand.
+   */
+  dnsVerified?: boolean | null;
+  /**
+   * When the TXT record was last confirmed.
+   */
+  dnsVerifiedAt?: string | null;
+  /**
+   * none → pending_review (scraped, awaiting approval) → published (live). brand_only means the clone was discarded in favour of brand sync.
+   */
+  cloneStatus?: ('none' | 'scraping' | 'pending_review' | 'published' | 'brand_only' | 'failed') | null;
+  /**
+   * Which rendering mode this tenant ended up in, and it is logged why.
+   */
+  cloneMode?: ('full_clone' | 'brand_only') | null;
+  /**
+   * Pixel similarity (0–100) between the rendered shell and the live source, from the last scrape.
+   */
+  qaScore?: number | null;
+  /**
+   * Below this score the admin UI recommends falling back to brand-only. Configurable per tenant — some sites clone worse than others.
+   */
+  qaThreshold?: number | null;
+  shellHtmlPath?: string | null;
+  sourceScreenshotPath?: string | null;
+  shellScreenshotPath?: string | null;
+  diffScreenshotPath?: string | null;
+  lastClonedAt?: string | null;
+  /**
+   * Why this tenant ended up in its current mode, plus any scripts held back for review.
+   */
+  cloneLog?: string | null;
+  /**
+   * Scripts kept rather than deleted because they may be structurally important. Review before publishing.
+   */
+  flaggedScripts?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
  */
 export interface Page {
   id: number;
+  tenant?: (number | null) | Tenant;
   title: string;
   hero: {
     type: 'none' | 'highImpact' | 'mediumImpact' | 'lowImpact';
@@ -379,6 +461,7 @@ export interface Page {
  */
 export interface Post {
   id: number;
+  tenant?: (number | null) | Tenant;
   title: string;
   heroImage?: (number | null) | Media;
   content: {
@@ -471,6 +554,7 @@ export interface Post {
  */
 export interface Category {
   id: number;
+  tenant?: (number | null) | Tenant;
   title: string;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
@@ -495,6 +579,7 @@ export interface Category {
  */
 export interface Tag {
   id: number;
+  tenant?: (number | null) | Tenant;
   title: string;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
@@ -512,6 +597,7 @@ export interface Tag {
  */
 export interface ContentSource {
   id: number;
+  tenant?: (number | null) | Tenant;
   /**
    * Just a label for you, e.g. "Partner Co Blog".
    */
@@ -591,6 +677,12 @@ export interface User {
    * Your personal API key for the AI provider selected above.
    */
   aiApiKey?: string | null;
+  tenants?:
+    | {
+        tenant: number | Tenant;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -951,12 +1043,13 @@ export interface Form {
  */
 export interface Review {
   id: number;
+  tenant?: (number | null) | Tenant;
   post: number | Post;
   customer: number | User;
   rating: number;
   comment: string;
   /**
-   * Only approved reviews are shown publicly.
+   * Reviews are shown publicly as soon as they're submitted. Uncheck to hide a specific review.
    */
   approved?: boolean | null;
   updatedAt: string;
@@ -970,6 +1063,7 @@ export interface Review {
  */
 export interface SeoResearchRun {
   id: number;
+  tenant?: (number | null) | Tenant;
   /**
    * The target keyword or search phrase to research.
    */
@@ -1023,6 +1117,7 @@ export interface SeoResearchRun {
  */
 export interface SeoResearchRule {
   id: number;
+  tenant?: (number | null) | Tenant;
   /**
    * The target keyword or search phrase to research. Can be a reusable template with bracketed instructions resolved fresh each time it runs — e.g. "best AI agents in [month] [year]", "[current quarter] SaaS pricing trends", or open-ended ones like "[trending AI model this week]". Leave it as a plain phrase with no brackets to search that exact keyword every time.
    */
@@ -1042,6 +1137,200 @@ export interface SeoResearchRule {
   lastRun?: (number | null) | SeoResearchRun;
   lastRunAt?: string | null;
   lastRunStatus?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "settings".
+ */
+export interface Setting {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Shown in the header/footer logo (if no image logo is set) and in browser tab titles.
+   */
+  siteName: string;
+  /**
+   * Optional. If set, this image replaces the text logo in the header and footer.
+   */
+  logo?: (number | null) | Media;
+  /**
+   * Optional. Replaces the browser tab icon. Square image recommended (e.g. 512×512 PNG or SVG).
+   */
+  favicon?: (number | null) | Media;
+  /**
+   * Hex color (e.g. #2563eb) used for buttons, links, and other accents site-wide.
+   */
+  primaryColor: string;
+  /**
+   * Optional. Hex color (e.g. #f59e0b) used for a second tint — badges, secondary buttons, and subtle highlights. Leave blank to use a neutral gray.
+   */
+  secondaryColor?: string | null;
+  /**
+   * Controls roundedness of cards, buttons, and inputs site-wide, from 0 (sharp) to 28 (very rounded).
+   */
+  cornerRadius?: number | null;
+  /**
+   * Global text-size multiplier applied to the whole site, from 90% to 115%.
+   */
+  fontScale?: number | null;
+  /**
+   * Compact reduces internal padding on cards and content blocks for a denser layout.
+   */
+  density?: ('comfortable' | 'compact') | null;
+  /**
+   * Turns on subtle hover/transition animations (cards, nav pills) across the site. Disable for a fully static, no-motion experience.
+   */
+  enableAnimations?: boolean | null;
+  /**
+   * Used for headings and the text logo site-wide. Body text stays on the readable base font.
+   */
+  fontFamily?: ('newsreader' | 'space-grotesk' | 'poppins' | 'sora' | 'outfit' | 'playfair-display' | 'inter') | null;
+  /**
+   * Controls how the logo and navigation are arranged in the site header.
+   */
+  headerLayout?: ('left' | 'centered') | null;
+  /**
+   * Optional. If this blog is a subdomain of a main website, point this at either (a) a JSON file on that site, e.g. https://example.com/brand.json, with { "siteName": "...", "primaryColor": "#...", "logoUrl": "..." }, or (b) just that site's homepage URL — if no JSON is found, we'll auto-detect the name, color, and logo from its standard meta tags and favicon. Any field found overrides the values in the Branding tab. Checked roughly every 5 minutes.
+   */
+  brandSyncUrl?: string | null;
+  /**
+   * Optional short line shown next to the logo in the footer, e.g. a mission statement.
+   */
+  footerTagline?: string | null;
+  /**
+   * Optional. Use {year} for the current year and {siteName} for the site name, e.g. "© {year} {siteName}. All rights reserved."
+   */
+  copyrightText?: string | null;
+  /**
+   * Shown as icon links in the footer.
+   */
+  socialLinks?:
+    | {
+        platform: 'twitter' | 'instagram' | 'linkedin' | 'facebook' | 'youtube' | 'github' | 'tiktok' | 'other';
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Injects the tracking snippet site-wide when a provider and ID are set.
+   */
+  analyticsProvider?: ('none' | 'ga4' | 'plausible') | null;
+  /**
+   * For GA4: your Measurement ID, e.g. G-XXXXXXXXXX. For Plausible: your site domain, e.g. example.com.
+   */
+  analyticsId?: string | null;
+  /**
+   * Used for pages/posts that don't set their own SEO description.
+   */
+  defaultMetaDescription?: string | null;
+  /**
+   * Used as the social-share preview image for pages/posts that don't set their own. Recommended 1200×630.
+   */
+  defaultOgImage?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "header".
+ */
+export interface Header {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  navItems?:
+    | {
+        link: {
+          type?: ('reference' | 'custom') | null;
+          newTab?: boolean | null;
+          reference?:
+            | ({
+                relationTo: 'pages';
+                value: number | Page;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: number | Post;
+              } | null);
+          url?: string | null;
+          label: string;
+        };
+        /**
+         * Optional icon shown next to this link.
+         */
+        icon?:
+          | (
+              | ''
+              | 'home'
+              | 'file-text'
+              | 'file-plus'
+              | 'mail'
+              | 'phone'
+              | 'info'
+              | 'search'
+              | 'star'
+              | 'shield-check'
+              | 'globe'
+              | 'message-square-text'
+            )
+          | null;
+        /**
+         * Only show this link to logged-in staff (admin/author/reviewer) — hidden from readers and logged-out visitors, e.g. for a "New Post" shortcut.
+         */
+        staffOnly?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "footer".
+ */
+export interface Footer {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  navItems?:
+    | {
+        link: {
+          type?: ('reference' | 'custom') | null;
+          newTab?: boolean | null;
+          reference?:
+            | ({
+                relationTo: 'pages';
+                value: number | Page;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: number | Post;
+              } | null);
+          url?: string | null;
+          label: string;
+        };
+        /**
+         * Optional icon shown next to this link.
+         */
+        icon?:
+          | (
+              | ''
+              | 'home'
+              | 'file-text'
+              | 'file-plus'
+              | 'mail'
+              | 'phone'
+              | 'info'
+              | 'search'
+              | 'star'
+              | 'shield-check'
+              | 'globe'
+              | 'message-square-text'
+            )
+          | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1096,6 +1385,7 @@ export interface FormSubmission {
  */
 export interface Search {
   id: number;
+  tenant?: (number | null) | Tenant;
   title?: string | null;
   priority?: number | null;
   doc: {
@@ -1260,6 +1550,10 @@ export interface PayloadLockedDocument {
         value: number | Tag;
       } | null)
     | ({
+        relationTo: 'tenants';
+        value: number | Tenant;
+      } | null)
+    | ({
         relationTo: 'users';
         value: number | User;
       } | null)
@@ -1278,6 +1572,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'seo-research-rules';
         value: number | SeoResearchRule;
+      } | null)
+    | ({
+        relationTo: 'settings';
+        value: number | Setting;
+      } | null)
+    | ({
+        relationTo: 'header';
+        value: number | Header;
+      } | null)
+    | ({
+        relationTo: 'footer';
+        value: number | Footer;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1356,6 +1662,7 @@ export interface FoldersSelect<T extends boolean = true> {
  * via the `definition` "pages_select".
  */
 export interface PagesSelect<T extends boolean = true> {
+  tenant?: T;
   title?: T;
   hero?:
     | T
@@ -1492,6 +1799,7 @@ export interface FormBlockSelect<T extends boolean = true> {
  * via the `definition` "posts_select".
  */
 export interface PostsSelect<T extends boolean = true> {
+  tenant?: T;
   title?: T;
   heroImage?: T;
   content?: T;
@@ -1542,6 +1850,7 @@ export interface PostsSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  tenant?: T;
   alt?: T;
   caption?: T;
   folder?: T;
@@ -1636,6 +1945,7 @@ export interface MediaSelect<T extends boolean = true> {
  * via the `definition` "categories_select".
  */
 export interface CategoriesSelect<T extends boolean = true> {
+  tenant?: T;
   title?: T;
   generateSlug?: T;
   slug?: T;
@@ -1656,9 +1966,37 @@ export interface CategoriesSelect<T extends boolean = true> {
  * via the `definition` "tags_select".
  */
 export interface TagsSelect<T extends boolean = true> {
+  tenant?: T;
   title?: T;
   generateSlug?: T;
   slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenants_select".
+ */
+export interface TenantsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  domain?: T;
+  sourceUrl?: T;
+  sourceDomain?: T;
+  dnsVerificationToken?: T;
+  dnsVerified?: T;
+  dnsVerifiedAt?: T;
+  cloneStatus?: T;
+  cloneMode?: T;
+  qaScore?: T;
+  qaThreshold?: T;
+  shellHtmlPath?: T;
+  sourceScreenshotPath?: T;
+  shellScreenshotPath?: T;
+  diffScreenshotPath?: T;
+  lastClonedAt?: T;
+  cloneLog?: T;
+  flaggedScripts?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1683,6 +2021,12 @@ export interface UsersSelect<T extends boolean = true> {
   serpApiKey?: T;
   aiProvider?: T;
   aiApiKey?: T;
+  tenants?:
+    | T
+    | {
+        tenant?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1707,6 +2051,7 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "reviews_select".
  */
 export interface ReviewsSelect<T extends boolean = true> {
+  tenant?: T;
   post?: T;
   customer?: T;
   rating?: T;
@@ -1720,6 +2065,7 @@ export interface ReviewsSelect<T extends boolean = true> {
  * via the `definition` "content-sources_select".
  */
 export interface ContentSourcesSelect<T extends boolean = true> {
+  tenant?: T;
   name?: T;
   feedUrl?: T;
   active?: T;
@@ -1737,6 +2083,7 @@ export interface ContentSourcesSelect<T extends boolean = true> {
  * via the `definition` "seo-research-runs_select".
  */
 export interface SeoResearchRunsSelect<T extends boolean = true> {
+  tenant?: T;
   keyword?: T;
   triggeredBy?: T;
   triggeredByRule?: T;
@@ -1759,6 +2106,7 @@ export interface SeoResearchRunsSelect<T extends boolean = true> {
  * via the `definition` "seo-research-rules_select".
  */
 export interface SeoResearchRulesSelect<T extends boolean = true> {
+  tenant?: T;
   keyword?: T;
   active?: T;
   runAsUser?: T;
@@ -1766,6 +2114,89 @@ export interface SeoResearchRulesSelect<T extends boolean = true> {
   lastRun?: T;
   lastRunAt?: T;
   lastRunStatus?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "settings_select".
+ */
+export interface SettingsSelect<T extends boolean = true> {
+  tenant?: T;
+  siteName?: T;
+  logo?: T;
+  favicon?: T;
+  primaryColor?: T;
+  secondaryColor?: T;
+  cornerRadius?: T;
+  fontScale?: T;
+  density?: T;
+  enableAnimations?: T;
+  fontFamily?: T;
+  headerLayout?: T;
+  brandSyncUrl?: T;
+  footerTagline?: T;
+  copyrightText?: T;
+  socialLinks?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        id?: T;
+      };
+  analyticsProvider?: T;
+  analyticsId?: T;
+  defaultMetaDescription?: T;
+  defaultOgImage?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "header_select".
+ */
+export interface HeaderSelect<T extends boolean = true> {
+  tenant?: T;
+  navItems?:
+    | T
+    | {
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+              label?: T;
+            };
+        icon?: T;
+        staffOnly?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "footer_select".
+ */
+export interface FooterSelect<T extends boolean = true> {
+  tenant?: T;
+  navItems?:
+    | T
+    | {
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+              label?: T;
+            };
+        icon?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1939,6 +2370,7 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
  * via the `definition` "search_select".
  */
 export interface SearchSelect<T extends boolean = true> {
+  tenant?: T;
   title?: T;
   priority?: T;
   doc?: T;
@@ -2046,280 +2478,6 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "header".
- */
-export interface Header {
-  id: number;
-  navItems?:
-    | {
-        link: {
-          type?: ('reference' | 'custom') | null;
-          newTab?: boolean | null;
-          reference?:
-            | ({
-                relationTo: 'pages';
-                value: number | Page;
-              } | null)
-            | ({
-                relationTo: 'posts';
-                value: number | Post;
-              } | null);
-          url?: string | null;
-          label: string;
-        };
-        /**
-         * Optional icon shown next to this link.
-         */
-        icon?:
-          | (
-              | ''
-              | 'home'
-              | 'file-text'
-              | 'file-plus'
-              | 'mail'
-              | 'phone'
-              | 'info'
-              | 'search'
-              | 'star'
-              | 'shield-check'
-              | 'globe'
-              | 'message-square-text'
-            )
-          | null;
-        /**
-         * Only show this link to logged-in staff (admin/author/reviewer) — hidden from readers and logged-out visitors, e.g. for a "New Post" shortcut.
-         */
-        staffOnly?: boolean | null;
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "footer".
- */
-export interface Footer {
-  id: number;
-  navItems?:
-    | {
-        link: {
-          type?: ('reference' | 'custom') | null;
-          newTab?: boolean | null;
-          reference?:
-            | ({
-                relationTo: 'pages';
-                value: number | Page;
-              } | null)
-            | ({
-                relationTo: 'posts';
-                value: number | Post;
-              } | null);
-          url?: string | null;
-          label: string;
-        };
-        /**
-         * Optional icon shown next to this link.
-         */
-        icon?:
-          | (
-              | ''
-              | 'home'
-              | 'file-text'
-              | 'file-plus'
-              | 'mail'
-              | 'phone'
-              | 'info'
-              | 'search'
-              | 'star'
-              | 'shield-check'
-              | 'globe'
-              | 'message-square-text'
-            )
-          | null;
-        id?: string | null;
-      }[]
-    | null;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "settings".
- */
-export interface Setting {
-  id: number;
-  /**
-   * Shown in the header/footer logo (if no image logo is set) and in browser tab titles.
-   */
-  siteName: string;
-  /**
-   * Optional. If set, this image replaces the text logo in the header and footer.
-   */
-  logo?: (number | null) | Media;
-  /**
-   * Optional. Replaces the browser tab icon. Square image recommended (e.g. 512×512 PNG or SVG).
-   */
-  favicon?: (number | null) | Media;
-  /**
-   * Hex color (e.g. #2563eb) used for buttons, links, and other accents site-wide.
-   */
-  primaryColor: string;
-  /**
-   * Optional. Hex color (e.g. #f59e0b) used for a second tint — badges, secondary buttons, and subtle highlights. Leave blank to use a neutral gray.
-   */
-  secondaryColor?: string | null;
-  /**
-   * Controls roundedness of cards, buttons, and inputs site-wide, from 0 (sharp) to 28 (very rounded).
-   */
-  cornerRadius?: number | null;
-  /**
-   * Global text-size multiplier applied to the whole site, from 90% to 115%.
-   */
-  fontScale?: number | null;
-  /**
-   * Compact reduces internal padding on cards and content blocks for a denser layout.
-   */
-  density?: ('comfortable' | 'compact') | null;
-  /**
-   * Turns on subtle hover/transition animations (cards, nav pills) across the site. Disable for a fully static, no-motion experience.
-   */
-  enableAnimations?: boolean | null;
-  /**
-   * Used for headings and the text logo site-wide. Body text stays on the readable base font.
-   */
-  fontFamily?: ('newsreader' | 'space-grotesk' | 'poppins' | 'sora' | 'outfit' | 'playfair-display' | 'inter') | null;
-  /**
-   * Controls how the logo and navigation are arranged in the site header.
-   */
-  headerLayout?: ('left' | 'centered') | null;
-  /**
-   * Optional. If this blog is a subdomain of a main website, point this at either (a) a JSON file on that site, e.g. https://example.com/brand.json, with { "siteName": "...", "primaryColor": "#...", "logoUrl": "..." }, or (b) just that site's homepage URL — if no JSON is found, we'll auto-detect the name, color, and logo from its standard meta tags and favicon. Any field found overrides the values in the Branding tab. Checked roughly every 5 minutes.
-   */
-  brandSyncUrl?: string | null;
-  /**
-   * Optional short line shown next to the logo in the footer, e.g. a mission statement.
-   */
-  footerTagline?: string | null;
-  /**
-   * Optional. Use {year} for the current year and {siteName} for the site name, e.g. "© {year} {siteName}. All rights reserved."
-   */
-  copyrightText?: string | null;
-  /**
-   * Shown as icon links in the footer.
-   */
-  socialLinks?:
-    | {
-        platform: 'twitter' | 'instagram' | 'linkedin' | 'facebook' | 'youtube' | 'github' | 'tiktok' | 'other';
-        url: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Injects the tracking snippet site-wide when a provider and ID are set.
-   */
-  analyticsProvider?: ('none' | 'ga4' | 'plausible') | null;
-  /**
-   * For GA4: your Measurement ID, e.g. G-XXXXXXXXXX. For Plausible: your site domain, e.g. example.com.
-   */
-  analyticsId?: string | null;
-  /**
-   * Used for pages/posts that don't set their own SEO description.
-   */
-  defaultMetaDescription?: string | null;
-  /**
-   * Used as the social-share preview image for pages/posts that don't set their own. Recommended 1200×630.
-   */
-  defaultOgImage?: (number | null) | Media;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "header_select".
- */
-export interface HeaderSelect<T extends boolean = true> {
-  navItems?:
-    | T
-    | {
-        link?:
-          | T
-          | {
-              type?: T;
-              newTab?: T;
-              reference?: T;
-              url?: T;
-              label?: T;
-            };
-        icon?: T;
-        staffOnly?: T;
-        id?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "footer_select".
- */
-export interface FooterSelect<T extends boolean = true> {
-  navItems?:
-    | T
-    | {
-        link?:
-          | T
-          | {
-              type?: T;
-              newTab?: T;
-              reference?: T;
-              url?: T;
-              label?: T;
-            };
-        icon?: T;
-        id?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "settings_select".
- */
-export interface SettingsSelect<T extends boolean = true> {
-  siteName?: T;
-  logo?: T;
-  favicon?: T;
-  primaryColor?: T;
-  secondaryColor?: T;
-  cornerRadius?: T;
-  fontScale?: T;
-  density?: T;
-  enableAnimations?: T;
-  fontFamily?: T;
-  headerLayout?: T;
-  brandSyncUrl?: T;
-  footerTagline?: T;
-  copyrightText?: T;
-  socialLinks?:
-    | T
-    | {
-        platform?: T;
-        url?: T;
-        id?: T;
-      };
-  analyticsProvider?: T;
-  analyticsId?: T;
-  defaultMetaDescription?: T;
-  defaultOgImage?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "collections_widget".
  */
 export interface CollectionsWidget {
@@ -2339,6 +2497,7 @@ export interface TaskRunSeoResearch {
     aiApiKey: string;
     aiProvider: string;
     authorId: string;
+    tenantId: string;
   };
   output?: unknown;
 }

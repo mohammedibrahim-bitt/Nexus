@@ -1,11 +1,17 @@
 import React from 'react'
 
 import { getBrandData } from '@/utilities/getBrandData'
+import { getRequestTenant } from '@/utilities/getTenant'
 import { darkShade, lightShade } from '@/utilities/colorShade'
 import { getDisplayFontCssVar } from '@/utilities/displayFonts'
 
 export const BrandColor: React.FC = async () => {
-  const brand = await getBrandData()
+  // Rendered from the root layout, which sits outside src/app/(frontend)/
+  // [tenantDomain]/ and so has no tenant route param — read the Host header
+  // directly instead. Without this every tenant would render the default
+  // tenant's color/radius/font, since getBrandData() falls back to it.
+  const tenant = await getRequestTenant()
+  const brand = await getBrandData(tenant?.slug)
   const color = brand.primaryColor
 
   const radiusPx = Math.min(28, Math.max(0, brand.cornerRadius))

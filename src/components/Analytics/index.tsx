@@ -2,6 +2,7 @@ import Script from 'next/script'
 import React from 'react'
 
 import { getBrandData } from '@/utilities/getBrandData'
+import { getRequestTenant } from '@/utilities/getTenant'
 
 // Matches the Settings field's own validator — this value is interpolated
 // into an inline <script> body, so it must be restricted to characters that
@@ -9,7 +10,10 @@ import { getBrandData } from '@/utilities/getBrandData'
 const SAFE_ID = /^[a-zA-Z0-9.\-_]+$/
 
 export const Analytics: React.FC = async () => {
-  const brand = await getBrandData()
+  // Rendered from the root layout, outside [tenantDomain] — see the note in
+  // BrandColor.
+  const tenant = await getRequestTenant()
+  const brand = await getBrandData(tenant?.slug)
   const id = brand.analyticsId?.trim()
 
   if (!id || brand.analyticsProvider === 'none' || !SAFE_ID.test(id)) return null

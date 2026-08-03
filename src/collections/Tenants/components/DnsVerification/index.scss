@@ -1,0 +1,73 @@
+.dnsVerification {
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+  padding: calc(var(--base) * 0.75);
+
+  &__status {
+    align-items: center;
+    display: flex;
+    font-weight: 600;
+    gap: 8px;
+    margin-bottom: calc(var(--base) * 0.5);
+  }
+
+  &__dot {
+    border-radius: 50%;
+    display: inline-block;
+    height: 10px;
+    width: 10px;
+
+    &--verified {
+      background: var(--theme-success-500);
+    }
+
+    &--pending {
+      background: var(--theme-warning-500);
+    }
+  }
+
+  &__instructions {
+    color: var(--theme-elevation-600);
+    margin: 0 0 calc(var(--base) * 0.5);
+  }
+
+  &__record {
+    background: var(--theme-elevation-50);
+    border: 1px solid var(--theme-elevation-100);
+    border-radius: 3px;
+    display: grid;
+    gap: 4px calc(var(--base) * 0.5);
+    grid-template-columns: auto 1fr;
+    margin-bottom: calc(var(--base) * 0.5);
+    padding: calc(var(--base) * 0.5);
+  }
+
+  &__key {
+    color: var(--theme-elevation-500);
+    font-size: 0.8rem;
+  }
+
+  &__value {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+  }
+
+  &__actions {
+    align-items: center;
+    display: flex;
+    gap: calc(var(--base) * 0.5);
+  }
+
+  &__result {
+    margin: 0;
+
+    &--error {
+      color: var(--theme-error-500);
+    }
+
+    &--ok {
+      color: var(--theme-success-500);
+    }
+  }
+}

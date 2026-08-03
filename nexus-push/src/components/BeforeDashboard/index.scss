@@ -1,0 +1,87 @@
+@import '@payloadcms/ui/scss';
+
+.dashboard .before-dashboard {
+  margin-bottom: base(1.5);
+
+  &__banner {
+    & h4 {
+      margin: 0;
+    }
+  }
+
+  &__stats-grid {
+    display: grid;
+    gap: base(0.5);
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    margin-bottom: base(1);
+  }
+
+  &__stat-card {
+    background: var(--theme-elevation-50);
+    border: 1px solid var(--theme-elevation-100);
+    border-radius: 4px;
+    padding: base(0.5);
+  }
+
+  &__stat-value {
+    color: var(--theme-elevation-800);
+    display: block;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  &__stat-label {
+    color: var(--theme-elevation-500);
+    font-size: 13px;
+  }
+
+  &__grid {
+    display: grid;
+    gap: base(0.5);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-bottom: base(1);
+  }
+
+  &__card {
+    align-items: flex-start;
+    background: var(--theme-elevation-50);
+    border: 1px solid var(--theme-elevation-100);
+    border-radius: 4px;
+    display: flex;
+    gap: base(0.4);
+    padding: base(0.5);
+    text-decoration: none;
+    transition: background-color 0.1s ease;
+
+    &:hover {
+      background: var(--theme-elevation-100);
+      opacity: 1;
+    }
+
+    & strong {
+      color: var(--theme-elevation-800);
+      display: block;
+    }
+
+    & p {
+      color: var(--theme-elevation-500);
+      font-size: 13px;
+      margin: base(0.15) 0 0;
+    }
+  }
+
+  &__card-icon {
+    color: var(--theme-success-500);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  &__seed {
+    color: var(--theme-elevation-500);
+  }
+
+  & a:hover {
+    opacity: 0.85;
+  }
+}

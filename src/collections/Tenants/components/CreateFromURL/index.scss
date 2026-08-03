@@ -1,0 +1,63 @@
+.createTenantFromURL {
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+  margin-bottom: var(--base);
+  padding: calc(var(--base) * 0.75) var(--base);
+
+  &__heading {
+    margin: 0 0 calc(var(--base) * 0.25);
+  }
+
+  &__description {
+    color: var(--theme-elevation-600);
+    margin: 0 0 calc(var(--base) * 0.75);
+    max-width: 46rem;
+  }
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--base) * 0.5);
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 12rem;
+    gap: 4px;
+  }
+
+  &__label {
+    color: var(--theme-elevation-600);
+    font-size: 0.8rem;
+  }
+
+  &__input {
+    background: var(--theme-input-bg);
+    border: 1px solid var(--theme-elevation-150);
+    border-radius: 3px;
+    color: var(--theme-elevation-800);
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 8px 10px;
+    width: 100%;
+
+    &:focus-visible {
+      border-color: var(--theme-elevation-400);
+      outline: 2px solid var(--theme-elevation-400);
+      outline-offset: 1px;
+    }
+  }
+
+  &__actions {
+    align-items: center;
+    display: flex;
+    gap: calc(var(--base) * 0.5);
+    margin-top: calc(var(--base) * 0.75);
+  }
+
+  &__error {
+    color: var(--theme-error-500);
+    margin: 0;
+  }
+}

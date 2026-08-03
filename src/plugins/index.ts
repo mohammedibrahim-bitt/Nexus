@@ -1,5 +1,6 @@
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
 import { isAdmin } from '@/access/isAdmin'
+import { multiTenantPlugin } from '@payloadcms/plugin-multi-tenant'
 import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
 import { seoPlugin } from '@payloadcms/plugin-seo'
@@ -11,7 +12,7 @@ import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/
 import { searchFields } from '@/search/fieldOverrides'
 import { beforeSyncWithSearch } from '@/search/beforeSync'
 
-import { Page, Post } from '@/payload-types'
+import { Config, Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 
 const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
@@ -101,5 +102,35 @@ export const plugins: Plugin[] = [
         return [...defaultFields, ...searchFields]
       },
     },
+  }),
+  /*
+   * Multi-tenancy. Must be registered LAST: it decorates collections that the
+   * plugins above generate (notably `search`, created by searchPlugin), so
+   * those collections have to exist in the config before this runs.
+   *
+   * `search` is scoped deliberately — searchPlugin mirrors every post's title
+   * and excerpt into it, so leaving it unscoped would leak one tenant's
+   * content into another tenant's site search.
+   */
+  multiTenantPlugin<Config>({
+    collections: {
+      posts: {},
+      pages: {},
+      media: {},
+      categories: {},
+      tags: {},
+      reviews: {},
+      'content-sources': {},
+      'seo-research-runs': {},
+      'seo-research-rules': {},
+      search: {},
+      // One row per tenant, surfaced in the admin as a singleton rather than
+      // a list — these were Payload Globals before multi-tenancy.
+      settings: { isGlobal: true },
+      header: { isGlobal: true },
+      footer: { isGlobal: true },
+    },
+    tenantsSlug: 'tenants',
+    userHasAccessToAllTenants: (user) => user?.role === 'admin',
   }),
 ]

@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { isAdmin } from '../../access/isAdmin'
 import { publishedOrAdmin } from '../../access/publishedOrAdmin'
+import { uniqueSlugPerTenant } from '../../utilities/uniqueSlugPerTenant'
 import { Archive } from '../../blocks/ArchiveBlock/config'
 import { CallToAction } from '../../blocks/CallToAction/config'
 import { Content } from '../../blocks/Content/config'
@@ -117,7 +118,14 @@ export const Pages: CollectionConfig<'pages'> = {
         position: 'sidebar',
       },
     },
-    slugField(),
+    slugField({
+      disableUnique: true,
+      overrides: (baseField) => {
+        const slugTextField = baseField.fields[1]
+        if (slugTextField.type === 'text') slugTextField.validate = uniqueSlugPerTenant('pages')
+        return baseField
+      },
+    }),
   ],
   hooks: {
     afterChange: [revalidatePage],

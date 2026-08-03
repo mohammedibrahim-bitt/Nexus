@@ -210,7 +210,7 @@ export const PostReviewsClient: React.FC<{
               </button>
             </form>
           ) : status === 'submitted' ? (
-            <p>Thanks, {staff.name}! Your review has been submitted and is awaiting approval.</p>
+            <p>Thanks, {staff.name}! Your review has been published.</p>
           ) : (
             <form className="flex flex-col gap-4 max-w-lg" onSubmit={handleSubmitReview}>
               <h3 className="text-lg font-medium">Leave a review, {staff.name}</h3>

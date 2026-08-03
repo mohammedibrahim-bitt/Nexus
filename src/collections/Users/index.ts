@@ -10,6 +10,8 @@ import { decryptSecret, encryptSecret } from '../../utilities/encryption'
 import { AI_PROVIDER_OPTIONS } from '../../utilities/seoResearch/aiProviders'
 import { getServerSideURL } from '../../utilities/getURL'
 import { assignFirstUserAsAdmin } from './hooks/assignFirstUserAsAdmin'
+import { assignSignupTenant } from './hooks/assignSignupTenant'
+import { autoVerifyInDev } from './hooks/autoVerifyInDev'
 import { trackLastLogin } from './hooks/trackLastLogin'
 
 export const Users: CollectionConfig = {
@@ -232,7 +234,7 @@ export const Users: CollectionConfig = {
   ],
   hooks: {
     afterLogin: [trackLastLogin],
-    beforeChange: [assignFirstUserAsAdmin],
+    beforeChange: [assignFirstUserAsAdmin, assignSignupTenant, autoVerifyInDev],
   },
   timestamps: true,
 }

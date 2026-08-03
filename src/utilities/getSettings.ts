@@ -9,6 +9,9 @@ import { getBrandData } from './getBrandData'
  * in getBrandData. The `depth` param is accepted for signature
  * compatibility with callers but isn't currently used by getBrandData.
  */
-export const getMergedSettings = async (_depth = 0): Promise<BrandData> => {
-  return getBrandData()
+export const getMergedSettings = async (
+  _depth = 0,
+  tenantHostOrSlug?: null | string,
+): Promise<BrandData> => {
+  return getBrandData(tenantHostOrSlug)
 }

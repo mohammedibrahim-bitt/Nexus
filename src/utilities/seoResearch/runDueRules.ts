@@ -7,9 +7,12 @@ import { runSeoResearch } from './runSeoResearch'
 
 // Safety net against a misconfigured rule (or a bug) silently burning
 // through a staff member's SerpApi/AI quota — caps how many automatic runs
-// can start per calendar day across ALL rules combined. Not user-configurable
-// on purpose: it's a backstop, not a feature knob. Raise it here if you
-// genuinely need more automatic runs per day.
+// can start per calendar day. Not user-configurable on purpose: it's a
+// backstop, not a feature knob. Raise it here if you genuinely need more
+// automatic runs per day.
+//
+// Counted PER TENANT: a single global cap would let one busy tenant starve
+// every other tenant's scheduled research for the rest of the day.
 const MAX_AUTOMATIC_RUNS_PER_DAY = 10
 
 const isDue = (lastRunAt: null | string | undefined, intervalDays: number): boolean => {
@@ -24,13 +27,18 @@ export type RunDueRulesResult = {
   skipped: string[]
 }
 
-async function countRunsToday(payload: BasePayload): Promise<number> {
+async function countRunsToday(payload: BasePayload, tenantId: number): Promise<number> {
   const startOfDay = new Date()
   startOfDay.setHours(0, 0, 0, 0)
 
   const { totalDocs } = await payload.count({
     collection: 'seo-research-runs',
-    where: { createdAt: { greater_than_equal: startOfDay.toISOString() } },
+    where: {
+      and: [
+        { tenant: { equals: tenantId } },
+        { createdAt: { greater_than_equal: startOfDay.toISOString() } },
+      ],
+    },
   })
 
   return totalDocs
@@ -45,13 +53,37 @@ async function countRunsToday(payload: BasePayload): Promise<number> {
 export async function runDueSeoResearchRules(payload: BasePayload): Promise<RunDueRulesResult> {
   const result: RunDueRulesResult = { errored: [], ran: [], skipped: [] }
 
+  // Rules belong to a tenant now, so walk tenants and process each one's due
+  // rules against its own daily cap. `depth: 1` populates each rule's tenant so
+  // the run/post it creates can be attributed back to it.
+  const { docs: tenants } = await payload.find({
+    collection: 'tenants',
+    depth: 0,
+    limit: 1000,
+    pagination: false,
+  })
+
+  for (const tenant of tenants) {
+    await runDueRulesForTenant(payload, tenant.id, result)
+  }
+
+  return result
+}
+
+async function runDueRulesForTenant(
+  payload: BasePayload,
+  tenantId: number,
+  result: RunDueRulesResult,
+): Promise<void> {
   const { docs: rules } = await payload.find({
     collection: 'seo-research-rules',
     limit: 100,
-    where: { active: { equals: true } },
+    where: { and: [{ tenant: { equals: tenantId } }, { active: { equals: true } }] },
   })
 
-  let runsToday = await countRunsToday(payload)
+  if (rules.length === 0) return
+
+  let runsToday = await countRunsToday(payload, tenantId)
 
   for (const rule of rules) {
     if (!isDue(rule.lastRunAt, rule.intervalDays)) {
@@ -120,6 +152,7 @@ export async function runDueSeoResearchRules(payload: BasePayload): Promise<RunD
       data: {
         keyword: resolvedKeyword,
         status: 'queued',
+        tenant: tenantId,
         triggeredBy: runAsUserId,
         triggeredByRule: rule.id,
       },
@@ -132,6 +165,7 @@ export async function runDueSeoResearchRules(payload: BasePayload): Promise<RunD
         aiProvider: aiProvider as AiProvider,
         authorId: Number(runAsUserId),
         serpApiKey,
+        tenantId,
       })
 
       const finished = await payload.findByID({ id: run.id, collection: 'seo-research-runs' })
@@ -171,5 +205,4 @@ export async function runDueSeoResearchRules(payload: BasePayload): Promise<RunD
     }
   }
 
-  return result
 }

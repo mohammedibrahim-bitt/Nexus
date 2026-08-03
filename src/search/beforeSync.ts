@@ -5,11 +5,17 @@ export const beforeSyncWithSearch: BeforeSync = async ({ req, originalDoc, searc
     doc: { relationTo: collection },
   } = searchDoc
 
-  const { slug, id, categories, title, meta } = originalDoc
+  const { slug, id, categories, title, meta, tenant } = originalDoc
 
   const modifiedDoc: DocToSync = {
     ...searchDoc,
     slug,
+    // The `search` collection is tenant-scoped (searchPlugin mirrors every
+    // post's title/excerpt into it, which would otherwise leak across
+    // subdomains), and its tenant field is required. The plugin knows nothing
+    // about tenants, so carry it over from the post being indexed — without
+    // this, every publish fails the search sync with a validation error.
+    tenant: typeof tenant === 'object' && tenant !== null ? tenant.id : tenant,
     meta: {
       ...meta,
       title: meta?.title || title,

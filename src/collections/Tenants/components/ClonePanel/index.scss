@@ -1,0 +1,61 @@
+.clonePanel {
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+  padding: calc(var(--base) * 0.75);
+
+  &__row {
+    display: grid;
+    gap: 4px calc(var(--base) * 0.5);
+    grid-template-columns: auto 1fr;
+    margin-bottom: calc(var(--base) * 0.5);
+  }
+
+  &__key {
+    color: var(--theme-elevation-500);
+    font-size: 0.8rem;
+  }
+
+  &__value {
+    font-size: 0.9rem;
+  }
+
+  &__warning {
+    background: var(--theme-warning-50, var(--theme-elevation-50));
+    border: 1px solid var(--theme-warning-250, var(--theme-elevation-150));
+    border-radius: 3px;
+    margin-bottom: calc(var(--base) * 0.5);
+    padding: calc(var(--base) * 0.5);
+  }
+
+  &__blocked {
+    color: var(--theme-elevation-600);
+    margin: 0;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--base) * 0.5);
+  }
+
+  &__error {
+    color: var(--theme-error-500);
+    margin: calc(var(--base) * 0.5) 0 0;
+  }
+
+  &__flagged {
+    margin-top: calc(var(--base) * 0.5);
+
+    summary {
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    code {
+      display: block;
+      font-size: 0.75rem;
+      overflow-wrap: anywhere;
+      padding: 2px 0;
+    }
+  }
+}

@@ -24,14 +24,19 @@ const paragraphsToLexical = (paragraphs: string[]) => ({
   },
 })
 
-const uniqueSlug = async (payload: BasePayload, base: string): Promise<string> => {
+// Per tenant — two tenants may legitimately import the same headline.
+const uniqueSlug = async (
+  payload: BasePayload,
+  base: string,
+  tenantId: number,
+): Promise<string> => {
   let candidate = base
   let suffix = 1
 
   while (true) {
     const { totalDocs } = await payload.count({
       collection: 'posts',
-      where: { slug: { equals: candidate } },
+      where: { and: [{ tenant: { equals: tenantId } }, { slug: { equals: candidate } }] },
     })
 
     if (totalDocs === 0) return candidate
@@ -52,6 +57,15 @@ export async function syncContentSource(
   source: ContentSource,
 ): Promise<SyncResult> {
   const result: SyncResult = { errors: [], imported: 0, skipped: 0 }
+
+  // Imported posts inherit the feed's own tenant — a source belongs to exactly
+  // one tenant, so everything it pulls in lands there too.
+  const tenantId = typeof source.tenant === 'object' ? source.tenant?.id : source.tenant
+
+  if (!tenantId) {
+    result.errors.push('Content source has no tenant assigned; skipping import.')
+    return result
+  }
 
   let items: ReturnType<typeof parseFeed> = []
 
@@ -76,7 +90,9 @@ export async function syncContentSource(
     try {
       const { totalDocs } = await payload.count({
         collection: 'posts',
-        where: { sourceUrl: { equals: item.link } },
+        where: {
+          and: [{ tenant: { equals: tenantId } }, { sourceUrl: { equals: item.link } }],
+        },
       })
 
       if (totalDocs > 0) {
@@ -90,7 +106,11 @@ export async function syncContentSource(
           ? htmlToParagraphs(item.description)
           : []
 
-      const slug = await uniqueSlug(payload, slugify(item.title).slice(0, 80) || 'imported-post')
+      const slug = await uniqueSlug(
+        payload,
+        slugify(item.title).slice(0, 80) || 'imported-post',
+        tenantId,
+      )
 
       const reviewerId =
         typeof source.defaultReviewer === 'object' ? source.defaultReviewer?.id : source.defaultReviewer
@@ -99,6 +119,7 @@ export async function syncContentSource(
         collection: 'posts',
         context: { disableRevalidate: true },
         data: {
+          tenant: tenantId,
           title: item.title,
           slug,
           _status: isPublishable ? 'published' : 'draft',

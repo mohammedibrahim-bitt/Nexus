@@ -45,7 +45,76 @@ if (!author) {
   console.log(`Created placeholder author "${AUTHOR_EMAIL}"`)
 }
 
+// ── Reviewer for imported (published) posts — requireReviewToPublish only
+// accepts an admin or reviewer, so the author above can't fill this role. ──
+const REVIEWER_EMAIL = 'content-reviewer@example.local'
+let reviewer =
+  (
+    await payload.find({
+      collection: 'users',
+      where: { role: { in: ['admin', 'reviewer'] } },
+      limit: 1,
+    })
+  ).docs[0] ||
+  (
+    await payload.find({
+      collection: 'users',
+      where: { email: { equals: REVIEWER_EMAIL } },
+      limit: 1,
+    })
+  ).docs[0]
+
+if (!reviewer) {
+  reviewer = await payload.create({
+    collection: 'users',
+    data: {
+      name: 'Site Reviewer',
+      email: REVIEWER_EMAIL,
+      password: crypto.randomBytes(24).toString('hex'),
+      role: 'reviewer',
+      _verified: true,
+    },
+    disableVerificationEmail: true,
+  })
+  console.log(`Created placeholder reviewer "${REVIEWER_EMAIL}"`)
+}
+
 // ── Media ──
+// A shared stand-in for any bundle.media entry whose source file wasn't
+// actually committed alongside data.json — created lazily (once) from
+// whatever image file does exist under content-seed/media/, so required
+// hero/heroImage fields still validate instead of failing the whole import.
+let placeholderMediaId = null
+const getPlaceholderMediaId = async () => {
+  if (placeholderMediaId) return placeholderMediaId
+
+  const existing = (
+    await payload.find({
+      collection: 'media',
+      where: { filename: { equals: 'content-seed-placeholder.jpg' } },
+      limit: 1,
+    })
+  ).docs[0]
+  if (existing) {
+    placeholderMediaId = existing.id
+    return placeholderMediaId
+  }
+
+  const candidates = fs.existsSync(path.join(dataDir, 'media'))
+    ? fs.readdirSync(path.join(dataDir, 'media'))
+    : []
+  const fallbackFile = candidates[0]
+  if (!fallbackFile) return null
+
+  const doc = await payload.create({
+    collection: 'media',
+    data: { alt: 'Placeholder image' },
+    filePath: path.join(dataDir, 'media', fallbackFile),
+  })
+  placeholderMediaId = doc.id
+  return placeholderMediaId
+}
+
 const mediaKeyToId = new Map()
 for (const m of bundle.media) {
   const existing = (
@@ -61,7 +130,13 @@ for (const m of bundle.media) {
   }
   const filePath = path.join(dataDir, 'media', m.filename)
   if (!fs.existsSync(filePath)) {
-    console.warn(`Missing bundled media file "${m.filename}", skipping`)
+    const placeholderId = await getPlaceholderMediaId()
+    if (placeholderId) {
+      console.warn(`Missing bundled media file "${m.filename}", using placeholder image`)
+      mediaKeyToId.set(m.key, placeholderId)
+    } else {
+      console.warn(`Missing bundled media file "${m.filename}", skipping (no placeholder available)`)
+    }
     continue
   }
   const doc = await payload.create({
@@ -158,7 +233,12 @@ for (const p of bundle.pages) {
             links: (p.hero.links || []).map((l) => ({ ...l, link: resolveLink(l.link) })),
           }
         : undefined,
-      layout: [],
+      // Cross-page/post link references inside these blocks may not resolve
+      // yet (their targets might not be created until later in this loop) —
+      // resolveLink's fallback to a safe '/' custom link covers that; the
+      // second pass below re-resolves the full layout once every page/post
+      // exists, overwriting this placeholder with the final version.
+      layout: (p.layout || []).map(resolveLayoutBlock),
       meta: p.meta ? { ...p.meta, image: resolveMedia(p.meta.image) } : undefined,
     },
   })
@@ -193,7 +273,7 @@ for (const p of bundle.posts) {
       sourceUrl: p.sourceUrl,
       meta: p.meta ? { ...p.meta, image: resolveMedia(p.meta.image) } : undefined,
       authors: [author.id],
-      reviewedBy: author.id,
+      reviewedBy: reviewer.id,
     },
   })
   postKeyToId.set(p.key, doc.id)

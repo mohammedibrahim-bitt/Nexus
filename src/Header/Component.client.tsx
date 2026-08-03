@@ -11,7 +11,9 @@ import { Logo } from '@/components/Logo/Logo'
 import { HeaderNav } from './Nav'
 
 interface HeaderClientProps {
-  data: Header
+  // Null when this tenant has no header row yet (e.g. a tenant created before
+  // its per-tenant nav was configured) — the nav simply renders empty.
+  data: Header | null
   brand?: BrandData
   initialStaffRole: null | string
 }

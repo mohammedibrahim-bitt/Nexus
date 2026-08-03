@@ -6,19 +6,31 @@ import React from 'react'
 import RichText from '@/components/RichText'
 
 import { CollectionArchive } from '@/components/CollectionArchive'
+import { requireTenant } from '@/utilities/getTenant'
+import { tenantWhere } from '@/utilities/tenantWhere'
 
 export const ArchiveBlock: React.FC<
   ArchiveBlockProps & {
     id?: string
+    tenantDomain: string
   }
 > = async (props) => {
-  const { id, categories, introContent, limit: limitFromProps, populateBy, selectedDocs } = props
+  const {
+    id,
+    categories,
+    introContent,
+    limit: limitFromProps,
+    populateBy,
+    selectedDocs,
+    tenantDomain,
+  } = props
 
   const limit = limitFromProps || 3
 
   let posts: Post[] = []
 
   if (populateBy === 'collection') {
+    const tenant = await requireTenant(tenantDomain)
     const payload = await getPayload({ config: configPromise })
 
     const flattenedCategories = categories?.map((category) => {
@@ -34,10 +46,15 @@ export const ArchiveBlock: React.FC<
       // Public archive listings only ever show published posts — never
       // rely on the viewer's own access level (an admin/reviewer viewing
       // the site would otherwise see drafts mixed in with real content).
-      where:
-        flattenedCategories && flattenedCategories.length > 0
-          ? { and: [{ categories: { in: flattenedCategories } }, { _status: { equals: 'published' } }] }
-          : { _status: { equals: 'published' } },
+      where: {
+        and: [
+          tenantWhere(tenant.id),
+          { _status: { equals: 'published' } },
+          ...(flattenedCategories && flattenedCategories.length > 0
+            ? [{ categories: { in: flattenedCategories } }]
+            : []),
+        ],
+      },
     })
 
     posts = fetchedPosts.docs

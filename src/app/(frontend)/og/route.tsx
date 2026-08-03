@@ -3,11 +3,16 @@ import { NextRequest } from 'next/server'
 
 import { darkShade, lightShade } from '@/utilities/colorShade'
 import { getBrandData } from '@/utilities/getBrandData'
+import { resolveTenant } from '@/utilities/getTenant'
 
 export const revalidate = 3600
 
 export async function GET(req: NextRequest) {
-  const brand = await getBrandData()
+  // A Route Handler, not a page under [tenantDomain] — it already has the
+  // request object, so read Host directly rather than going through
+  // next/headers.
+  const tenant = await resolveTenant(req.headers.get('host'))
+  const brand = await getBrandData(tenant?.slug)
 
   const title = (req.nextUrl.searchParams.get('title') || brand.siteName).slice(0, 140)
 
