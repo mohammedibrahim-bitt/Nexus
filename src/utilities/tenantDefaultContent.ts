@@ -1,4 +1,5 @@
-import type { Payload } from 'payload'
+import type { Payload, RequiredDataFromCollectionSlug } from 'payload'
+import type { FormBlock, Header, Page } from '@/payload-types'
 
 /**
  * About/Contact copy is intentionally generic (no site name baked in) so it
@@ -6,7 +7,7 @@ import type { Payload } from 'payload'
  * itself already renders the tenant's own logo/name/color via the shared
  * layout, so the body text just needs to avoid claiming a specific brand.
  */
-const aboutLayout = [
+const aboutLayout: Page['layout'] = [
   {
     blockType: 'content' as const,
     columns: [
@@ -119,7 +120,7 @@ const aboutLayout = [
   },
 ]
 
-const contactIntroContent = {
+const contactIntroContent: NonNullable<FormBlock['introContent']> = {
   root: {
     type: 'root',
     format: '',
@@ -142,7 +143,7 @@ const contactIntroContent = {
   },
 }
 
-const DEFAULT_HEADER_NAV_TEMPLATE = [
+const DEFAULT_HEADER_NAV_TEMPLATE: NonNullable<Header['navItems']> = [
   {
     icon: 'file-plus',
     staffOnly: true,
@@ -214,7 +215,7 @@ async function findOrCreatePage(
   payload: Payload,
   tenantId: number,
   slug: 'about' | 'contact',
-  data: Record<string, unknown>,
+  data: Omit<RequiredDataFromCollectionSlug<'pages'>, 'slug' | 'tenant'>,
 ): Promise<number> {
   const { docs } = await payload.find({
     collection: 'pages',
@@ -228,6 +229,7 @@ async function findOrCreatePage(
   const created = await payload.create({
     collection: 'pages',
     depth: 0,
+    draft: false,
     context: { disableRevalidate: true },
     data: { ...data, tenant: tenantId, slug, _status: 'published' },
   })
@@ -282,15 +284,15 @@ export async function ensureDefaultTenantContent(payload: Payload, tenantId: num
 
   if (hasAbout && hasContact) return
 
-  const navItems = [
+  const navItems: NonNullable<Header['navItems']> = [
     ...(existingNavItems.length > 0
-      ? existingNavItems
+      ? (existingHeader?.navItems ?? [])
       : DEFAULT_HEADER_NAV_TEMPLATE),
     ...(hasAbout
       ? []
       : [
           {
-            icon: 'info',
+            icon: 'info' as const,
             staffOnly: false,
             link: {
               type: 'reference' as const,
@@ -303,7 +305,7 @@ export async function ensureDefaultTenantContent(payload: Payload, tenantId: num
       ? []
       : [
           {
-            icon: 'mail',
+            icon: 'mail' as const,
             staffOnly: false,
             link: {
               type: 'reference' as const,

@@ -5,7 +5,8 @@ import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { searchPlugin } from '@payloadcms/plugin-search'
-import { Plugin } from 'payload'
+import { s3Storage } from '@payloadcms/storage-s3'
+import { Field, Plugin } from 'payload'
 import { revalidateRedirects } from '@/hooks/revalidateRedirects'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
@@ -83,7 +84,10 @@ export const plugins: Plugin[] = [
                   Cell: '@/components/admin/FormSubmissionFormCell#FormSubmissionFormCell',
                 },
               },
-            }
+              // The spread above only ever touches a relationship field's own
+              // admin.components, but TS can't narrow that from a runtime
+              // `field.name` check across the whole Field union.
+            } as Field
           }
           return field
         })
@@ -143,6 +147,30 @@ export const plugins: Plugin[] = [
       fields: ({ defaultFields }) => {
         return [...defaultFields, ...searchFields]
       },
+    },
+  }),
+  /*
+   * Media uploads go to Supabase Storage (S3-compatible) instead of local
+   * disk in any environment that has the S3 credentials set — required for
+   * Vercel, whose serverless functions have a read-only filesystem outside
+   * `/tmp`, so writes to `public/media` wouldn't survive past the request
+   * that made them. Falls back to Media's own `staticDir` (local disk) when
+   * unconfigured, so local dev keeps working without provisioning S3 creds.
+   */
+  s3Storage({
+    enabled: Boolean(process.env.SUPABASE_S3_ACCESS_KEY_ID),
+    collections: {
+      media: true,
+    },
+    bucket: process.env.SUPABASE_MEDIA_BUCKET || 'media',
+    config: {
+      endpoint: process.env.SUPABASE_S3_ENDPOINT,
+      region: process.env.SUPABASE_S3_REGION || 'us-east-1',
+      credentials: {
+        accessKeyId: process.env.SUPABASE_S3_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.SUPABASE_S3_SECRET_ACCESS_KEY || '',
+      },
+      forcePathStyle: true,
     },
   }),
   /*

@@ -190,8 +190,8 @@ export async function getBrandData(tenantHostOrSlug?: null | string): Promise<Br
     secondaryColor: settings?.secondaryColor || null,
     siteName: settings?.siteName || 'Nexus',
     socialLinks: (settings?.socialLinks || [])
-      .filter((link): link is { platform: string; url: string } => Boolean(link?.url))
-      .map((link) => ({ platform: link.platform || 'other', url: link.url })),
+      .filter((link) => Boolean(link?.url))
+      .map((link) => ({ platform: link.platform || 'other', url: link.url as string })),
   }
 
   // The tenant's own sourceUrl is the fallback when this tenant's Settings doc

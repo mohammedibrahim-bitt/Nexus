@@ -141,17 +141,20 @@ export const seed = async ({
     ),
   ])
 
-  const [demoAuthor, demoReviewer, image1Doc, image2Doc, image3Doc, imageHomeDoc] = await Promise.all([
+  const [demoAuthor, demoReviewer] = await Promise.all([
     payload.create({
       collection: 'users',
+      draft: false,
       data: {
         name: 'Demo Author',
         email: 'demo-author@example.com',
         password: 'password',
+        role: 'author',
       },
     }),
     payload.create({
       collection: 'users',
+      draft: false,
       data: {
         name: 'Demo Reviewer',
         email: 'demo-reviewer@example.com',
@@ -160,6 +163,9 @@ export const seed = async ({
         title: 'Editorial Reviewer',
       },
     }),
+  ])
+
+  const [image1Doc, image2Doc, image3Doc, imageHomeDoc] = await Promise.all([
     payload.create({
       collection: 'media',
       data: image1,

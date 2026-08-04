@@ -27,7 +27,7 @@ async function isAuthorized(req: Request): Promise<boolean> {
   return authHeader === `Bearer ${secret}`
 }
 
-export async function POST(req: Request) {
+async function handle(req: Request) {
   if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -37,3 +37,10 @@ export async function POST(req: Request) {
 
   return NextResponse.json(result)
 }
+
+// Vercel Cron invokes with GET, automatically attaching
+// `Authorization: Bearer $CRON_SECRET` when a CRON_SECRET env var is set.
+// POST is kept for the admin-triggered manual check and other external cron
+// callers (GitHub Actions, cron-job.org, etc).
+export const GET = handle
+export const POST = handle
