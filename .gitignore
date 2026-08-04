@@ -26,6 +26,9 @@ public/media/
 public/robots.txt
 public/sitemap*.xml
 
+# Stray nested clone accidentally committed by an earlier manual push
+nexus-push/
+
 # OS files
 .DS_Store
 Thumbs.db
