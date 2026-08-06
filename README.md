@@ -4,15 +4,15 @@ A multi-tenant blog/news platform built with [Payload CMS](https://payloadcms.co
 
 On top of that, a tenant's site can either use Nexus's own templates (branded via colors/logo/fonts pulled from the client's real site), **or** be a full pixel-level clone of the client's existing homepage, with the Nexus blog mounted at `/blog` inside it. Both modes are covered below.
 
-If you're picking this project up for the first time, read this whole file before touching code — the multi-tenancy and clone-pipeline sections cover non-obvious architecture decisions and a few sharp edges that cost real debugging time to find.
+If you're picking this project up for the first time, read this whole file before touching code — the multi-tenancy and clone-pipeline sections cover non-obvious architecture decisions and a few sharp edges that cost real debugging time to find. If you're touching permissions, the Users collection, or access control on any tenant-scoped collection, also read [HANDOFF.md](HANDOFF.md) — it covers the `super_admin`/tenant-scoped-`admin` role split in detail.
 
 ## Features
 
 - **Multi-tenant**: each tenant gets its own subdomain, isolated Posts/Pages/Media/Categories/Tags/Reviews/content sources, and its own branding — one Payload instance and one database serve every tenant
 - **Optional full-site clone**: given a client's URL and DNS proof of ownership, scrape their homepage, store a rewritten self-contained copy, and serve it as that tenant's shell with `/blog` mounted inside — gated behind a quality check and manual admin approval, never auto-published
 - Page builder (hero, content, call-to-action, media, form blocks) editable from the admin panel
-- Posts with categories, a **reader/author/reviewer/admin** role system, reviewer sign-off, and SEO fields
-- Unified sign-in — anyone can self-register (as a reader), only an admin can promote someone to author/reviewer/admin
+- Posts with categories, a **reader/author/reviewer/admin/super_admin** role system (`admin` is tenant-scoped; `super_admin` is platform-wide — see [HANDOFF.md](HANDOFF.md) for the full model), reviewer sign-off, and SEO fields
+- Unified sign-in — anyone can self-register (as a reader), only an admin (own tenant) or super_admin (any tenant) can promote someone to author/reviewer/admin
 - **SEO Research Agent** — trigger it manually, or define keyword rules that run automatically on a schedule (`[month]`/`[year]`-style templated keywords supported), scoped per tenant with a per-tenant daily run cap; every run always lands as a draft for human review, never auto-published
 - Contact/newsletter forms — submissions land in the admin's Form Submissions collection and in an in-app **Messages** page for admins
 - Per-tenant **Settings**, **Header**, and **Footer** — site name, logo, favicon, brand color, fonts, corner radius, density, animations, analytics, social links, and navigation, all from one place, no code changes required
@@ -126,7 +126,7 @@ If you're used to the original [Payload Website Template](https://github.com/pay
 
 ### Creating a tenant
 
-In the admin panel, under **Tenants**, there's a **"Create a tenant from a URL"** panel above the list (admin-only; the panel is hidden in the UI for non-admins, and the `/api/tenants/create-from-url` route it posts to independently re-checks `role === 'admin'` server-side — the UI check is convenience, not the security boundary).
+In the admin panel, under **Tenants**, there's a **"Create a tenant from a URL"** panel above the list (super_admin-only — tenant creation is platform-wide, not something a tenant-scoped `admin` can do; the panel is hidden in the UI for everyone else, and the `/api/tenants/create-from-url` route it posts to independently re-checks `role === 'super_admin'` server-side — the UI check is convenience, not the security boundary).
 
 Give it a name, a subdomain, and (optionally) the client's existing site URL — the latter runs brand sync immediately (logo/color/name extracted from their site's meta tags or a `brand.json`), rather than waiting for the ~5-minute background poll that keeps it in sync afterward.
 
@@ -337,7 +337,7 @@ If the sync URL is unreachable or returns nothing usable, the site silently fall
 
 ## Project structure
 
-- `src/collections` — Pages, Posts, Media, Users (reader/author/reviewer/admin), Categories, Tags, Tenants, Reviews, ContentSources, SeoResearchRuns, SeoResearchRules, and the per-tenant Settings/Header/Footer collections
+- `src/collections` — Pages, Posts, Media, Users (reader/author/reviewer/admin/super_admin — see [HANDOFF.md](HANDOFF.md) for the tenant-admin role model), Categories, Tags, Tenants, Reviews, ContentSources, SeoResearchRuns, SeoResearchRules, and the per-tenant Settings/Header/Footer collections
 - `src/collections/Tenants` — the Tenants collection, its DNS-verification and site-clone admin panels (`components/DnsVerification`, `components/ClonePanel`)
 - `src/plugins/index.ts` — plugin registration; `multiTenantPlugin` **must stay last**
 - `src/middleware.ts` — subdomain → `[tenantDomain]` rewrite (Edge runtime — see the comment at the top about why it only imports from `tenantConstants.ts`, never anything that reaches `payload.config.ts`)
