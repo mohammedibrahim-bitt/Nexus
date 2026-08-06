@@ -1,10 +1,12 @@
 import type { CollectionConfig } from 'payload'
 
 import { anyone } from '../../access/anyone'
-import { isAdmin } from '../../access/isAdmin'
+import { isTenantManager } from '../../access/isTenantManager'
 import { isAdminOrSelf } from '../../access/isAdminOrSelf'
 import { isAdminOrSelfField } from '../../access/isAdminOrSelfField'
 import { isStaffOrSelf } from '../../access/isStaffOrSelf'
+import { isSuperAdminOrTenantAdmin } from '../../access/isSuperAdminOrTenantAdmin'
+import { isTenantManagerRole } from '../../access/permissions'
 import { brandedEmailHTML, getBrandEmailData } from '../../utilities/brandedEmail'
 import { decryptSecret, encryptSecret } from '../../utilities/encryption'
 import { AI_PROVIDER_OPTIONS } from '../../utilities/seoResearch/aiProviders'
@@ -12,29 +14,36 @@ import { getServerSideURL } from '../../utilities/getURL'
 import { assignFirstUserAsAdmin } from './hooks/assignFirstUserAsAdmin'
 import { assignSignupTenant } from './hooks/assignSignupTenant'
 import { autoVerifyInDev } from './hooks/autoVerifyInDev'
+import { enforceTenantAdminBoundaries } from './hooks/enforceTenantAdminBoundaries'
 import { trackLastLogin } from './hooks/trackLastLogin'
 
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    // Only admins can open /admin at all — authors/reviewers use the
-    // frontend /dashboard instead. This is a real server-side redirect gate
-    // (Payload's admin app shell checks it on every /admin/* request), not
-    // just a hidden UI element.
-    admin: isAdmin,
+    // super_admin and the tenant-scoped admin can open /admin — authors/
+    // reviewers use the frontend /dashboard instead. This is a real
+    // server-side redirect gate (Payload's admin app shell checks it on
+    // every /admin/* request), not just a hidden UI element. A tenant-admin
+    // who opens /admin only ever sees their own tenant's data, everywhere
+    // else in this collection map — see `plugins/index.ts`'s
+    // `userHasAccessToAllTenants`.
+    admin: isTenantManager,
     // Anyone can register an account, but they always land in the collection
     // as a "reader" — see the `role` field's own access control below, and
     // the `assignFirstUserAsAdmin` hook for the one bootstrap exception.
-    // Only an admin can grant author/reviewer/admin.
+    // Only a super_admin/tenant-admin can grant author/reviewer/admin (and a
+    // tenant-admin is further restricted by `enforceTenantAdminBoundaries`
+    // from ever granting super_admin or reaching outside their own tenant).
     create: anyone,
-    delete: isAdmin,
+    delete: isSuperAdminOrTenantAdmin,
     read: isStaffOrSelf,
     update: isAdminOrSelf,
   },
   admin: {
     defaultColumns: ['name', 'email', 'role'],
-    // Author/reviewer accounts don't manage other staff — keep this admin-only in the nav.
-    hidden: ({ user }) => user?.role !== 'admin',
+    // Author/reviewer accounts don't manage other staff — keep this
+    // restricted to super_admin/tenant-admin in the nav.
+    hidden: ({ user }) => !isTenantManagerRole(user),
     useAsTitle: 'name',
   },
   auth: {
@@ -87,22 +96,28 @@ export const Users: CollectionConfig = {
       name: 'role',
       type: 'select',
       access: {
-        // Only an admin can set or change this — self-registration always
-        // falls through to the `defaultValue` below since the submitted
-        // value is silently dropped for anyone who isn't already an admin.
-        create: isAdmin,
-        update: isAdmin,
+        // Only a super_admin/tenant-admin can set or change this —
+        // self-registration always falls through to the `defaultValue`
+        // below since the submitted value is silently dropped for anyone
+        // who isn't already one of those two. A tenant-admin's own choices
+        // here are further restricted (never Super Admin, never their own
+        // role, never a tenant outside their own) by
+        // `enforceTenantAdminBoundaries`, since that's a cross-field
+        // invariant this field-level access can't express.
+        create: isTenantManager,
+        update: isTenantManager,
       },
       admin: {
         components: {
           Cell: '@/collections/Users/components/RoleCell#RoleCell',
         },
         description:
-          'Self-registered accounts always start as Reader. Only an admin can grant Author, Reviewer, or Admin.',
+          'Self-registered accounts always start as Reader. A tenant admin can grant Admin, Author, or Reviewer within their own tenant; only a Super Admin can grant Super Admin.',
         position: 'sidebar',
       },
       defaultValue: 'reader',
       options: [
+        { label: 'Super Admin', value: 'super_admin' },
         { label: 'Admin', value: 'admin' },
         { label: 'Author', value: 'author' },
         { label: 'Reviewer', value: 'reviewer' },
@@ -234,7 +249,7 @@ export const Users: CollectionConfig = {
   ],
   hooks: {
     afterLogin: [trackLastLogin],
-    beforeChange: [assignFirstUserAsAdmin, assignSignupTenant, autoVerifyInDev],
+    beforeChange: [assignFirstUserAsAdmin, assignSignupTenant, autoVerifyInDev, enforceTenantAdminBoundaries],
   },
   timestamps: true,
 }

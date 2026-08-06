@@ -31,7 +31,7 @@ export default async function ShellPreviewPage({ params }: Args) {
   const headers = await getHeaders()
   const { user } = await payload.auth({ headers })
 
-  if (!user || user.collection !== 'users' || user.role !== 'admin') {
+  if (!user || user.collection !== 'users' || user.role !== 'super_admin') {
     // 404 rather than a redirect — don't confirm the route exists to a non-admin.
     notFound()
   }

@@ -101,8 +101,8 @@ test.describe('Tenant creation is admin-only', () => {
     await page.click('button[type="submit"]')
     await page.waitForTimeout(2000)
 
-    // Readers can't open /admin at all (Users.access.admin === isAdmin), so
-    // the Tenants link is unreachable either way.
+    // Readers can't open /admin at all (Users.access.admin === isTenantManager,
+    // which readers never satisfy), so the Tenants link is unreachable either way.
     await page.goto(`${SERVER}/admin`)
     await expect(page.locator('nav')).not.toContainText('Tenants')
 
@@ -116,6 +116,160 @@ test.describe('Tenant creation is admin-only', () => {
 
     await expect(page.locator('.createTenantFromURL')).toBeVisible()
     await expect(page.locator('.createTenantFromURL')).toContainText('Create a tenant from a URL')
+  })
+})
+
+test.describe('Tenant-admin role', () => {
+  test.describe.configure({ timeout: 60_000 })
+
+  // Deliberately does not assume a specific tenant slug exists (e.g. the
+  // 'acme' fixture the "Tenant isolation" suite above assumes) — it looks up
+  // whatever two tenants are actually present and uses those, so it stays
+  // correct regardless of which tenants happen to be seeded.
+  const TENANT_ADMIN = {
+    email: `tenant-admin-${Date.now()}@example.com`,
+    password: 'TenantAdmin123!',
+  }
+
+  let ownTenantId: number
+  let otherTenantId: number
+  let tenantAdminUserId: number
+  let createdPostId: number | undefined
+
+  test.beforeAll(async ({ browser }) => {
+    test.setTimeout(60_000)
+    const context = await browser.newContext()
+    const page = await context.newPage()
+    await login({ page, user: ADMIN })
+
+    const tenants = await page.request.get(`${SERVER}/api/tenants?limit=50&depth=0`)
+    expect(tenants.ok(), `GET /api/tenants failed: ${tenants.status()} ${await tenants.text()}`).toBeTruthy()
+    const tenantsBody = await tenants.json()
+    const [first, second] = tenantsBody.docs as Array<{ id: number; slug: string }>
+    expect(first, 'at least two tenants must exist for this suite').toBeTruthy()
+    expect(second, 'at least two tenants must exist for this suite').toBeTruthy()
+    ownTenantId = first.id
+    otherTenantId = second.id
+
+    const created = await page.request.post(`${SERVER}/api/users`, {
+      data: {
+        name: 'E2E Tenant Admin',
+        email: TENANT_ADMIN.email,
+        password: TENANT_ADMIN.password,
+        role: 'admin',
+        tenants: [{ tenant: ownTenantId }],
+        _verified: true,
+      },
+    })
+    expect(created.ok()).toBeTruthy()
+    tenantAdminUserId = (await created.json()).doc.id
+
+    await context.close()
+  })
+
+  test.afterAll(async ({ browser }) => {
+    test.setTimeout(60_000)
+    const context = await browser.newContext()
+    const page = await context.newPage()
+    await login({ page, user: ADMIN })
+
+    if (createdPostId) {
+      await page.request.delete(`${SERVER}/api/posts/${createdPostId}`)
+    }
+    await page.request.delete(`${SERVER}/api/users/${tenantAdminUserId}`)
+
+    await context.close()
+  })
+
+  test('a tenant-admin can open /admin and does not see Tenants in the nav', async ({ page }) => {
+    await login({ page, user: TENANT_ADMIN })
+
+    // The admin shell has more than one <nav> (sidebar + step/breadcrumb
+    // nav), so a bare `nav` locator is ambiguous — this scopes to the
+    // sidebar specifically, the one that lists collection links.
+    const sidebar = page.locator('nav.nav__wrap')
+    await expect(sidebar).not.toContainText('Tenants')
+    await expect(sidebar).toContainText('Posts')
+    await expect(sidebar).toContainText('Users')
+  })
+
+  test('a tenant-admin can create a post scoped to their own tenant', async ({ page }) => {
+    await login({ page, user: TENANT_ADMIN })
+
+    const res = await page.request.post(`${SERVER}/api/posts`, {
+      data: {
+        title: 'E2E Tenant Admin Post',
+        slug: `e2e-tenant-admin-post-${Date.now()}`,
+        tenant: ownTenantId,
+        _status: 'draft',
+        content: {
+          root: {
+            type: 'root',
+            format: '',
+            indent: 0,
+            version: 1,
+            direction: 'ltr',
+            children: [
+              {
+                type: 'paragraph',
+                format: '',
+                indent: 0,
+                version: 1,
+                direction: 'ltr',
+                children: [{ mode: 'normal', text: 'ok', type: 'text', style: '', detail: 0, format: 0, version: 1 }],
+              },
+            ],
+          },
+        },
+      },
+    })
+
+    expect(res.ok()).toBeTruthy()
+    const body = await res.json()
+    // The REST create response returns the tenant relationship populated
+    // (default depth), not a bare ID — compare the id field either way.
+    const returnedTenantId =
+      typeof body.doc.tenant === 'object' ? body.doc.tenant.id : body.doc.tenant
+    expect(returnedTenantId).toBe(ownTenantId)
+    createdPostId = body.doc.id
+  })
+
+  test('a tenant-admin is rejected when trying to create content in another tenant', async ({ page }) => {
+    await login({ page, user: TENANT_ADMIN })
+
+    const res = await page.request.post(`${SERVER}/api/posts`, {
+      data: {
+        title: 'Cross Tenant E2E Attempt',
+        slug: `cross-tenant-e2e-attempt-${Date.now()}`,
+        tenant: otherTenantId,
+        _status: 'draft',
+        content: {
+          root: { type: 'root', format: '', indent: 0, version: 1, direction: 'ltr', children: [] },
+        },
+      },
+    })
+
+    expect(res.status()).toBe(403)
+  })
+
+  test('a tenant-admin cannot create a Tenant', async ({ page }) => {
+    await login({ page, user: TENANT_ADMIN })
+
+    const res = await page.request.post(`${SERVER}/api/tenants`, {
+      data: { name: 'Sneaky From Tenant Admin', slug: `sneaky-${Date.now()}` },
+    })
+
+    expect(res.status()).toBe(403)
+  })
+
+  test('a tenant-admin cannot promote themselves to Super Admin', async ({ page }) => {
+    await login({ page, user: TENANT_ADMIN })
+
+    const res = await page.request.patch(`${SERVER}/api/users/${tenantAdminUserId}`, {
+      data: { role: 'super_admin' },
+    })
+
+    expect(res.status()).toBe(403)
   })
 })
 

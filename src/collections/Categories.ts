@@ -4,6 +4,7 @@ import { anyone } from '../access/anyone'
 import { isStaffRole } from '../access/isStaffRole'
 import { uniqueSlugPerTenant } from '../utilities/uniqueSlugPerTenant'
 import { slugField } from 'payload'
+import { enforceTenantOwnership } from '@/hooks/enforceTenantOwnership'
 
 export const Categories: CollectionConfig = {
   slug: 'categories',
@@ -15,6 +16,9 @@ export const Categories: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
+  },
+  hooks: {
+    beforeChange: [enforceTenantOwnership],
   },
   fields: [
     {

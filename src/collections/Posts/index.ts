@@ -11,6 +11,7 @@ import {
 } from '@payloadcms/richtext-lexical'
 
 import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
+import { enforceTenantOwnership } from '@/hooks/enforceTenantOwnership'
 import { isAdminOrReviewer } from '../../access/isAdminOrReviewer'
 import { isAdminOrReviewerOrAuthor } from '../../access/isAdminOrReviewerOrAuthor'
 import { isStaffRole } from '../../access/isStaffRole'
@@ -224,7 +225,7 @@ export const Posts: CollectionConfig<'posts'> = {
       },
       filterOptions: {
         role: {
-          in: ['admin', 'author', 'reviewer'],
+          in: ['super_admin', 'admin', 'author', 'reviewer'],
         },
       },
       hasMany: true,
@@ -246,7 +247,7 @@ export const Posts: CollectionConfig<'posts'> = {
       },
       filterOptions: {
         role: {
-          in: ['admin', 'reviewer'],
+          in: ['super_admin', 'admin', 'reviewer'],
         },
       },
       relationTo: 'users',
@@ -348,7 +349,7 @@ export const Posts: CollectionConfig<'posts'> = {
     }),
   ],
   hooks: {
-    beforeChange: [requireReviewToPublish],
+    beforeChange: [enforceTenantOwnership, requireReviewToPublish],
     afterChange: [revalidatePost],
     afterRead: [populateAuthors],
     afterDelete: [revalidateDelete],

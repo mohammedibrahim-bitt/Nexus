@@ -1,22 +1,27 @@
 import type { CollectionConfig } from 'payload'
 
-import { isAdmin } from '../access/isAdmin'
+import { isTenantManager } from '../access/isTenantManager'
+import { isTenantManagerRole } from '../access/permissions'
+import { enforceTenantOwnership } from '@/hooks/enforceTenantOwnership'
 
 export const ContentSources: CollectionConfig = {
   slug: 'content-sources',
   access: {
-    create: isAdmin,
-    delete: isAdmin,
-    read: isAdmin,
-    update: isAdmin,
+    create: isTenantManager,
+    delete: isTenantManager,
+    read: isTenantManager,
+    update: isTenantManager,
   },
   admin: {
     defaultColumns: ['name', 'feedUrl', 'active', 'lastFetchStatus'],
     description:
       'External RSS/Atom feeds to pull new articles from. Add a source, then trigger a sync from POST /api/sync-content-sources (protected by CRON_SECRET, or works automatically for logged-in admins) — wire an external cron to that URL to check on a schedule.',
     group: 'Site',
-    hidden: ({ user }) => user?.role !== 'admin',
+    hidden: ({ user }) => !isTenantManagerRole(user),
     useAsTitle: 'name',
+  },
+  hooks: {
+    beforeChange: [enforceTenantOwnership],
   },
   fields: [
     {
@@ -73,7 +78,7 @@ export const ContentSources: CollectionConfig = {
           'Required for auto-publish — imported posts need a reviewer on file, same as any other post.',
       },
       filterOptions: {
-        role: { in: ['admin', 'reviewer'] },
+        role: { in: ['super_admin', 'admin', 'reviewer'] },
       },
       relationTo: 'users',
     },

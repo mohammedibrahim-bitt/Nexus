@@ -34,7 +34,7 @@ export const Card: React.FC<{
   return (
     <article
       className={cn(
-        'group hover-lift flex flex-col overflow-hidden rounded-lg border border-border bg-card shadow-[var(--shadow-md)] hover:cursor-pointer hover:border-rule',
+        'group nx-card hover-lift flex flex-col overflow-hidden hover:cursor-pointer',
         className,
       )}
       ref={card.ref}
@@ -63,7 +63,7 @@ export const Card: React.FC<{
         style={{ padding: 'calc(1.25rem * var(--space-scale, 1))' }}
       >
         {showCategories && hasCategories && (
-          <div className="kicker">
+          <div className="nx-tag self-start">
             {categories?.map((category, index) => {
               if (typeof category === 'object') {
                 const { title: titleFromCategory } = category

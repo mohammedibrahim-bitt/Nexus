@@ -2,10 +2,11 @@
 
 import type { DefaultCellComponentProps } from 'payload'
 
-import { toast } from '@payloadcms/ui'
+import { toast, useAuth } from '@payloadcms/ui'
 import React, { useState } from 'react'
 
 const ROLE_OPTIONS = [
+  { label: 'Super Admin', value: 'super_admin' },
   { label: 'Admin', value: 'admin' },
   { label: 'Author', value: 'author' },
   { label: 'Reviewer', value: 'reviewer' },
@@ -15,8 +16,19 @@ const ROLE_OPTIONS = [
 const baseClass = 'role-cell'
 
 export const RoleCell: React.FC<DefaultCellComponentProps> = ({ cellData, rowData }) => {
+  const { user } = useAuth()
   const [role, setRole] = useState((cellData as string) || 'author')
   const [saving, setSaving] = useState(false)
+
+  // A tenant-scoped admin can grant Admin/Author/Reviewer/Reader within their
+  // own tenant, but never Super Admin — enforced server-side in
+  // enforceTenantAdminBoundaries.ts, mirrored here so the option isn't
+  // offered in the first place. They also can't change their own role at
+  // all, so that row's select is disabled rather than silently rejected.
+  const isTenantAdminViewer = user?.role === 'admin'
+  const isEditingOwnRow = user && String(user.id) === String(rowData.id)
+  const options = isTenantAdminViewer ? ROLE_OPTIONS.filter((o) => o.value !== 'super_admin') : ROLE_OPTIONS
+  const disabled = saving || (isTenantAdminViewer && Boolean(isEditingOwnRow))
 
   const onChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const nextRole = e.target.value
@@ -49,7 +61,7 @@ export const RoleCell: React.FC<DefaultCellComponentProps> = ({ cellData, rowDat
   return (
     <select
       className={baseClass}
-      disabled={saving}
+      disabled={disabled}
       onChange={onChange}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
@@ -58,13 +70,13 @@ export const RoleCell: React.FC<DefaultCellComponentProps> = ({ cellData, rowDat
         border: '1px solid var(--theme-elevation-150)',
         borderRadius: '4px',
         color: 'var(--theme-elevation-800)',
-        cursor: saving ? 'wait' : 'pointer',
+        cursor: disabled ? (saving ? 'wait' : 'not-allowed') : 'pointer',
         fontSize: '13px',
         padding: '4px 8px',
       }}
       value={role}
     >
-      {ROLE_OPTIONS.map((option) => (
+      {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
         </option>

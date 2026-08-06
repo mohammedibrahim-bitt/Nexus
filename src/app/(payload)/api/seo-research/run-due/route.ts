@@ -18,7 +18,9 @@ async function isAuthorized(req: Request): Promise<boolean> {
   const headers = await getHeaders()
   const { user } = await payload.auth({ headers })
 
-  if (user && user.collection === 'users' && user.role === 'admin') return true
+  // This checks every tenant's due rules in one pass, so it must stay
+  // platform-wide — a tenant-scoped `admin` doesn't qualify.
+  if (user && user.collection === 'users' && user.role === 'super_admin') return true
 
   const secret = process.env.CRON_SECRET
   if (!secret) return false

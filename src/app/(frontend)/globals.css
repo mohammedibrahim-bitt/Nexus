@@ -62,7 +62,10 @@
   --font-mono: var(--font-geist-mono);
   --font-sans: var(--font-roboto), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-newsreader), ui-serif, Georgia, 'Times New Roman', serif;
-  --font-display: var(--font-newsreader);
+  /* Reference UI sets headings in the same geometric sans as body copy rather
+     than an editorial serif; Outfit is the closest match in the preloaded set
+     to its Avenir Next / Futura fallback stack. Admin-overridable as before. */
+  --font-display: var(--font-outfit);
   --font-proxemic: 'PROXEMIC', 'Avenir Next', 'Futura', 'Century Gothic', ui-sans-serif, sans-serif;
 }
 
@@ -117,43 +120,49 @@
  * color choice never eats the link/CTA color.
  */
 :root {
-  --background: #fdf7f7;
-  --foreground: #1c1416;
+  --background: #f7f7fb;
+  --foreground: #16161d;
   --card: #ffffff;
-  --card-foreground: #1c1416;
+  --card-foreground: #16161d;
   --popover: #ffffff;
-  --popover-foreground: #1c1416;
-  --primary: #dc2626;
+  --popover-foreground: #16161d;
+  --primary: #6366f1;
   --primary-foreground: #ffffff;
-  --secondary: #f4efef;
-  --secondary-foreground: #1c1416;
-  --muted: #f4efef;
-  --muted-foreground: #5c5155;
-  --accent: #f4efef;
-  --accent-foreground: #1c1416;
-  --destructive: #dc2626;
+  --secondary: #f0f0f6;
+  --secondary-foreground: #16161d;
+  --muted: #f0f0f6;
+  --muted-foreground: #6b7080;
+  --accent: #f0f0f6;
+  --accent-foreground: #16161d;
+  --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: rgb(28 20 22 / 0.11);
-  --input: rgb(28 20 22 / 0.14);
-  --ring: #dc2626;
+  --border: rgb(22 22 29 / 0.09);
+  --input: rgb(22 22 29 / 0.14);
+  --ring: #6366f1;
 
-  /* Editorial accents — not touched by <BrandColor /> */
-  --link: #1e40af;
-  --link-hover: #1a3696;
-  --kicker: #b91c1c;
-  --rule: #fecaca;
+  /*
+   * The reference UI drives links, tags and CTAs from the single accent
+   * colour rather than a separate editorial blue, so these follow --primary
+   * (and therefore each tenant's own brand colour, contrast-corrected by
+   * <BrandColor />) instead of holding an independent hue.
+   */
+  --link: var(--primary);
+  --link-hover: color-mix(in srgb, var(--primary) 82%, black);
+  --kicker: var(--primary);
+  --rule: var(--border);
 
-  /* Soft UI Evolution: softer than flat, clearer than neumorphism */
-  --shadow-sm: 0 1px 2px rgb(28 20 22 / 0.05);
+  /* Soft, wide-spread elevation — the reference's single --nx-shadow, spread
+     across the existing 4-step scale so component call sites keep working. */
+  --shadow-sm: 0 1px 2px rgb(22 22 29 / 0.05);
   --shadow-md:
-    0 2px 4px rgb(28 20 22 / 0.06),
-    0 8px 16px -8px rgb(28 20 22 / 0.1);
+    0 1px 2px rgb(22 22 29 / 0.05),
+    0 12px 32px -16px rgb(22 22 29 / 0.18);
   --shadow-lg:
-    0 4px 8px rgb(28 20 22 / 0.07),
-    0 16px 32px -12px rgb(28 20 22 / 0.14);
+    0 2px 4px rgb(22 22 29 / 0.06),
+    0 18px 40px -18px rgb(22 22 29 / 0.24);
   --shadow-xl:
-    0 8px 16px rgb(28 20 22 / 0.08),
-    0 28px 48px -16px rgb(28 20 22 / 0.2);
+    0 4px 8px rgb(22 22 29 / 0.07),
+    0 28px 56px -20px rgb(22 22 29 / 0.3);
   --shadow-card: var(--shadow-md);
 
   /* Spacing scale — density 4/10 (standard) */
@@ -165,76 +174,76 @@
   --space-2xl: 3rem;
   --space-3xl: 4rem;
 
-  --chart-1: #dc2626;
-  --chart-2: #1e40af;
-  --chart-3: #b45309;
-  --chart-4: #0f766e;
-  --chart-5: #7e22ce;
-  --radius: 0.75rem;
+  --chart-1: #6366f1;
+  --chart-2: #0ea5e9;
+  --chart-3: #f59e0b;
+  --chart-4: #10b981;
+  --chart-5: #ec4899;
+  --radius: 1rem;
   --sidebar: #ffffff;
-  --sidebar-foreground: #1c1416;
-  --sidebar-primary: #dc2626;
+  --sidebar-foreground: #16161d;
+  --sidebar-primary: #6366f1;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f4efef;
-  --sidebar-accent-foreground: #1c1416;
-  --sidebar-border: rgb(28 20 22 / 0.11);
-  --sidebar-ring: #dc2626;
+  --sidebar-accent: #f0f0f6;
+  --sidebar-accent-foreground: #16161d;
+  --sidebar-border: rgb(22 22 29 / 0.09);
+  --sidebar-ring: #6366f1;
   --success: #d1fae5;
   --warning: #fef3c7;
   --error: #fee2e2;
 }
 
 [data-theme='dark'] {
-  --background: #131011;
-  --foreground: #f2eceb;
-  --card: #1b1718;
-  --card-foreground: #f2eceb;
-  --popover: #1b1718;
-  --popover-foreground: #f2eceb;
-  --primary: #f87171;
-  --primary-foreground: #1c1416;
-  --secondary: #262021;
-  --secondary-foreground: #f2eceb;
-  --muted: #262021;
-  --muted-foreground: #a49a9c;
-  --accent: #262021;
-  --accent-foreground: #f2eceb;
+  --background: #0d0d12;
+  --foreground: #ececf2;
+  --card: #16161d;
+  --card-foreground: #ececf2;
+  --popover: #16161d;
+  --popover-foreground: #ececf2;
+  --primary: #818cf8;
+  --primary-foreground: #16161d;
+  --secondary: #1e1e27;
+  --secondary-foreground: #ececf2;
+  --muted: #1e1e27;
+  --muted-foreground: #9298a8;
+  --accent: #1e1e27;
+  --accent-foreground: #ececf2;
   --destructive: #f87171;
-  --destructive-foreground: #1c1416;
-  --border: rgb(242 236 235 / 0.12);
-  --input: rgb(242 236 235 / 0.16);
-  --ring: #f87171;
+  --destructive-foreground: #16161d;
+  --border: rgb(236 236 242 / 0.1);
+  --input: rgb(236 236 242 / 0.16);
+  --ring: #818cf8;
 
-  --link: #a8c3ff;
-  --link-hover: #c7d8ff;
-  --kicker: #fca5a5;
-  --rule: rgb(248 113 113 / 0.32);
+  --link: var(--primary);
+  --link-hover: color-mix(in srgb, var(--primary) 80%, white);
+  --kicker: var(--primary);
+  --rule: var(--border);
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow-md:
-    0 2px 4px rgb(0 0 0 / 0.4),
-    0 8px 16px -8px rgb(0 0 0 / 0.55);
+    0 1px 2px rgb(0 0 0 / 0.4),
+    0 12px 32px -16px rgb(0 0 0 / 0.6);
   --shadow-lg:
-    0 4px 8px rgb(0 0 0 / 0.45),
-    0 16px 32px -12px rgb(0 0 0 / 0.65);
+    0 2px 4px rgb(0 0 0 / 0.45),
+    0 18px 40px -18px rgb(0 0 0 / 0.7);
   --shadow-xl:
-    0 8px 16px rgb(0 0 0 / 0.5),
-    0 28px 48px -16px rgb(0 0 0 / 0.75);
+    0 4px 8px rgb(0 0 0 / 0.5),
+    0 28px 56px -20px rgb(0 0 0 / 0.8);
   --shadow-card: var(--shadow-md);
 
-  --chart-1: #f87171;
-  --chart-2: #93b4fe;
+  --chart-1: #818cf8;
+  --chart-2: #38bdf8;
   --chart-3: #fbbf24;
-  --chart-4: #5eead4;
-  --chart-5: #d8b4fe;
-  --sidebar: #1b1718;
-  --sidebar-foreground: #f2eceb;
-  --sidebar-primary: #f87171;
-  --sidebar-primary-foreground: #1c1416;
-  --sidebar-accent: #262021;
-  --sidebar-accent-foreground: #f2eceb;
-  --sidebar-border: rgb(242 236 235 / 0.12);
-  --sidebar-ring: #f87171;
+  --chart-4: #34d399;
+  --chart-5: #f472b6;
+  --sidebar: #16161d;
+  --sidebar-foreground: #ececf2;
+  --sidebar-primary: #818cf8;
+  --sidebar-primary-foreground: #16161d;
+  --sidebar-accent: #1e1e27;
+  --sidebar-accent-foreground: #ececf2;
+  --sidebar-border: rgb(236 236 242 / 0.1);
+  --sidebar-ring: #818cf8;
   --success: #064e3b;
   --warning: #4a3209;
   --error: #4c1d1d;
@@ -323,7 +332,43 @@
 
 @layer components {
   /*
-   * Editorial kicker — the small red category line above a headline.
+   * Surface primitive from the reference UI (its .nx-card): a white panel
+   * with a hairline border, the shared radius, and the soft wide shadow.
+   */
+  .nx-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+  }
+
+  /*
+   * Its companion padding utility. The reference scales this by --nx-space;
+   * here it reads --space-scale, which <BrandColor /> already sets from the
+   * CMS "density" setting, so compact/comfortable keeps working unchanged.
+   */
+  .nx-space {
+    padding: calc(1.5rem * var(--space-scale, 1));
+  }
+
+  /*
+   * Pill tag used on cards for the category/topic label — the reference's
+   * accent-on-tinted-surface chip.
+   */
+  .nx-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 9999px;
+    background: var(--secondary);
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--primary);
+  }
+
+  /*
+   * Editorial kicker — the small category line above a headline.
    * Reads as "section label", the standard newsroom cue.
    */
   .kicker {
@@ -341,17 +386,34 @@
     border-top: 2px solid var(--rule);
   }
 
-  /* Card/tile hover: lift without shifting neighbours (no scale). */
+  /*
+   * Card/tile hover: lift without shifting neighbours (no scale).
+   *
+   * Matches the reference UI's `whileHover={{ y: -4 }}` spring, but stays in
+   * CSS on purpose: the admin-facing "Enable Animations" setting disables
+   * motion by zeroing transition-duration (see <BrandColor />), and the
+   * reduced-motion block below cancels the lift. A JS spring would silently
+   * ignore both, and would pull framer-motion into every card grid's bundle.
+   */
   .hover-lift {
     transition:
-      box-shadow 220ms ease,
-      transform 220ms ease,
-      border-color 220ms ease;
+      box-shadow 260ms cubic-bezier(0.34, 1.36, 0.64, 1),
+      transform 260ms cubic-bezier(0.34, 1.36, 0.64, 1),
+      border-color 260ms ease;
   }
 
   .hover-lift:hover {
     box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
+    transform: translateY(-4px);
+  }
+
+  /* Press feedback, mirroring the reference's `whileTap={{ scale: 0.97 }}`. */
+  .tap-shrink {
+    transition: transform 120ms ease;
+  }
+
+  .tap-shrink:active {
+    transform: scale(0.97);
   }
 
   /* Inline editorial link styling for body copy. */
@@ -409,7 +471,15 @@ html[data-theme='light'] {
     scroll-behavior: auto !important;
   }
 
-  .hover-lift:hover {
+  .hover-lift:hover,
+  .tap-shrink:active {
     transform: none;
+  }
+
+  /* Cancel the button press-shrink too — transform still applies at zero
+     duration, so it would otherwise snap rather than simply not happen. */
+  button:active,
+  [role='button']:active {
+    transform: none !important;
   }
 }

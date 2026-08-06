@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   const headers = await getHeaders()
   const { user } = await payload.auth({ headers })
 
-  if (!user || user.collection !== 'users' || user.role !== 'admin') {
+  if (!user || user.collection !== 'users' || user.role !== 'super_admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

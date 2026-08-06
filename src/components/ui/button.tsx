@@ -4,13 +4,18 @@ import { type VariantProps, cva } from 'class-variance-authority'
 import * as React from 'react'
 
 /*
- * Soft UI Evolution buttons: 200ms transitions, a 1px lift on hover (never a
- * scale — that shifts neighbouring layout), and an always-visible focus ring.
- * `cta` carries the design system's editorial link-blue for conversion
- * actions, kept separate from `default` so the CMS brand color can't eat it.
+ * Buttons follow the reference UI: fully-rounded to the shared radius token,
+ * a 1px lift on hover, and a 0.97 press shrink standing in for its
+ * `whileTap={{ scale: 0.97 }}` (kept in CSS so the admin "Enable Animations"
+ * switch and prefers-reduced-motion both still cancel it).
+ *
+ * `cta` now resolves to the same accent as `default` — the reference drives
+ * every call-to-action from the single accent colour rather than holding a
+ * separate editorial link-blue — but stays as its own variant so existing
+ * call sites keep working and can be re-pointed later if that changes.
  */
 const buttonVariants = cva(
-  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-[color,background-color,box-shadow,transform,border-color] duration-200 ease-out disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-[color,background-color,box-shadow,transform,border-color] duration-200 ease-out active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
   {
     variants: {
       variant: {
@@ -29,8 +34,8 @@ const buttonVariants = cva(
       size: {
         clear: '',
         default: 'h-10 px-5 py-2 has-[>svg]:px-4',
-        sm: 'h-9 rounded-md px-3.5 text-[0.8125rem] has-[>svg]:px-3',
-        lg: 'h-12 rounded-md px-7 text-base has-[>svg]:px-5',
+        sm: 'h-9 rounded-lg px-3.5 text-[0.8125rem] has-[>svg]:px-3',
+        lg: 'h-12 rounded-lg px-7 text-base has-[>svg]:px-5',
         icon: 'size-10',
       },
     },

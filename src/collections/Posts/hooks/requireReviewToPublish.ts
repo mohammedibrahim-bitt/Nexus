@@ -1,10 +1,13 @@
 import type { CollectionBeforeChangeHook } from 'payload'
 import { APIError } from 'payload'
 
+import { isTenantManagerRole } from '@/access/permissions'
+
 // Drafts can be saved freely, but a post can only move to "published" once
 // it has a reviewer assigned, and that reviewer must actually hold the
-// "admin" or "reviewer" role (enforced here in case the relationship still
-// points at a stale value from before someone's role was changed).
+// "super_admin", "admin", or "reviewer" role (enforced here in case the
+// relationship still points at a stale value from before someone's role
+// was changed).
 export const requireReviewToPublish: CollectionBeforeChangeHook = async ({
   data,
   originalDoc,
@@ -31,7 +34,7 @@ export const requireReviewToPublish: CollectionBeforeChangeHook = async ({
     depth: 0,
   })
 
-  if (!reviewer || (reviewer.role !== 'admin' && reviewer.role !== 'reviewer')) {
+  if (!reviewer || (!isTenantManagerRole(reviewer) && reviewer.role !== 'reviewer')) {
     throw new APIError(
       'The user set as "Reviewed By" must have the reviewer or admin role.',
       400,

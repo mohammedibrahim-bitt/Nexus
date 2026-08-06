@@ -1,9 +1,10 @@
 import type { CollectionConfig } from 'payload'
 
-import { isAdmin } from '@/access/isAdmin'
+import { isTenantManager } from '@/access/isTenantManager'
 import { link } from '@/fields/link'
 import { navIcon } from '@/fields/navIcon'
 import { revalidateHeader } from './hooks/revalidateHeader'
+import { enforceTenantOwnership } from '@/hooks/enforceTenantOwnership'
 
 // Per-tenant "global" — see the note on Settings for why this is a collection
 // rather than a Payload Global.
@@ -11,9 +12,9 @@ export const Header: CollectionConfig = {
   slug: 'header',
   access: {
     read: () => true,
-    create: isAdmin,
-    delete: isAdmin,
-    update: isAdmin,
+    create: isTenantManager,
+    delete: isTenantManager,
+    update: isTenantManager,
   },
   admin: {
     group: 'Site',
@@ -51,6 +52,7 @@ export const Header: CollectionConfig = {
     },
   ],
   hooks: {
+    beforeChange: [enforceTenantOwnership],
     afterChange: [revalidateHeader],
   },
 }

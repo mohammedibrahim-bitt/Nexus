@@ -2,6 +2,8 @@ import type { CollectionConfig } from 'payload'
 
 import { isAdminOrTriggeredBy } from '../../access/isAdminOrTriggeredBy'
 import { isStaffRole } from '../../access/isStaffRole'
+import { isTenantManagerRole } from '../../access/permissions'
+import { enforceTenantOwnership } from '@/hooks/enforceTenantOwnership'
 
 export const SeoResearchRuns: CollectionConfig = {
   slug: 'seo-research-runs',
@@ -20,7 +22,7 @@ export const SeoResearchRuns: CollectionConfig = {
     description:
       'Enter a target keyword and run automatic competitor research: finds top-ranking pages, scores them across SEO/content-quality dimensions, and drafts an original post designed to outperform them. Each user needs their own SerpApi key and an API key for their chosen AI provider, set on their profile.',
     group: 'Site',
-    hidden: ({ user }) => user?.role !== 'admin',
+    hidden: ({ user }) => !isTenantManagerRole(user),
     useAsTitle: 'keyword',
   },
   fields: [
@@ -129,4 +131,7 @@ export const SeoResearchRuns: CollectionConfig = {
       },
     },
   ],
+  hooks: {
+    beforeChange: [enforceTenantOwnership],
+  },
 }

@@ -1,5 +1,5 @@
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
-import { isAdmin } from '@/access/isAdmin'
+import { isTenantManager } from '@/access/isTenantManager'
 import { multiTenantPlugin } from '@payloadcms/plugin-multi-tenant'
 import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
@@ -8,6 +8,7 @@ import { searchPlugin } from '@payloadcms/plugin-search'
 import { s3Storage } from '@payloadcms/storage-s3'
 import { Field, Plugin } from 'payload'
 import { revalidateRedirects } from '@/hooks/revalidateRedirects'
+import { enforceTenantOwnership } from '@/hooks/enforceTenantOwnership'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
 import { searchFields } from '@/search/fieldOverrides'
@@ -65,8 +66,10 @@ export const plugins: Plugin[] = [
       access: {
         // Contact-form messages and newsletter emails are PII/leads — the
         // plugin's default (`read: !!user`) would let any self-registered
-        // author read them. Anyone can still submit (create stays open).
-        read: isAdmin,
+        // author read them. Anyone can still submit (create stays open). A
+        // tenant-admin is further confined to their own tenant's submissions
+        // by this collection's multi-tenant plugin registration below.
+        read: isTenantManager,
       },
       admin: {
         defaultColumns: ['form', 'createdAt'],
@@ -138,6 +141,9 @@ export const plugins: Plugin[] = [
           return field
         })
       },
+      hooks: {
+        beforeChange: [enforceTenantOwnership],
+      },
     },
   }),
   searchPlugin({
@@ -203,6 +209,10 @@ export const plugins: Plugin[] = [
       footer: { isGlobal: true },
     },
     tenantsSlug: 'tenants',
-    userHasAccessToAllTenants: (user) => user?.role === 'admin',
+    // Only super_admin bypasses tenant scoping entirely. The tenant-scoped
+    // `admin` role is deliberately NOT here — that's what confines it to its
+    // own tenant(s) for every collection registered above, via the plugin's
+    // own withTenantAccess wrapper.
+    userHasAccessToAllTenants: (user) => user?.role === 'super_admin',
   }),
 ]

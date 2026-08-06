@@ -17,7 +17,7 @@ export async function getBrandEmailData(
   tenantId?: null | number | string,
 ): Promise<BrandEmailData> {
   if (!req?.payload) {
-    return { primaryColor: '#dc2626', siteName: 'Nexus' }
+    return { primaryColor: '#6366f1', siteName: 'Nexus' }
   }
 
   // Settings is one row per tenant now. Without a tenant to attribute the
@@ -34,7 +34,7 @@ export async function getBrandEmailData(
   const settings = docs[0]
 
   return {
-    primaryColor: settings?.primaryColor || '#dc2626',
+    primaryColor: settings?.primaryColor || '#6366f1',
     siteName: settings?.siteName || 'Nexus',
   }
 }

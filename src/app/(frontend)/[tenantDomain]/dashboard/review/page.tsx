@@ -6,18 +6,20 @@ import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
 import { useStaffAuth } from '@/providers/StaffAuth'
+import { useTenantId } from '@/utilities/useTenantId'
 
 type ReviewPost = { id: string; title: string }
 
 export default function ReviewQueuePage() {
   const { staff } = useStaffAuth()
   const router = useRouter()
+  const tenantId = useTenantId()
 
   const [posts, setPosts] = useState<null | ReviewPost[]>(null)
   const [busyId, setBusyId] = useState<null | string>(null)
   const [error, setError] = useState<null | string>(null)
 
-  const canReview = staff?.role === 'admin' || staff?.role === 'reviewer'
+  const canReview = staff?.role === 'super_admin' || staff?.role === 'admin' || staff?.role === 'reviewer'
 
   useEffect(() => {
     if (staff && !canReview) {
@@ -27,7 +29,7 @@ export default function ReviewQueuePage() {
 
   const load = () => {
     fetch(
-      '/api/posts?where[_status][equals]=draft&where[reviewedBy][exists]=false&limit=100&draft=true&sort=-updatedAt&depth=0',
+      `/api/posts?where[_status][equals]=draft&where[reviewedBy][exists]=false&where[tenant][equals]=${tenantId}&limit=100&draft=true&sort=-updatedAt&depth=0`,
       { credentials: 'include' },
     )
       .then((res) => res.json())
@@ -35,9 +37,9 @@ export default function ReviewQueuePage() {
   }
 
   useEffect(() => {
-    if (staff && canReview) load()
+    if (staff && canReview && tenantId) load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [staff, canReview])
+  }, [staff, canReview, tenantId])
 
   if (!staff || !canReview) return null
 

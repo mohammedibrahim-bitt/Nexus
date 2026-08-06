@@ -2,7 +2,7 @@
 
 import React, { createContext, use, useCallback, useEffect, useState } from 'react'
 
-export type StaffRole = 'admin' | 'author' | 'reader' | 'reviewer'
+export type StaffRole = 'admin' | 'author' | 'reader' | 'reviewer' | 'super_admin'
 
 export type Staff = {
   avatarUrl: null | string

@@ -1,7 +1,8 @@
 import type { CollectionConfig } from 'payload'
 
-import { isAdmin } from '../../access/isAdmin'
+import { isTenantManager } from '../../access/isTenantManager'
 import { publishedOrAdmin } from '../../access/publishedOrAdmin'
+import { enforceTenantOwnership } from '@/hooks/enforceTenantOwnership'
 import { uniqueSlugPerTenant } from '../../utilities/uniqueSlugPerTenant'
 import { Archive } from '../../blocks/ArchiveBlock/config'
 import { CallToAction } from '../../blocks/CallToAction/config'
@@ -25,10 +26,10 @@ import {
 export const Pages: CollectionConfig<'pages'> = {
   slug: 'pages',
   access: {
-    create: isAdmin,
-    delete: isAdmin,
+    create: isTenantManager,
+    delete: isTenantManager,
     read: publishedOrAdmin,
-    update: isAdmin,
+    update: isTenantManager,
   },
   // This config controls what's populated by default when a page is referenced
   // https://payloadcms.com/docs/queries/select#defaultpopulate-collection-config-property
@@ -129,7 +130,7 @@ export const Pages: CollectionConfig<'pages'> = {
   ],
   hooks: {
     afterChange: [revalidatePage],
-    beforeChange: [populatePublishedAt],
+    beforeChange: [enforceTenantOwnership, populatePublishedAt],
     afterDelete: [revalidateDelete],
   },
   versions: {

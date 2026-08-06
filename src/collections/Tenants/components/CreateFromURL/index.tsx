@@ -88,7 +88,7 @@ export const CreateTenantFromURL: React.FC = () => {
     [name, router, slug, sourceUrl, submitting],
   )
 
-  if (!user || user.role !== 'admin') return null
+  if (!user || user.role !== 'super_admin') return null
 
   return (
     <div className="createTenantFromURL">

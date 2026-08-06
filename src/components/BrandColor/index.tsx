@@ -33,8 +33,15 @@ export const BrandColor: React.FC = async () => {
     // Same brand hue, but adapted per theme so it always has strong contrast
     // against that theme's background — a literal color forced into both
     // themes would go invisible in whichever theme it doesn't suit.
-    const lightModePrimary = darkShade(color, 25)
-    const darkModePrimary = lightShade(color, 85)
+    //
+    // Saturation is held at 70 rather than the 45 used for background tints:
+    // the accent is a foreground colour (buttons, links, tags), so muting it
+    // that far turned every brand into the same near-navy. At these values a
+    // #6366f1 brand lands on ~7.1:1 against white button text in light mode
+    // and ~6.2:1 against the dark background — both comfortably past AA, and
+    // still recognisably the brand hue.
+    const lightModePrimary = darkShade(color, 55, 70)
+    const darkModePrimary = lightShade(color, 72, 70)
 
     const lightRule = `--primary: ${lightModePrimary}; --primary-foreground: #fafafa; --ring: ${lightModePrimary};`
     const darkRule = `--primary: ${darkModePrimary}; --primary-foreground: #171717; --ring: ${darkModePrimary};`

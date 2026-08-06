@@ -6,13 +6,14 @@ import { usePathname, useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
 import { useStaffAuth } from '@/providers/StaffAuth'
+import { useTenantId } from '@/utilities/useTenantId'
 
 const navItems = [
   { href: '/dashboard', label: 'Overview', rolesOnly: null as null | string[] },
-  { href: '/dashboard/posts', label: 'My Posts', rolesOnly: ['admin', 'author', 'reviewer'] },
-  { href: '/dashboard/review', label: 'Review Queue', rolesOnly: ['admin', 'reviewer'] },
-  { href: '/dashboard/seo-rules', label: 'SEO Automation', rolesOnly: ['admin'] },
-  { href: '/dashboard/messages', label: 'Messages', rolesOnly: ['admin'] },
+  { href: '/dashboard/posts', label: 'My Posts', rolesOnly: ['super_admin', 'admin', 'author', 'reviewer'] },
+  { href: '/dashboard/review', label: 'Review Queue', rolesOnly: ['super_admin', 'admin', 'reviewer'] },
+  { href: '/dashboard/seo-rules', label: 'SEO Automation', rolesOnly: ['super_admin', 'admin'] },
+  { href: '/dashboard/messages', label: 'Messages', rolesOnly: ['super_admin', 'admin'] },
   { href: '/dashboard/profile', label: 'Profile', rolesOnly: null },
 ]
 
@@ -20,6 +21,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { loading, logout, staff } = useStaffAuth()
   const pathname = usePathname()
   const router = useRouter()
+  const tenantId = useTenantId()
   const [pendingReviewCount, setPendingReviewCount] = useState(0)
 
   useEffect(() => {
@@ -29,16 +31,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [loading, staff, pathname, router])
 
   useEffect(() => {
-    if (!staff || (staff.role !== 'admin' && staff.role !== 'reviewer')) return
+    if (
+      !staff ||
+      (staff.role !== 'super_admin' && staff.role !== 'admin' && staff.role !== 'reviewer') ||
+      !tenantId
+    )
+      return
 
     fetch(
-      '/api/posts?where[_status][equals]=draft&where[reviewedBy][exists]=false&limit=1&draft=true',
+      `/api/posts?where[_status][equals]=draft&where[reviewedBy][exists]=false&where[tenant][equals]=${tenantId}&limit=1&draft=true`,
       { credentials: 'include' },
     )
       .then((res) => res.json())
       .then((data) => setPendingReviewCount(data.totalDocs ?? 0))
       .catch(() => setPendingReviewCount(0))
-  }, [staff])
+  }, [staff, tenantId])
 
   if (loading || !staff) {
     return <div className="container py-24 text-muted-foreground">Loading...</div>

@@ -86,12 +86,16 @@ const hslToHex = (h: number, s: number, l: number): string => {
 /**
  * Returns a dark, low-lightness shade of the given hex color — same hue/saturation,
  * clamped to a lightness that reads as a "near-black brand tint" background.
+ *
+ * `maxSaturation` defaults to 45 (a muted tint, right for background fills).
+ * Raise it for foreground accents, where over-desaturating collapses every
+ * brand colour into the same near-grey and loses the brand entirely.
  */
-export const darkShade = (hex: string, lightness = 13): string => {
+export const darkShade = (hex: string, lightness = 13, maxSaturation = 45): string => {
   try {
     const [r, g, b] = hexToRgb(hex)
     const [h, s] = rgbToHsl(r, g, b)
-    return hslToHex(h, Math.min(s, 45), lightness)
+    return hslToHex(h, Math.min(s, maxSaturation), lightness)
   } catch {
     return '#111111'
   }
@@ -100,12 +104,14 @@ export const darkShade = (hex: string, lightness = 13): string => {
 /**
  * Returns a light, high-lightness shade of the given hex color — same hue/saturation,
  * clamped to a lightness that reads clearly against a dark background.
+ *
+ * See `darkShade` for the `maxSaturation` rationale.
  */
-export const lightShade = (hex: string, lightness = 85): string => {
+export const lightShade = (hex: string, lightness = 85, maxSaturation = 45): string => {
   try {
     const [r, g, b] = hexToRgb(hex)
     const [h, s] = rgbToHsl(r, g, b)
-    return hslToHex(h, Math.min(s, 45), lightness)
+    return hslToHex(h, Math.min(s, maxSaturation), lightness)
   } catch {
     return '#f5f5f5'
   }

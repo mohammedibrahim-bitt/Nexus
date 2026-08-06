@@ -639,9 +639,9 @@ export interface User {
   id: number;
   name?: string | null;
   /**
-   * Self-registered accounts always start as Reader. Only an admin can grant Author, Reviewer, or Admin.
+   * Self-registered accounts always start as Reader. A tenant admin can grant Admin, Author, or Reviewer within their own tenant; only a Super Admin can grant Super Admin.
    */
-  role: 'admin' | 'author' | 'reviewer' | 'reader';
+  role: 'super_admin' | 'admin' | 'author' | 'reviewer' | 'reader';
   avatar?: (number | null) | Media;
   /**
    * e.g. "Senior Editor" or "Licensed Real Estate Broker" — shown under their name.
@@ -1187,7 +1187,7 @@ export interface Setting {
   /**
    * Used for headings and the text logo site-wide. Body text stays on the readable base font.
    */
-  fontFamily?: ('newsreader' | 'space-grotesk' | 'poppins' | 'sora' | 'outfit' | 'playfair-display' | 'inter') | null;
+  fontFamily?: ('outfit' | 'space-grotesk' | 'poppins' | 'sora' | 'inter' | 'newsreader' | 'playfair-display') | null;
   /**
    * Controls how the logo and navigation are arranged in the site header.
    */

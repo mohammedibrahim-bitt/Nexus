@@ -30,13 +30,13 @@ export default function MessagesPage() {
   const [submissions, setSubmissions] = useState<null | Submission[]>(null)
 
   useEffect(() => {
-    if (staff?.role !== 'admin') return
+    if (staff?.role !== 'super_admin' && staff?.role !== 'admin') return
     fetch('/api/form-submissions?limit=100&sort=-createdAt&depth=1', { credentials: 'include' })
       .then((res) => res.json())
       .then((data) => setSubmissions(data.docs))
   }, [staff])
 
-  if (!staff || staff.role !== 'admin') return null
+  if (!staff || (staff.role !== 'super_admin' && staff.role !== 'admin')) return null
 
   return (
     <div className="flex flex-col gap-4">

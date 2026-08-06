@@ -1,21 +1,23 @@
 import type { CollectionConfig } from 'payload'
 
-import { isAdmin } from '../../access/isAdmin'
+import { isTenantManager } from '../../access/isTenantManager'
+import { isTenantManagerRole } from '../../access/permissions'
+import { enforceTenantOwnership } from '@/hooks/enforceTenantOwnership'
 
 export const SeoResearchRules: CollectionConfig = {
   slug: 'seo-research-rules',
   access: {
-    create: isAdmin,
-    delete: isAdmin,
-    read: isAdmin,
-    update: isAdmin,
+    create: isTenantManager,
+    delete: isTenantManager,
+    read: isTenantManager,
+    update: isTenantManager,
   },
   admin: {
     defaultColumns: ['keyword', 'active', 'runAsUser', 'intervalDays', 'lastRunAt', 'lastRunStatus'],
     description:
       'Keywords the SEO Research Agent researches and drafts on its own, on a schedule — no one has to trigger it by hand. Every run still only ever produces a draft post; nothing is ever auto-published.',
     group: 'Site',
-    hidden: ({ user }) => user?.role !== 'admin',
+    hidden: ({ user }) => !isTenantManagerRole(user),
     useAsTitle: 'keyword',
   },
   fields: [
@@ -44,7 +46,7 @@ export const SeoResearchRules: CollectionConfig = {
           "Whose SerpApi key and AI provider key to use — this person must have both saved on their profile. Automated runs are credited to them as the post author, same as if they'd triggered it manually.",
       },
       filterOptions: {
-        role: { in: ['admin', 'author', 'reviewer'] },
+        role: { in: ['super_admin', 'admin', 'author', 'reviewer'] },
       },
       relationTo: 'users',
       required: true,
@@ -86,5 +88,8 @@ export const SeoResearchRules: CollectionConfig = {
       },
     },
   ],
+  hooks: {
+    beforeChange: [enforceTenantOwnership],
+  },
   timestamps: true,
 }

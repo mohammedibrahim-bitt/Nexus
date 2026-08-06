@@ -11,9 +11,11 @@ import { ensureDefaultTenantContent } from '@/utilities/tenantDefaultContent'
  * resolver immediately so the new subdomain is branded on its very first load
  * rather than after the next 5-minute revalidate window.
  *
- * SECURITY: this re-checks `role === 'admin'` itself. The admin UI hides the
- * Create-from-URL panel from non-admins, but hiding UI is not a security
- * boundary — this route is reachable directly and must stand on its own.
+ * SECURITY: this re-checks `role === 'super_admin'` itself. The admin UI hides
+ * the Create-from-URL panel from non-super-admins, but hiding UI is not a
+ * security boundary — this route is reachable directly and must stand on its
+ * own. Tenant creation is platform-wide, so even a tenant-scoped `admin`
+ * must not reach this.
  */
 
 const hexColorRegex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
@@ -25,7 +27,7 @@ export async function POST(request: Request) {
   const headers = await getHeaders()
   const { user } = await payload.auth({ headers })
 
-  if (!user || user.collection !== 'users' || user.role !== 'admin') {
+  if (!user || user.collection !== 'users' || user.role !== 'super_admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -113,7 +115,7 @@ export async function POST(request: Request) {
         brandSyncUrl: sourceUrl,
         // primaryColor is required on Settings, so always supply one — the
         // synced brand color when we resolved it, otherwise the house default.
-        primaryColor: synced.primaryColor || '#dc2626',
+        primaryColor: synced.primaryColor || '#6366f1',
         siteName: synced.siteName || name,
         tenant: tenant.id,
       },

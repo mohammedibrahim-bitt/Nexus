@@ -4,6 +4,7 @@ import { headers as getHeaders } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 import { runSeoResearch } from '@/utilities/seoResearch/runSeoResearch'
+import { userTenantIds } from '@/access/permissions'
 
 export async function POST(req: Request) {
   const payload = await getPayload({ config: configPromise })
@@ -49,17 +50,20 @@ export async function POST(req: Request) {
 
   /*
    * Every run — and the draft post it produces — belongs to exactly one tenant.
-   * Non-admins may only research for a tenant they're assigned to; an admin can
-   * name any tenant explicitly (userHasAccessToAllTenants covers them).
+   * Non-super-admins (including the tenant-scoped `admin` role) may only
+   * research for a tenant they're assigned to; a super_admin can name any
+   * tenant explicitly (userHasAccessToAllTenants covers them).
    */
-  const assignedTenantIds = (user.tenants || [])
-    .map((row) => (typeof row.tenant === 'object' ? row.tenant?.id : row.tenant))
-    .filter((id): id is number => typeof id === 'number')
+  const assignedTenantIds = userTenantIds(user)
 
   const tenantId: number | undefined =
     requestedTenantId !== undefined ? Number(requestedTenantId) : assignedTenantIds[0]
 
-  if (requestedTenantId !== undefined && user.role !== 'admin' && !assignedTenantIds.includes(Number(requestedTenantId))) {
+  if (
+    requestedTenantId !== undefined &&
+    user.role !== 'super_admin' &&
+    !assignedTenantIds.includes(Number(requestedTenantId))
+  ) {
     return NextResponse.json({ error: 'You are not assigned to that tenant.' }, { status: 403 })
   }
 

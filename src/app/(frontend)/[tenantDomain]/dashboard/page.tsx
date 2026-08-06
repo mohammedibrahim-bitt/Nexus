@@ -4,30 +4,32 @@ import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 
 import { useStaffAuth } from '@/providers/StaffAuth'
+import { useTenantId } from '@/utilities/useTenantId'
 
 type Counts = { drafts: number; pendingReview: number; published: number }
 
 export default function DashboardOverviewPage() {
   const { staff } = useStaffAuth()
+  const tenantId = useTenantId()
   const [counts, setCounts] = useState<Counts | null>(null)
-  const canReview = staff?.role === 'admin' || staff?.role === 'reviewer'
+  const canReview = staff?.role === 'super_admin' || staff?.role === 'admin' || staff?.role === 'reviewer'
 
   useEffect(() => {
-    if (!staff || staff.role === 'reader') return
+    if (!staff || staff.role === 'reader' || !tenantId) return
 
     const load = async () => {
       const [draftsRes, publishedRes, reviewRes] = await Promise.all([
         fetch(
-          `/api/posts?where[authors][contains]=${staff.id}&where[_status][equals]=draft&limit=1&draft=true`,
+          `/api/posts?where[authors][contains]=${staff.id}&where[_status][equals]=draft&where[tenant][equals]=${tenantId}&limit=1&draft=true`,
           { credentials: 'include' },
         ),
         fetch(
-          `/api/posts?where[authors][contains]=${staff.id}&where[_status][equals]=published&limit=1`,
+          `/api/posts?where[authors][contains]=${staff.id}&where[_status][equals]=published&where[tenant][equals]=${tenantId}&limit=1`,
           { credentials: 'include' },
         ),
         canReview
           ? fetch(
-              `/api/posts?where[_status][equals]=draft&where[reviewedBy][exists]=false&limit=1&draft=true`,
+              `/api/posts?where[_status][equals]=draft&where[reviewedBy][exists]=false&where[tenant][equals]=${tenantId}&limit=1&draft=true`,
               { credentials: 'include' },
             )
           : Promise.resolve(null),
@@ -41,7 +43,7 @@ export default function DashboardOverviewPage() {
     }
 
     void load()
-  }, [staff, canReview])
+  }, [staff, canReview, tenantId])
 
   if (!staff) return null
 

@@ -1,18 +1,19 @@
 import type { CollectionConfig } from 'payload'
 
-import { isAdmin } from '../../access/isAdmin'
+import { isTenantManager } from '../../access/isTenantManager'
 import { isAdminOrReviewer } from '../../access/isAdminOrReviewer'
+import { isTenantManagerRole } from '../../access/permissions'
 
 export const Reviews: CollectionConfig = {
   slug: 'reviews',
   access: {
     create: ({ req: { user } }) => Boolean(user && user.collection === 'users'),
-    delete: isAdmin,
+    delete: isTenantManager,
     read: ({ req: { user } }) => {
       // Moderation visibility is role-based, not just "any signed-in
       // account" — anyone can self-register as an author, so plain authors
       // (and the public) only ever see approved reviews.
-      if (user && (user.role === 'admin' || user.role === 'reviewer')) return true
+      if (isTenantManagerRole(user) || user?.role === 'reviewer') return true
       return {
         approved: {
           equals: true,
@@ -80,8 +81,13 @@ export const Reviews: CollectionConfig = {
         // plugin's tenantField) and the public review form never sends one.
         // A review belongs to whichever tenant the post it's on belongs to,
         // not necessarily the reviewer's own tenant — a reader could review
-        // a post on a tenant they're not "assigned" to at all.
-        if (operation === 'create' && !data.tenant && data.post) {
+        // a post on a tenant they're not "assigned" to at all. Always
+        // re-derived from the post, even if `data.tenant` was already
+        // (explicitly) set — Reviews' `create` access has no tenant
+        // restriction of its own (any authenticated user), so a client
+        // supplying a mismatched tenant must never be trusted over the
+        // actual post it's attached to.
+        if (operation === 'create' && data.post) {
           const postId = typeof data.post === 'object' ? data.post.id : data.post
           const post = await req.payload.findByID({
             id: postId,

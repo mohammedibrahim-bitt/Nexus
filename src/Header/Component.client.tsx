@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
+import { useTheme } from '@/providers/Theme'
+
 import type { Header } from '@/payload-types'
 import type { BrandData } from '@/utilities/getBrandData'
 
@@ -19,9 +21,8 @@ interface HeaderClientProps {
 }
 
 export const HeaderClient: React.FC<HeaderClientProps> = ({ data, brand, initialStaffRole }) => {
-  /* Storing the value in a useState to avoid hydration errors */
-  const [theme, setTheme] = useState<string | null>(null)
   const { headerTheme, setHeaderTheme } = useHeaderTheme()
+  const { theme } = useTheme()
   const pathname = usePathname()
 
   useEffect(() => {
@@ -29,15 +30,13 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, brand, initial
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname])
 
-  useEffect(() => {
-    if (headerTheme !== theme) setTheme(headerTheme ?? null)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [headerTheme])
+  // Strictly follow the global theme so the header always matches the toggle.
+  const activeTheme = theme
 
   return (
     <header
       className="sticky top-0 z-20 border-b border-border bg-background/85 shadow-[var(--shadow-sm)] backdrop-blur-md"
-      {...(theme ? { 'data-theme': theme } : {})}
+      {...(activeTheme ? { 'data-theme': activeTheme } : {})}
     >
       {/* Masthead band — the newspaper cue that anchors the brand color. */}
       <div aria-hidden className="h-[3px] w-full bg-primary" />

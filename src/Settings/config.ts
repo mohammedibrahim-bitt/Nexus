@@ -1,8 +1,9 @@
 import type { CollectionConfig } from 'payload'
 
-import { isAdmin } from '../access/isAdmin'
+import { isTenantManager } from '../access/isTenantManager'
 import { revalidateSettings } from './hooks/revalidateSettings'
 import { DEFAULT_DISPLAY_FONT, DISPLAY_FONT_OPTIONS } from '../utilities/displayFonts'
+import { enforceTenantOwnership } from '@/hooks/enforceTenantOwnership'
 
 const hexColorValidate = (value: string | null | undefined) => {
   if (!value) return 'A brand color is required.'
@@ -46,10 +47,12 @@ export const Settings: CollectionConfig = {
     read: () => true,
     // Previously this was a Global, where Payload's default update access is
     // merely "is authenticated" — which would have let any self-registered
-    // reader rewrite site branding. Restricted to admins now.
-    create: isAdmin,
-    delete: isAdmin,
-    update: isAdmin,
+    // reader rewrite site branding. Restricted to super_admin/tenant-admin
+    // now (a tenant-admin is further confined to their own tenant's Settings
+    // row by the multi-tenant plugin's withTenantAccess wrapper).
+    create: isTenantManager,
+    delete: isTenantManager,
+    update: isTenantManager,
   },
   admin: {
     group: 'Site',
@@ -95,7 +98,7 @@ export const Settings: CollectionConfig = {
             {
               name: 'primaryColor',
               type: 'text',
-              defaultValue: '#dc2626',
+              defaultValue: '#6366f1',
               label: 'Brand Color',
               required: true,
               admin: {
@@ -121,7 +124,7 @@ export const Settings: CollectionConfig = {
             {
               name: 'cornerRadius',
               type: 'number',
-              defaultValue: 12,
+              defaultValue: 16,
               label: 'Corner Radius (px)',
               max: 28,
               min: 0,
@@ -329,6 +332,7 @@ export const Settings: CollectionConfig = {
     },
   ],
   hooks: {
+    beforeChange: [enforceTenantOwnership],
     afterChange: [revalidateSettings],
   },
 }

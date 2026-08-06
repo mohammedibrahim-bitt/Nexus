@@ -30,10 +30,10 @@ export default function SeoRulesPage() {
   }, [])
 
   useEffect(() => {
-    if (staff?.role === 'admin') load()
+    if (staff?.role === 'super_admin' || staff?.role === 'admin') load()
   }, [staff, load])
 
-  if (!staff || staff.role !== 'admin') return null
+  if (!staff || (staff.role !== 'super_admin' && staff.role !== 'admin')) return null
 
   const onDelete = async (id: string) => {
     if (!confirm('Delete this rule? This does not delete any drafts it already created.')) return

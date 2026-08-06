@@ -6,6 +6,7 @@ import * as migration_20260729_092635_add_header_nav_staff_only from './20260729
 import * as migration_20260729_112722_add_run_rule_link from './20260729_112722_add_run_rule_link';
 import * as migration_20260731_080955_add_multi_tenant from './20260731_080955_add_multi_tenant';
 import * as migration_20260804_080143_add_forms_tenant_scope from './20260804_080143_add_forms_tenant_scope';
+import * as migration_20260805_195923_add_tenant_admin_role from './20260805_195923_add_tenant_admin_role';
 
 export const migrations = [
   {
@@ -46,6 +47,11 @@ export const migrations = [
   {
     up: migration_20260804_080143_add_forms_tenant_scope.up,
     down: migration_20260804_080143_add_forms_tenant_scope.down,
-    name: '20260804_080143_add_forms_tenant_scope'
+    name: '20260804_080143_add_forms_tenant_scope',
+  },
+  {
+    up: migration_20260805_195923_add_tenant_admin_role.up,
+    down: migration_20260805_195923_add_tenant_admin_role.down,
+    name: '20260805_195923_add_tenant_admin_role'
   },
 ];

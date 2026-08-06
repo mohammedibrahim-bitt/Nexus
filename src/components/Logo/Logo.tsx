@@ -16,7 +16,7 @@ export const Logo = (props: Props) => {
   const { className, logo, siteName } = props
 
   const imgClassName = clsx(
-    'h-[34px] max-w-[9.375rem] w-full object-contain object-left',
+    'h-[34px] max-w-[9.375rem] w-full object-contain object-left dark:invert',
     className,
   )
 

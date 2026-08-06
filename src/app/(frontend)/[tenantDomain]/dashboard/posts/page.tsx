@@ -6,6 +6,8 @@ import React, { useEffect, useState } from 'react'
 
 import { useStaffAuth } from '@/providers/StaffAuth'
 
+import { useTenantId } from '@/utilities/useTenantId'
+
 type PostSummary = {
   _status: 'draft' | 'published'
   id: string
@@ -15,17 +17,18 @@ type PostSummary = {
 
 export default function MyPostsPage() {
   const { staff } = useStaffAuth()
+  const tenantId = useTenantId()
   const [posts, setPosts] = useState<null | PostSummary[]>(null)
 
   useEffect(() => {
-    if (!staff) return
+    if (!staff || !tenantId) return
     fetch(
-      `/api/posts?where[authors][contains]=${staff.id}&limit=100&draft=true&sort=-updatedAt&depth=0`,
+      `/api/posts?where[authors][contains]=${staff.id}&where[tenant][equals]=${tenantId}&limit=100&draft=true&sort=-updatedAt&depth=0`,
       { credentials: 'include' },
     )
       .then((res) => res.json())
       .then((data) => setPosts(data.docs))
-  }, [staff])
+  }, [staff, tenantId])
 
   if (!staff) return null
 

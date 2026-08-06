@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import crypto from 'crypto'
 
-import { isAdmin } from '../../access/isAdmin'
+import { isSuperAdmin } from '../../access/isSuperAdmin'
 import { isStaffRole } from '../../access/isStaffRole'
 
 /**
@@ -81,12 +81,14 @@ const urlValidate = (value: string | null | undefined) => {
 export const Tenants: CollectionConfig = {
   slug: 'tenants',
   access: {
-    // Tenant creation is an admin-only operation — see also the server-side
+    // Tenant creation/deletion/modification is a super-admin-only, platform
+    // -wide operation — a tenant-scoped `admin` must never create, delete, or
+    // modify a tenant (including their own). See also the server-side
     // re-check in the create-from-url route, since hiding UI is not a
     // security boundary.
-    create: isAdmin,
-    delete: isAdmin,
-    update: isAdmin,
+    create: isSuperAdmin,
+    delete: isSuperAdmin,
+    update: isSuperAdmin,
     // Staff read the tenants they're assigned to; the multi-tenant plugin
     // narrows this further via useTenantsCollectionAccess. Public page
     // rendering does NOT depend on this: host->tenant resolution runs through
@@ -104,8 +106,9 @@ export const Tenants: CollectionConfig = {
     description:
       'Each tenant is an independent site on its own subdomain, with fully isolated content, media, and branding.',
     group: 'Site',
-    // Non-admins never see Tenants in the sidebar at all.
-    hidden: ({ user }) => user?.role !== 'admin',
+    // Platform-only surface: a tenant-scoped `admin` never sees Tenants in
+    // the sidebar at all, only super_admin does.
+    hidden: ({ user }) => user?.role !== 'super_admin',
     useAsTitle: 'name',
   },
   fields: [
